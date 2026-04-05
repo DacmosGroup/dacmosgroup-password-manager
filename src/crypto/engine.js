@@ -232,6 +232,45 @@ async function cargarVaultDescifrado(clave) {
   return vault.credenciales || [];
 }
 
+// ── CAMBIAR CONTRASEÑA MAESTRA ──
+// Re-cifra todo el vault con una nueva contraseña maestra
+// DECISIÓN DE SEGURIDAD: El proceso completo ocurre en memoria.
+async function cambiarMasterPassword(passwordActual, passwordNueva) {
+  // Paso 1: Verificar contraseña actual
+  const claveActual = await desbloquearVault(passwordActual);
+  if (!claveActual) {
+    throw new Error('PASSWORD_INCORRECTA');
+  }
+
+  // Paso 2: Descifrar vault actual en memoria
+  const credenciales = await cargarVaultDescifrado(claveActual);
+
+  // Paso 3: Generar nuevas sales — nunca reutilizar sales anteriores
+  const salNueva  = generarSal();
+  const sal2Nueva = generarSal();
+
+  // Paso 4: Derivar nueva clave con PBKDF2
+  const claveNueva = await derivarClave(passwordNueva, salNueva);
+
+  // Paso 5: Generar nuevo token de verificación
+  const tokenNuevo = await generarHashVerificacion(passwordNueva, sal2Nueva);
+
+  // Paso 6: Re-cifrar vault con nueva clave
+  const vaultNuevo = await cifrar({ credenciales }, claveNueva);
+
+  // Paso 7: Guardar todo atómicamente
+  await new Promise((resolve) => {
+    chrome.storage.local.set({
+      sal:               bufferABase64(salNueva.buffer),
+      sal2:              bufferABase64(sal2Nueva.buffer),
+      tokenVerificacion: tokenNuevo,
+      vaultCifrado:      vaultNuevo,
+    }, resolve);
+  });
+
+  return claveNueva;
+}
+
 // ── EXPORTAR FUNCIONES PÚBLICAS ──
 export {
   configurarVault,
