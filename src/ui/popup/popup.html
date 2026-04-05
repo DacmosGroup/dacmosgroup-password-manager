@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DacmosGroup Password Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <!-- Cabecera con identidad DacmosGroup -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-icon">🔐</span>
+      <div class="logo-text">
+        <span class="logo-title">DacmosGroup</span>
+        <span class="logo-subtitle">Password Manager</span>
+      </div>
+    </div>
+    <!-- Indicador de estado: bloqueado/desbloqueado -->
+    <div class="status-badge" id="statusBadge">
+      <span class="status-dot locked"></span>
+      <span class="status-label">Bloqueado</span>
+    </div>
+  </header>
+
+  <!-- Vista: Sin configurar (primera vez) -->
+  <div class="view" id="viewSetup">
+    <div class="welcome">
+      <h2>Bienvenido</h2>
+      <p>Configura tu contraseña maestra para comenzar a proteger tus credenciales.</p>
+      <button class="btn btn-primary" id="btnGoSetup">
+        Configurar ahora →
+      </button>
+    </div>
+  </div>
+
+  <!-- Vista: Bloqueado -->
+  <div class="view hidden" id="viewLocked">
+    <div class="unlock-form">
+      <p class="unlock-label">Ingresa tu contraseña maestra</p>
+      <div class="input-group">
+        <input
+          type="password"
+          id="masterPasswordInput"
+          class="input"
+          placeholder="Contraseña maestra"
+          autocomplete="off"
+        />
+        <button class="btn-icon" id="btnTogglePassword" title="Mostrar/ocultar">
+          👁
+        </button>
+      </div>
+      <button class="btn btn-primary" id="btnUnlock">
+        Desbloquear
+      </button>
+      <p class="error-msg hidden" id="errorMsg">Contraseña incorrecta</p>
+    </div>
+  </div>
+
+  <!-- Vista: Desbloqueado -->
+  <div class="view hidden" id="viewUnlocked">
+    <div class="quick-actions">
+      <button class="action-card" id="btnOpenVault">
+        <span class="action-icon">🗄️</span>
+        <span class="action-label">Mi Vault</span>
+        <span class="action-count" id="credentialCount">0 credenciales</span>
+      </button>
+      <button class="action-card" id="btnAddCredential">
+        <span class="action-icon">➕</span>
+        <span class="action-label">Agregar</span>
+        <span class="action-count">Nueva credencial</span>
+      </button>
+    </div>
+    <div class="quick-fill" id="quickFill">
+      <!-- Se llenará dinámicamente con sugerencias del sitio actual -->
+    </div>
+  </div>
+
+  <!-- Barra de navegación inferior -->
+  <nav class="nav-bar" id="navBar">
+    <button class="nav-btn active" id="navVault" title="Vault">
+      <span>🗄️</span>
+      <span>Vault</span>
+    </button>
+    <button class="nav-btn" id="navGenerator" title="Generador">
+      <span>⚡</span>
+      <span>Generar</span>
+    </button>
+    <button class="nav-btn" id="navSettings" title="Configuración">
+      <span>⚙️</span>
+      <span>Config</span>
+    </button>
+    <button class="nav-btn nav-btn-danger" id="navLock" title="Bloquear">
+      <span>🔒</span>
+      <span>Bloquear</span>
+    </button>
+  </nav>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>DacmosGroup.com · Zero-Knowledge · AES-256-GCM</span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+/* ============================================
+   DacmosGroup Password Manager — Popup Styles
+   Tema oscuro + identidad DacmosGroup
+   ============================================ */
+
+/* Variables de color y tipografía */
+:root {
+  --color-bg:          #1a1a2e;
+  --color-surface:     #16213e;
+  --color-surface-2:   #0f3460;
+  --color-primary:     #0066cc;
+  --color-primary-hover: #0052a3;
+  --color-accent:      #00d4ff;
+  --color-danger:      #e74c3c;
+  --color-success:     #2ecc71;
+  --color-warning:     #f39c12;
+  --color-text:        #e8e8e8;
+  --color-text-muted:  #8892a4;
+  --color-border:      #2a3a5c;
+  --radius:            8px;
+  --radius-sm:         4px;
+  --font:              'Segoe UI', system-ui, sans-serif;
+}
+
+/* Reset y base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 360px;
+  min-height: 480px;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--color-surface);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  font-size: 24px;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.logo-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-accent);
+}
+
+.logo-subtitle {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Badge de estado */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface-2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.locked   { background: var(--color-danger); }
+.status-dot.unlocked { background: var(--color-success); }
+
+/* ── Vistas ── */
+.view {
+  flex: 1;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hidden { display: none !important; }
+
+/* Vista: Bienvenida/Setup */
+.welcome {
+  text-align: center;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.welcome h2 {
+  color: var(--color-accent);
+  font-size: 20px;
+}
+
+.welcome p {
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* Vista: Unlock */
+.unlock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.unlock-label {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+}
+
+.btn-icon {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.btn-icon:hover {
+  background: var(--color-surface-2);
+}
+
+.error-msg {
+  color: var(--color-danger);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Vista: Desbloqueado */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.action-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--color-text);
+}
+
+.action-card:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.action-icon { font-size: 24px; }
+
+.action-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.action-count {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* ── Botones ── */
+.btn {
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+/* ── Nav Bar ── */
+.nav-bar {
+  display: flex;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: 4px;
+  gap: 2px;
+}
+
+.nav-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover,
+.nav-btn.active {
+  background: var(--color-surface-2);
+  color: var(--color-accent);
+}
+
+.nav-btn-danger:hover {
+  background: rgba(231, 76, 60, 0.15);
+  color: var(--color-danger);
+}
+
+/* ── Footer ── */
+.footer {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: 6px 16px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
