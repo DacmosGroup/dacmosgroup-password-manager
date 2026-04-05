@@ -1,7 +1,9 @@
 // ================================================
 // DacmosGroup Password Manager — Settings Logic
-// Gestión de configuración y contraseña maestra
+// Conectado al motor de cifrado AES-256-GCM real
 // ================================================
+
+import { configurarVault } from '../../crypto/engine.js';
 
 // ── Referencias al DOM ──
 const inputNuevaMaster     = document.getElementById('inputNuevaMaster');
@@ -19,30 +21,25 @@ async function inicializar() {
   await cargarConfiguracion();
 }
 
-// Carga la configuración guardada y la refleja en la UI
 async function cargarConfiguracion() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['config'], (result) => {
       const config = result.config || {};
-      if (config.autoLock !== undefined) {
-        selectAutoLock.value = config.autoLock;
-      }
-      if (config.clipboard !== undefined) {
-        selectClipboard.value = config.clipboard;
-      }
+      if (config.autoLock  !== undefined) selectAutoLock.value  = config.autoLock;
+      if (config.clipboard !== undefined) selectClipboard.value = config.clipboard;
       resolve();
     });
   });
 }
 
-// ── Evaluador de fortaleza de contraseña maestra ──
+// ── Evaluador de fortaleza ──
 function evaluarFortaleza(password) {
   let puntos = 0;
-  if (password.length >= 8)              puntos++;
-  if (password.length >= 12)             puntos++;
-  if (/[A-Z]/.test(password))           puntos++;
-  if (/[0-9]/.test(password))           puntos++;
-  if (/[^A-Za-z0-9]/.test(password))   puntos++;
+  if (password.length >= 8)            puntos++;
+  if (password.length >= 12)           puntos++;
+  if (/[A-Z]/.test(password))         puntos++;
+  if (/[0-9]/.test(password))         puntos++;
+  if (/[^A-Za-z0-9]/.test(password)) puntos++;
 
   const niveles = [
     { label: '',           color: 'transparent', ancho: '0%'   },
@@ -58,19 +55,18 @@ function evaluarFortaleza(password) {
   strengthFill.style.backgroundColor = nivel.color;
   strengthLabel.textContent          = nivel.label;
   strengthLabel.style.color          = nivel.color;
-
   return puntos;
 }
 
-// ── Guardar contraseña maestra ──
-// NOTA DE SEGURIDAD: En E1.3 esta contraseña se procesará con
-// PBKDF2-SHA256 (600,000 iteraciones) antes de almacenarse.
-// Por ahora guardamos un placeholder para probar la UI.
+// ── Guardar contraseña maestra con PBKDF2 real ──
+// DECISIÓN DE SEGURIDAD: configurarVault() ejecuta PBKDF2-SHA256
+// con 600,000 iteraciones. Esto tarda ~1 segundo intencionalmente.
+// Ese segundo es insignificante para el usuario pero hace inviable
+// un ataque de fuerza bruta que prueba millones de contraseñas.
 async function guardarMasterPassword() {
   const nueva     = inputNuevaMaster.value;
   const confirmar = inputConfirmarMaster.value;
 
-  // Ocultar mensajes anteriores
   errorMaster.classList.add('hidden');
   successMaster.classList.add('hidden');
 
@@ -96,23 +92,35 @@ async function guardarMasterPassword() {
     return;
   }
 
-  // PLACEHOLDER — E1.3 reemplaza esto con PBKDF2 real
-  await new Promise((resolve) => {
-    chrome.storage.local.set({
-      vaultConfigurado: true,
-      sesionActiva: true,
-      // ⚠️ TEMPORAL: En E1.3 se almacenará el hash derivado con PBKDF2
-      masterPasswordHash: nueva,
-    }, resolve);
-  });
+  // Mostrar estado de carga — PBKDF2 tarda ~1 segundo
+  const btnGuardar = document.getElementById('btnGuardarMaster');
+  btnGuardar.textContent = 'Configurando vault seguro...';
+  btnGuardar.disabled    = true;
 
-  // Limpiar campos
-  inputNuevaMaster.value     = '';
-  inputConfirmarMaster.value = '';
-  strengthFill.style.width   = '0%';
-  strengthLabel.textContent  = '';
+  try {
+    // Configurar vault con cifrado real AES-256-GCM + PBKDF2
+    await configurarVault(nueva);
 
-  mostrarExito(successMaster, '✅ Contraseña maestra guardada correctamente');
+    // Activar sesión
+    await new Promise((resolve) => {
+      chrome.storage.local.set({ sesionActiva: true }, resolve);
+    });
+
+    // Limpiar campos
+    inputNuevaMaster.value     = '';
+    inputConfirmarMaster.value = '';
+    strengthFill.style.width   = '0%';
+    strengthLabel.textContent  = '';
+
+    mostrarExito(successMaster, '✅ Vault configurado con AES-256-GCM + PBKDF2-SHA256');
+
+  } catch (error) {
+    mostrarError(errorMaster, 'Error al configurar el vault — intenta de nuevo');
+    console.error('Error configurarVault:', error);
+  } finally {
+    btnGuardar.textContent = 'Guardar contraseña maestra';
+    btnGuardar.disabled    = false;
+  }
 }
 
 // ── Guardar configuración de seguridad ──
@@ -130,25 +138,42 @@ async function guardarConfigSeguridad() {
 }
 
 // ── Exportar vault ──
-// PLACEHOLDER — E1.10 implementa la exportación cifrada completa
 async function exportarVault() {
-  const data = await new Promise((resolve) => {
-    chrome.storage.local.get(['credenciales'], (result) => {
-      resolve(result.credenciales || []);
-    });
+  const datos = await new Promise((resolve) => {
+    chrome.storage.local.get(['vaultCifrado', 'sal', 'sal2', 'tokenVerificacion'], resolve);
   });
 
-  if (data.length === 0) {
-    alert('No hay credenciales para exportar');
+  if (!datos.vaultCifrado) {
+    alert('No hay vault para exportar');
     return;
   }
 
-  alert('Exportación completa disponible en E1.10 — Backup cifrado AES-256-GCM');
+  // El export incluye el vault ya cifrado — nunca datos en claro
+  const backup = {
+    version:          '1.0',
+    app:              'DacmosGroup Password Manager',
+    fecha:            new Date().toISOString(),
+    cifrado:          'AES-256-GCM',
+    kdf:              'PBKDF2-SHA256-600000',
+    sal:              datos.sal,
+    sal2:             datos.sal2,
+    tokenVerificacion: datos.tokenVerificacion,
+    vaultCifrado:     datos.vaultCifrado,
+  };
+
+  // Descargar como archivo JSON cifrado
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `dacmosgroup-vault-backup-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── Borrar todo ──
 async function borrarTodo() {
-  if (!confirm('⚠️ ¿Estás seguro? Esta acción eliminará TODAS las credenciales permanentemente.')) return;
+  if (!confirm('⚠️ ¿Eliminar TODAS las credenciales permanentemente?')) return;
   if (!confirm('⚠️ Última advertencia — esta acción NO se puede deshacer.')) return;
 
   await new Promise((resolve) => {
@@ -159,7 +184,7 @@ async function borrarTodo() {
   window.location.reload();
 }
 
-// ── Helpers de UI ──
+// ── Helpers UI ──
 function mostrarError(elemento, mensaje) {
   elemento.textContent = mensaje;
   elemento.classList.remove('hidden');
@@ -168,17 +193,12 @@ function mostrarError(elemento, mensaje) {
 function mostrarExito(elemento, mensaje) {
   elemento.textContent = mensaje;
   elemento.classList.remove('hidden');
-  setTimeout(() => elemento.classList.add('hidden'), 3000);
+  setTimeout(() => elemento.classList.add('hidden'), 4000);
 }
 
 // ── Event Listeners ──
+inputNuevaMaster.addEventListener('input', (e) => evaluarFortaleza(e.target.value));
 
-// Evaluar fortaleza al escribir
-inputNuevaMaster.addEventListener('input', (e) => {
-  evaluarFortaleza(e.target.value);
-});
-
-// Mostrar/ocultar contraseñas
 document.getElementById('btnToggleNueva').addEventListener('click', () => {
   inputNuevaMaster.type = inputNuevaMaster.type === 'password' ? 'text' : 'password';
 });
@@ -187,7 +207,6 @@ document.getElementById('btnToggleConfirmar').addEventListener('click', () => {
   inputConfirmarMaster.type = inputConfirmarMaster.type === 'password' ? 'text' : 'password';
 });
 
-// Botones principales
 document.getElementById('btnGuardarMaster').addEventListener('click', guardarMasterPassword);
 document.getElementById('btnGuardarSeguridad').addEventListener('click', guardarConfigSeguridad);
 document.getElementById('btnExportar').addEventListener('click', exportarVault);
