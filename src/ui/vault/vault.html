@@ -17,44 +17,70 @@
         <span class="logo-subtitle">Mi Vault</span>
       </div>
     </div>
-    <button class="btn btn-primary btn-sm" id="btnNuevaCredencial">
+    <button class="btn btn-primary btn-sm hidden" id="btnNuevaCredencial">
       + Nueva
     </button>
   </header>
 
-  <!-- Barra de búsqueda -->
-  <div class="search-bar">
-    <span class="search-icon">🔍</span>
-    <input
-      type="text"
-      id="searchInput"
-      class="search-input"
-      placeholder="Buscar credenciales..."
-      autocomplete="off"
-    />
-  </div>
-
-  <!-- Lista de credenciales -->
-  <main class="vault-content">
-
-    <!-- Estado: vacío -->
-    <div class="empty-state hidden" id="emptyState">
-      <span class="empty-icon">🗄️</span>
-      <h3>Tu vault está vacío</h3>
-      <p>Agrega tu primera credencial para comenzar</p>
-      <button class="btn btn-primary" id="btnAgregarPrimero">
-        + Agregar credencial
+  <!-- Vista: Desbloquear vault -->
+  <div class="unlock-overlay" id="unlockOverlay">
+    <div class="unlock-card">
+      <span class="unlock-icon">🔒</span>
+      <h2>Vault Bloqueado</h2>
+      <p>Ingresa tu contraseña maestra para acceder</p>
+      <div class="input-group">
+        <input
+          type="password"
+          id="unlockInput"
+          class="input"
+          placeholder="Contraseña maestra"
+          autocomplete="off"
+        />
+        <button class="btn-icon" id="btnToggleUnlock">👁</button>
+      </div>
+      <p class="error-msg hidden" id="unlockError">Contraseña incorrecta</p>
+      <button class="btn btn-primary" id="btnDesbloquear">
+        Desbloquear Vault
       </button>
     </div>
+  </div>
 
-    <!-- Lista de credenciales -->
-    <ul class="credential-list" id="credentialList">
-      <!-- Se llena dinámicamente con JS -->
-    </ul>
+  <!-- Vista: Vault desbloqueado -->
+  <div class="vault-wrapper hidden" id="vaultWrapper">
 
-  </main>
+    <!-- Barra de búsqueda -->
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        id="searchInput"
+        class="search-input"
+        placeholder="Buscar credenciales..."
+        autocomplete="off"
+      />
+      <span class="credential-counter" id="credentialCounter"></span>
+    </div>
 
-  <!-- Modal: Agregar / Editar credencial -->
+    <!-- Contenido principal -->
+    <main class="vault-content">
+
+      <!-- Estado vacío -->
+      <div class="empty-state hidden" id="emptyState">
+        <span class="empty-icon">🗄️</span>
+        <h3>Tu vault está vacío</h3>
+        <p>Agrega tu primera credencial para comenzar</p>
+        <button class="btn btn-primary" id="btnAgregarPrimero">
+          + Agregar credencial
+        </button>
+      </div>
+
+      <!-- Lista de credenciales -->
+      <ul class="credential-list" id="credentialList"></ul>
+
+    </main>
+  </div>
+
+  <!-- Modal: Agregar / Editar -->
   <div class="modal-overlay hidden" id="modalOverlay">
     <div class="modal">
       <div class="modal-header">
@@ -63,25 +89,28 @@
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label">Sitio / Servicio</label>
-          <input type="text" id="inputSitio" class="input" placeholder="ej. Gmail, Netflix, GitHub"/>
+          <label class="form-label">Sitio / Servicio *</label>
+          <input type="text" id="inputSitio" class="input"
+            placeholder="ej. Gmail, Netflix, GitHub"/>
         </div>
         <div class="form-group">
           <label class="form-label">URL (opcional)</label>
-          <input type="url" id="inputUrl" class="input" placeholder="https://ejemplo.com"/>
+          <input type="url" id="inputUrl" class="input"
+            placeholder="https://ejemplo.com"/>
         </div>
         <div class="form-group">
-          <label class="form-label">Usuario / Email</label>
-          <input type="text" id="inputUsuario" class="input" placeholder="tu@email.com" autocomplete="off"/>
+          <label class="form-label">Usuario / Email *</label>
+          <input type="text" id="inputUsuario" class="input"
+            placeholder="tu@email.com" autocomplete="off"/>
         </div>
         <div class="form-group">
-          <label class="form-label">Contraseña</label>
+          <label class="form-label">Contraseña *</label>
           <div class="input-group">
-            <input type="password" id="inputPassword" class="input" placeholder="Contraseña" autocomplete="off"/>
-            <button class="btn-icon" id="btnTogglePass">👁</button>
+            <input type="password" id="inputPassword" class="input"
+              placeholder="Contraseña" autocomplete="off"/>
+            <button class="btn-icon" id="btnTogglePass" title="Mostrar/ocultar">👁</button>
             <button class="btn-icon" id="btnGenerarPass" title="Generar contraseña segura">⚡</button>
           </div>
-          <!-- Indicador de fortaleza -->
           <div class="strength-bar">
             <div class="strength-fill" id="strengthFill"></div>
           </div>
@@ -89,8 +118,10 @@
         </div>
         <div class="form-group">
           <label class="form-label">Notas (opcional)</label>
-          <textarea id="inputNotas" class="input textarea" placeholder="Notas adicionales..."></textarea>
+          <textarea id="inputNotas" class="input textarea"
+            placeholder="Notas adicionales..."></textarea>
         </div>
+        <p class="error-msg hidden" id="modalError"></p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>

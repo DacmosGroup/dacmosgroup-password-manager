@@ -1,23 +1,28 @@
 // ============================================
 // DacmosGroup Password Manager — Vault Logic
-// Conectado al motor de cifrado AES-256-GCM
+// E1.5: CRUD completo de credenciales cifradas
 // ============================================
 
 import { desbloquearVault, guardarVaultCifrado, cargarVaultDescifrado } from '../../crypto/engine.js';
 
 // ── Referencias al DOM ──
+const unlockOverlay      = document.getElementById('unlockOverlay');
+const vaultWrapper       = document.getElementById('vaultWrapper');
+const unlockInput        = document.getElementById('unlockInput');
+const unlockError        = document.getElementById('unlockError');
+const btnDesbloquear     = document.getElementById('btnDesbloquear');
 const credentialList     = document.getElementById('credentialList');
+const credentialCounter  = document.getElementById('credentialCounter');
 const emptyState         = document.getElementById('emptyState');
 const searchInput        = document.getElementById('searchInput');
 const modalOverlay       = document.getElementById('modalOverlay');
 const modalTitle         = document.getElementById('modalTitle');
+const modalError         = document.getElementById('modalError');
 const btnNuevaCredencial = document.getElementById('btnNuevaCredencial');
 const btnAgregarPrimero  = document.getElementById('btnAgregarPrimero');
 const btnCerrarModal     = document.getElementById('btnCerrarModal');
 const btnCancelar        = document.getElementById('btnCancelar');
 const btnGuardar         = document.getElementById('btnGuardar');
-const btnTogglePass      = document.getElementById('btnTogglePass');
-const btnGenerarPass     = document.getElementById('btnGenerarPass');
 const strengthFill       = document.getElementById('strengthFill');
 const strengthLabel      = document.getElementById('strengthLabel');
 
@@ -28,47 +33,83 @@ let claveSesion        = null; // Clave AES en memoria — nunca va a storage
 
 // ── Inicialización ──
 async function inicializar() {
-  // Verificar sesión activa
   const { sesionActiva } = await new Promise((resolve) => {
     chrome.storage.local.get(['sesionActiva'], resolve);
   });
 
-  if (!sesionActiva) {
-    // Sin sesión activa — redirigir al popup
-    alert('Sesión expirada. Por favor desbloquea el vault.');
-    window.close();
-    return;
-  }
+  // Si hay sesión activa, intentar desbloquear automáticamente
+  // pidiendo la contraseña con la pantalla elegante del vault
+  unlockInput.focus();
 
-  // Pedir password para obtener clave en memoria
-  // DECISIÓN DE SEGURIDAD: La clave AES nunca se guarda en storage.
-  // Vive solo en memoria RAM durante la sesión activa.
-  const password = prompt('Ingresa tu contraseña maestra para acceder al vault:');
-  if (!password) {
-    window.close();
-    return;
-  }
-
-  claveSesion = await desbloquearVault(password);
-
-  if (!claveSesion) {
-    alert('Contraseña incorrecta');
-    window.close();
-    return;
-  }
-
-  // Cargar credenciales descifradas
-  credenciales = await cargarVaultDescifrado(claveSesion);
-  renderizarLista(credenciales);
-
-  // Abrir modal si viene con ?action=new
+  // Abrir modal si viene con ?action=new (después de desbloquear)
   const params = new URLSearchParams(window.location.search);
-  if (params.get('action') === 'new') abrirModal();
+  if (params.get('action') === 'new') {
+    // Se abrirá el modal después del desbloqueo
+    window._abrirModalAlDesbloquear = true;
+  }
+}
+
+// ── Desbloquear vault ──
+async function desbloquear() {
+  const password = unlockInput.value;
+
+  if (!password) {
+    mostrarErrorUnlock('Ingresa tu contraseña maestra');
+    return;
+  }
+
+  btnDesbloquear.textContent = 'Verificando...';
+  btnDesbloquear.disabled    = true;
+  unlockError.classList.add('hidden');
+
+  try {
+    claveSesion = await desbloquearVault(password);
+
+    if (!claveSesion) {
+      mostrarErrorUnlock('Contraseña incorrecta');
+      unlockInput.value = '';
+      unlockInput.focus();
+      return;
+    }
+
+    // Cargar credenciales descifradas
+    credenciales = await cargarVaultDescifrado(claveSesion);
+
+    // Mostrar vault
+    unlockOverlay.classList.add('hidden');
+    vaultWrapper.classList.remove('hidden');
+    btnNuevaCredencial.classList.remove('hidden');
+
+    renderizarLista(credenciales);
+
+    // Abrir modal si viene con ?action=new
+    if (window._abrirModalAlDesbloquear) {
+      abrirModal();
+      window._abrirModalAlDesbloquear = false;
+    }
+
+  } catch (error) {
+    mostrarErrorUnlock('Error al desbloquear — intenta de nuevo');
+  } finally {
+    btnDesbloquear.textContent = 'Desbloquear Vault';
+    btnDesbloquear.disabled    = false;
+  }
+}
+
+function mostrarErrorUnlock(mensaje) {
+  unlockError.textContent = mensaje;
+  unlockError.classList.remove('hidden');
 }
 
 // ── Renderizar lista ──
 function renderizarLista(lista) {
   credentialList.innerHTML = '';
+
+  // Actualizar contador
+  const total = credenciales.length;
+  credentialCounter.textContent = total > 0
+    ? `${lista.length} de ${total} credencial${total !== 1 ? 'es' : ''}`
+    : '';
 
   if (lista.length === 0) {
     emptyState.classList.remove('hidden');
@@ -86,11 +127,17 @@ function crearItemCredencial(cred) {
   li.className  = 'credential-item';
   li.dataset.id = cred.id;
 
+  // Fecha de modificación formateada
+  const fecha = new Date(cred.modificado).toLocaleDateString('es', {
+    day: '2-digit', month: 'short', year: 'numeric'
+  });
+
   li.innerHTML = `
     <div class="credential-avatar">${obtenerIcono(cred.sitio)}</div>
     <div class="credential-info">
-      <div class="credential-site">${cred.sitio}</div>
-      <div class="credential-user">${cred.usuario}</div>
+      <div class="credential-site">${escapeHtml(cred.sitio)}</div>
+      <div class="credential-user">${escapeHtml(cred.usuario)}</div>
+      <div class="credential-date">Modificado: ${fecha}</div>
     </div>
     <div class="credential-actions">
       <button class="btn-icon btn-copiar"   data-id="${cred.id}" title="Copiar contraseña">📋</button>
@@ -115,11 +162,22 @@ function obtenerIcono(sitio) {
   if (n.includes('netflix'))  return '🔴';
   if (n.includes('amazon'))   return '📦';
   if (n.includes('banco') || n.includes('bank')) return '🏦';
+  if (n.includes('linkedin')) return '💼';
+  if (n.includes('microsoft') || n.includes('outlook')) return '🪟';
+  if (n.includes('apple'))    return '🍎';
   return '🔐';
+}
+
+// Prevenir XSS al mostrar datos del usuario en el DOM
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 // ── CRUD ──
 
+// COPIAR contraseña al portapapeles
 async function copiarPassword(id) {
   const cred = credenciales.find(c => c.id === id);
   if (!cred) return;
@@ -133,16 +191,27 @@ async function copiarPassword(id) {
     setTimeout(() => navigator.clipboard.writeText(''), segundos * 1000);
   }
 
+  // Feedback visual
   const btn = document.querySelector(`.btn-copiar[data-id="${id}"]`);
   if (btn) {
+    const textoOriginal = btn.textContent;
     btn.textContent = '✅';
-    setTimeout(() => btn.textContent = '📋', 2000);
+    btn.title = 'Copiado!';
+    setTimeout(() => {
+      btn.textContent = textoOriginal;
+      btn.title = 'Copiar contraseña';
+    }, 2000);
   }
 }
 
+// ELIMINAR credencial
 async function eliminarCredencial(id) {
-  if (!confirm('¿Eliminar esta credencial?')) return;
+  const cred = credenciales.find(c => c.id === id);
+  if (!confirm(`¿Eliminar credencial de "${cred?.sitio}"?`)) return;
+
   credenciales = credenciales.filter(c => c.id !== id);
+
+  // Cifrar y guardar vault actualizado
   await guardarVaultCifrado(credenciales, claveSesion);
   renderizarLista(credenciales);
 }
@@ -151,7 +220,8 @@ async function eliminarCredencial(id) {
 
 function abrirModal() {
   credencialEditando = null;
-  modalTitle.textContent = 'Nueva Credencial';
+  modalTitle.textContent = '+ Nueva Credencial';
+  modalError.classList.add('hidden');
   limpiarFormulario();
   modalOverlay.classList.remove('hidden');
   document.getElementById('inputSitio').focus();
@@ -162,12 +232,15 @@ function abrirModalEdicion(id) {
   if (!cred) return;
 
   credencialEditando = id;
-  modalTitle.textContent = 'Editar Credencial';
+  modalTitle.textContent = `✏️ Editar — ${cred.sitio}`;
+  modalError.classList.add('hidden');
+
   document.getElementById('inputSitio').value    = cred.sitio    || '';
   document.getElementById('inputUrl').value      = cred.url      || '';
   document.getElementById('inputUsuario').value  = cred.usuario  || '';
   document.getElementById('inputPassword').value = cred.password || '';
   document.getElementById('inputNotas').value    = cred.notas    || '';
+
   evaluarFortaleza(cred.password || '');
   modalOverlay.classList.remove('hidden');
 }
@@ -175,7 +248,7 @@ function abrirModalEdicion(id) {
 function limpiarFormulario() {
   ['inputSitio','inputUrl','inputUsuario','inputPassword','inputNotas']
     .forEach(id => document.getElementById(id).value = '');
-  strengthFill.style.width = '0%';
+  strengthFill.style.width  = '0%';
   strengthLabel.textContent = '';
 }
 
@@ -185,47 +258,62 @@ function cerrarModal() {
   limpiarFormulario();
 }
 
-// ── Guardar credencial cifrada ──
+// GUARDAR credencial (crear o actualizar)
 async function guardarCredencial() {
   const sitio    = document.getElementById('inputSitio').value.trim();
+  const url      = document.getElementById('inputUrl').value.trim();
   const usuario  = document.getElementById('inputUsuario').value.trim();
   const password = document.getElementById('inputPassword').value;
+  const notas    = document.getElementById('inputNotas').value.trim();
 
-  if (!sitio || !usuario || !password) {
-    alert('Sitio, usuario y contraseña son obligatorios');
-    return;
-  }
+  // Validación
+  modalError.classList.add('hidden');
+  if (!sitio)    { mostrarErrorModal('El nombre del sitio es obligatorio'); return; }
+  if (!usuario)  { mostrarErrorModal('El usuario o email es obligatorio');  return; }
+  if (!password) { mostrarErrorModal('La contraseña es obligatoria');       return; }
+
+  const ahora = new Date().toISOString();
 
   if (credencialEditando) {
+    // ACTUALIZAR existente
     const idx = credenciales.findIndex(c => c.id === credencialEditando);
     if (idx !== -1) {
       credenciales[idx] = {
         ...credenciales[idx],
-        sitio,
-        url:       document.getElementById('inputUrl').value.trim(),
-        usuario,
-        password,
-        notas:     document.getElementById('inputNotas').value.trim(),
-        modificado: new Date().toISOString(),
+        sitio, url, usuario, password, notas,
+        modificado: ahora,
       };
     }
   } else {
+    // CREAR nueva
     credenciales.push({
       id:         crypto.randomUUID(),
-      sitio,
-      url:        document.getElementById('inputUrl').value.trim(),
-      usuario,
-      password,
-      notas:      document.getElementById('inputNotas').value.trim(),
-      creado:     new Date().toISOString(),
-      modificado: new Date().toISOString(),
+      sitio, url, usuario, password, notas,
+      creado:     ahora,
+      modificado: ahora,
     });
   }
 
-  // Cifrar y guardar con AES-256-GCM
-  await guardarVaultCifrado(credenciales, claveSesion);
-  cerrarModal();
-  renderizarLista(credenciales);
+  // Deshabilitar botón durante el cifrado
+  btnGuardar.textContent = 'Guardando...';
+  btnGuardar.disabled    = true;
+
+  try {
+    // Cifrar y guardar con AES-256-GCM
+    await guardarVaultCifrado(credenciales, claveSesion);
+    cerrarModal();
+    renderizarLista(credenciales);
+  } catch (error) {
+    mostrarErrorModal('Error al guardar — intenta de nuevo');
+  } finally {
+    btnGuardar.textContent = 'Guardar';
+    btnGuardar.disabled    = false;
+  }
+}
+
+function mostrarErrorModal(mensaje) {
+  modalError.textContent = mensaje;
+  modalError.classList.remove('hidden');
 }
 
 // ── Evaluador de fortaleza ──
@@ -254,6 +342,17 @@ function evaluarFortaleza(password) {
 }
 
 // ── Event Listeners ──
+
+// Desbloqueo
+btnDesbloquear.addEventListener('click', desbloquear);
+unlockInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') desbloquear();
+});
+document.getElementById('btnToggleUnlock').addEventListener('click', () => {
+  unlockInput.type = unlockInput.type === 'password' ? 'text' : 'password';
+});
+
+// Modal
 btnNuevaCredencial.addEventListener('click', abrirModal);
 btnAgregarPrimero.addEventListener('click',  abrirModal);
 btnCerrarModal.addEventListener('click',     cerrarModal);
@@ -264,29 +363,42 @@ modalOverlay.addEventListener('click', (e) => {
   if (e.target === modalOverlay) cerrarModal();
 });
 
-btnTogglePass.addEventListener('click', () => {
+// Cerrar modal con Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+    cerrarModal();
+  }
+});
+
+// Mostrar/ocultar contraseña
+document.getElementById('btnTogglePass').addEventListener('click', () => {
   const input = document.getElementById('inputPassword');
   input.type  = input.type === 'password' ? 'text' : 'password';
 });
 
-btnGenerarPass.addEventListener('click', () => {
+// Generar contraseña segura
+document.getElementById('btnGenerarPass').addEventListener('click', () => {
   const chars    = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
   const array    = new Uint8Array(16);
   crypto.getRandomValues(array);
   const password = Array.from(array).map(b => chars[b % chars.length]).join('');
   document.getElementById('inputPassword').value = password;
+  document.getElementById('inputPassword').type  = 'text';
   evaluarFortaleza(password);
 });
 
+// Evaluar fortaleza al escribir
 document.getElementById('inputPassword').addEventListener('input', (e) => {
   evaluarFortaleza(e.target.value);
 });
 
+// Búsqueda en tiempo real
 searchInput.addEventListener('input', (e) => {
-  const termino  = e.target.value.toLowerCase();
+  const termino   = e.target.value.toLowerCase();
   const filtradas = credenciales.filter(c =>
-    c.sitio.toLowerCase().includes(termino) ||
-    c.usuario.toLowerCase().includes(termino)
+    c.sitio.toLowerCase().includes(termino)   ||
+    c.usuario.toLowerCase().includes(termino) ||
+    (c.url && c.url.toLowerCase().includes(termino))
   );
   renderizarLista(filtradas);
 });
