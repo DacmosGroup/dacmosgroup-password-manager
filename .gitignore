@@ -1,0 +1,24 @@
+# Dependencias (si se agregan en fases futuras)
+node_modules/
+npm-debug.log*
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Variables de entorno (NUNCA en el repo)
+.env
+.env.local
+
+# Builds empaquetados
+*.zip
+*.crx
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# Archivos de prueba con datos reales
+*.vault.json
+test-credentials.*
