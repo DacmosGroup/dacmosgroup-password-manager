@@ -22,11 +22,12 @@
   <main class="settings-content">
 
     <!-- Sección: Contraseña Maestra -->
+    <!-- Sección: Contraseña Maestra -->
     <section class="settings-section">
       <h2 class="section-title">🔑 Contraseña Maestra</h2>
 
-      <!-- Configurar por primera vez -->
-      <div id="setupMaster">
+      <!-- Panel: Configurar por primera vez -->
+      <div id="panelConfigurar">
         <p class="section-desc">
           La contraseña maestra protege todo tu vault con cifrado AES-256-GCM.
           <strong>No puede recuperarse si la olvidas.</strong>
@@ -57,6 +58,48 @@
           Guardar contraseña maestra
         </button>
       </div>
+
+      <!-- Panel: Cambiar contraseña existente -->
+      <div id="panelCambiar" class="hidden">
+        <div class="vault-status">
+          <span class="status-icon">✅</span>
+          <span class="status-text">Vault protegido con AES-256-GCM</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña actual</label>
+          <div class="input-group">
+            <input type="password" id="inputActualMaster" class="input"
+              placeholder="Contraseña actual" autocomplete="off"/>
+            <button class="btn-icon" id="btnToggleActual">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nueva contraseña</label>
+          <div class="input-group">
+            <input type="password" id="inputNuevaCambio" class="input"
+              placeholder="Mínimo 12 caracteres" autocomplete="off"/>
+            <button class="btn-icon" id="btnToggleNuevaCambio">👁</button>
+          </div>
+          <div class="strength-bar">
+            <div class="strength-fill" id="strengthFillCambio"></div>
+          </div>
+          <span class="strength-label" id="strengthLabelCambio"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar nueva contraseña</label>
+          <div class="input-group">
+            <input type="password" id="inputConfirmarCambio" class="input"
+              placeholder="Repite la nueva contraseña" autocomplete="off"/>
+            <button class="btn-icon" id="btnToggleConfirmarCambio">👁</button>
+          </div>
+        </div>
+        <p class="error-msg hidden" id="errorCambio"></p>
+        <p class="success-msg hidden" id="successCambio"></p>
+        <button class="btn btn-primary" id="btnCambiarMaster">
+          Cambiar contraseña maestra
+        </button>
+      </div>
+
     </section>
 
     <!-- Sección: Seguridad -->

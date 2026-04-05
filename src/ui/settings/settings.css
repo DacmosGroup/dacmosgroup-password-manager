@@ -311,4 +311,24 @@ body {
   color: var(--color-text-muted);
 }
 
+/* ── Estado del vault ── */
+.vault-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.status-icon { font-size: 18px; }
+
+.status-text {
+  font-size: 13px;
+  color: var(--color-success);
+  font-weight: 600;
+}
+
 .hidden { display: none !important; }

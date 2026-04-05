@@ -238,6 +238,7 @@ export {
   desbloquearVault,
   guardarVaultCifrado,
   cargarVaultDescifrado,
+  cambiarMasterPassword,
   generarSal,
   bufferABase64,
   base64ABuffer,
