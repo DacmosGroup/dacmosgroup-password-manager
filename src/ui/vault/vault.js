@@ -188,7 +188,9 @@ async function copiarPassword(id) {
   const { config } = await new Promise(r => chrome.storage.local.get(['config'], r));
   const segundos = config?.clipboard ?? 30;
   if (segundos > 0) {
-    setTimeout(() => navigator.clipboard.writeText(''), segundos * 1000);
+    setTimeout(async () => {
+  try { await navigator.clipboard.writeText(''); } catch (_) {}
+}, segundos * 1000);
   }
 
   // Feedback visual

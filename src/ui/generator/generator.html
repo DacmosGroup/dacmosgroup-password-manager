@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador — DacmosGroup Password Manager</title>
+  <link rel="stylesheet" href="generator.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-icon">🔐</span>
+      <div class="logo-text">
+        <span class="logo-title">DacmosGroup</span>
+        <span class="logo-subtitle">Generador de Contraseñas</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="generator-content">
+
+    <!-- Contraseña generada -->
+    <section class="password-display-section">
+      <div class="password-display" id="passwordDisplay">
+        <span class="password-text" id="passwordText">Haz clic en Generar</span>
+        <div class="password-actions">
+          <button class="btn-icon" id="btnCopiar" title="Copiar">📋</button>
+          <button class="btn-icon" id="btnRefresh" title="Generar nueva">🔄</button>
+        </div>
+      </div>
+      <!-- Indicador de fortaleza -->
+      <div class="strength-bar">
+        <div class="strength-fill" id="strengthFill"></div>
+      </div>
+      <div class="strength-info">
+        <span class="strength-label" id="strengthLabel"></span>
+        <span class="entropy-label" id="entropyLabel"></span>
+      </div>
+    </section>
+
+    <!-- Opciones del generador -->
+    <section class="options-section">
+      <h3 class="options-title">⚙️ Opciones</h3>
+
+      <!-- Longitud -->
+      <div class="option-row">
+        <div class="option-info">
+          <span class="option-name">Longitud</span>
+          <span class="option-value" id="longitudValue">16</span>
+        </div>
+        <input
+          type="range"
+          id="longitudSlider"
+          class="slider"
+          min="8"
+          max="64"
+          value="16"
+        />
+        <div class="slider-labels">
+          <span>8</span>
+          <span>64</span>
+        </div>
+      </div>
+
+      <!-- Toggles de caracteres -->
+      <div class="option-row">
+        <span class="option-name">Mayúsculas (A-Z)</span>
+        <label class="toggle">
+          <input type="checkbox" id="chkMayusculas" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="option-row">
+        <span class="option-name">Minúsculas (a-z)</span>
+        <label class="toggle">
+          <input type="checkbox" id="chkMinusculas" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="option-row">
+        <span class="option-name">Números (0-9)</span>
+        <label class="toggle">
+          <input type="checkbox" id="chkNumeros" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="option-row">
+        <span class="option-name">Símbolos (!@#$...)</span>
+        <label class="toggle">
+          <input type="checkbox" id="chkSimbolos" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="option-row">
+        <span class="option-name">Excluir caracteres ambiguos</span>
+        <label class="toggle">
+          <input type="checkbox" id="chkExcluirAmbiguos"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <p class="option-hint">Excluye: 0, O, l, 1, I (fáciles de confundir)</p>
+
+      <button class="btn btn-primary" id="btnGenerar">
+        ⚡ Generar Contraseña
+      </button>
+    </section>
+
+    <!-- Historial -->
+    <section class="history-section">
+      <div class="history-header">
+        <h3 class="options-title">🕐 Historial reciente</h3>
+        <button class="btn-text" id="btnLimpiarHistorial">Limpiar</button>
+      </div>
+      <ul class="history-list" id="historyList">
+        <li class="history-empty">Aún no has generado contraseñas</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>DacmosGroup.com · Generador criptográfico · Web Crypto API</span>
+  </footer>
+
+  <script src="generator.js" type="module"></script>
+</body>
+</html>

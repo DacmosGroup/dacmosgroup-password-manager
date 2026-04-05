@@ -138,6 +138,9 @@ document.getElementById('navLock').addEventListener('click', () => {
   actualizarEstado(false);
 });
 
+document.getElementById('navGenerator').addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/generator/generator.html') });
+});
 document.getElementById('navSettings').addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/settings/settings.html') });
 });
