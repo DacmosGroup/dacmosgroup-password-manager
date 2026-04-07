@@ -377,6 +377,28 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
     sendResponse({ tieneLogin, dominio: window.location.hostname });
   }
 
+  // Vault bloqueado — limpiar íconos y mostrar aviso
+  if (mensaje.tipo === 'VAULT_BLOQUEADO') {
+    iconosInyectados.forEach(icono => icono.remove());
+    iconosInyectados = [];
+    eliminarSelectorExistente();
+
+    // Mostrar aviso discreto
+    const aviso = document.createElement('div');
+    aviso.style.cssText = `
+      position: fixed; bottom: 20px; right: 20px;
+      background: #16213e; border: 1px solid #e74c3c;
+      border-radius: 8px; padding: 12px 16px;
+      color: #e8e8e8; font-size: 13px; z-index: 2147483647;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    `;
+    aviso.textContent = '🔒 DacmosGroup — Vault bloqueado por inactividad';
+    document.body.appendChild(aviso);
+    setTimeout(() => aviso.remove(), 4000);
+    sendResponse({ ok: true });
+  } 
+  
   if (mensaje.tipo === 'AUTOCOMPLETAR') {
     llenarCampos(mensaje.credencial);
     sendResponse({ ok: true });
@@ -401,6 +423,19 @@ const observer = new MutationObserver((mutations) => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+// ── Notificar actividad del usuario al service worker ──
+// Resetea el timer de inactividad en cada interacción
+function notificarActividad() {
+  try {
+    chrome.runtime.sendMessage({ tipo: 'ACTIVIDAD_USUARIO' });
+  } catch (_) {}
+}
+
+// Escuchar eventos de actividad del usuario
+['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evento => {
+  document.addEventListener(evento, notificarActividad, { passive: true });
+});
 
 // ── Iniciar detección ──
 if (document.readyState === 'loading') {
