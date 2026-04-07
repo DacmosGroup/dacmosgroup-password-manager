@@ -271,6 +271,106 @@ async function cambiarMasterPassword(passwordActual, passwordNueva) {
   return claveNueva;
 }
 
+// ── EXPORTAR VAULT COMO BACKUP CIFRADO ──
+// DECISIÓN DE SEGURIDAD: El backup incluye el vault ya cifrado
+// con AES-256-GCM. Las sales y el token de verificación viajan
+// junto al backup — sin ellos no se puede descifrar.
+// El archivo resultante es inútil sin la contraseña maestra.
+async function exportarVaultBackup(passwordMaestra) {
+  // Verificar contraseña antes de exportar
+  const clave = await desbloquearVault(passwordMaestra);
+  if (!clave) throw new Error('PASSWORD_INCORRECTA');
+
+  // Obtener todos los datos del vault
+  const datos = await new Promise((resolve) => {
+    chrome.storage.local.get(
+      ['sal', 'sal2', 'tokenVerificacion', 'vaultCifrado'],
+      resolve
+    );
+  });
+
+  // Construir el objeto de backup
+  const backup = {
+    version:           '1.0',
+    app:               'DacmosGroup Password Manager',
+    fecha:             new Date().toISOString(),
+    cifrado:           'AES-256-GCM',
+    kdf:               'PBKDF2-SHA256-600000',
+    sal:               datos.sal,
+    sal2:              datos.sal2,
+    tokenVerificacion: datos.tokenVerificacion,
+    vaultCifrado:      datos.vaultCifrado,
+  };
+
+  return backup;
+}
+
+// ── IMPORTAR VAULT DESDE BACKUP ──
+// DECISIÓN DE SEGURIDAD: Verificamos la contraseña maestra contra
+// el backup ANTES de importar. Si la verificación falla, el backup
+// es inválido o la contraseña es incorrecta.
+async function importarVaultBackup(backup, passwordMaestra) {
+  // Validar estructura del backup
+  if (!backup.sal || !backup.sal2 || !backup.tokenVerificacion || !backup.vaultCifrado) {
+    throw new Error('BACKUP_INVALIDO');
+  }
+
+  if (backup.app !== 'DacmosGroup Password Manager') {
+    throw new Error('BACKUP_INVALIDO');
+  }
+
+  // Verificar contraseña contra el backup
+  try {
+    const sal2   = new Uint8Array(base64ABuffer(backup.sal2));
+    const claveVerif = await derivarClave(passwordMaestra, sal2);
+    const token  = await descifrar(backup.tokenVerificacion, claveVerif);
+
+    if (token.verificacion !== 'DACMOSGROUP_VAULT_OK') {
+      throw new Error('PASSWORD_INCORRECTA');
+    }
+  } catch (error) {
+    if (error.message === 'PASSWORD_INCORRECTA') throw error;
+    throw new Error('PASSWORD_INCORRECTA');
+  }
+
+  // Descifrar vault del backup
+  const sal      = new Uint8Array(base64ABuffer(backup.sal));
+  const claveNew = await derivarClave(passwordMaestra, sal);
+  const vaultBackup = await descifrar(backup.vaultCifrado, claveNew);
+
+  // Obtener credenciales actuales para fusionar
+  const datosActuales = await new Promise((resolve) => {
+    chrome.storage.local.get(['sal', 'vaultCifrado'], resolve);
+  });
+
+  let credencialesFinales = vaultBackup.credenciales || [];
+
+  // Fusionar con vault actual si existe
+  if (datosActuales.vaultCifrado && datosActuales.sal) {
+    try {
+      const salActual   = new Uint8Array(base64ABuffer(datosActuales.sal));
+      const claveActual = await derivarClave(passwordMaestra, salActual);
+      const vaultActual = await descifrar(datosActuales.vaultCifrado, claveActual);
+      const credActuales = vaultActual.credenciales || [];
+
+      // Fusionar — evitar duplicados por ID
+      const idsBackup = new Set(credencialesFinales.map(c => c.id));
+      const nuevas    = credActuales.filter(c => !idsBackup.has(c.id));
+      credencialesFinales = [...credencialesFinales, ...nuevas];
+    } catch (_) {
+      // Si no se puede descifrar el vault actual, usar solo el backup
+    }
+  }
+
+  // Guardar vault importado con las credenciales fusionadas
+  const claveActualParaGuardar = await desbloquearVault(passwordMaestra);
+  if (claveActualParaGuardar) {
+    await guardarVaultCifrado(credencialesFinales, claveActualParaGuardar);
+  }
+
+  return credencialesFinales.length;
+}
+
 // ── EXPORTAR FUNCIONES PÚBLICAS ──
 export {
   configurarVault,
@@ -278,7 +378,10 @@ export {
   guardarVaultCifrado,
   cargarVaultDescifrado,
   cambiarMasterPassword,
+  exportarVaultBackup,
+  importarVaultBackup,
   generarSal,
   bufferABase64,
   base64ABuffer,
 };
+

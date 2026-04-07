@@ -170,16 +170,74 @@
       </div>
     </section>
 
-    <!-- Sección: Datos -->
-    <section class="settings-section danger-section">
-      <h2 class="section-title">⚠️ Zona de Peligro</h2>
-      <div class="danger-row">
+    
+<!-- Sección: Backup -->
+    <section class="settings-section">
+      <h2 class="section-title">💾 Backup del Vault</h2>
+
+      <!-- Exportar -->
+      <div class="backup-row">
         <div class="setting-info">
-          <span class="setting-name">Exportar vault</span>
-          <span class="setting-desc">Descarga un backup cifrado de tus credenciales</span>
+          <span class="setting-name">Exportar vault cifrado</span>
+          <span class="setting-desc">Descarga un backup AES-256-GCM de tus credenciales</span>
         </div>
         <button class="btn btn-secondary" id="btnExportar">Exportar</button>
       </div>
+
+      <!-- Modal exportar: pedir contraseña -->
+      <div class="backup-form hidden" id="formExportar">
+        <div class="form-group">
+          <label class="form-label">Confirma tu contraseña maestra</label>
+          <div class="input-group">
+            <input type="password" id="inputExportarPass" class="input"
+              placeholder="Contraseña maestra" autocomplete="off"/>
+            <button class="btn-icon" id="btnToggleExportarPass">👁</button>
+          </div>
+        </div>
+        <p class="error-msg hidden" id="errorExportar"></p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-secondary" id="btnCancelarExportar">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmarExportar">Descargar backup</button>
+        </div>
+      </div>
+
+      <!-- Importar -->
+      <div class="backup-row">
+        <div class="setting-info">
+          <span class="setting-name">Importar vault</span>
+          <span class="setting-desc">Restaura credenciales desde un backup cifrado</span>
+        </div>
+        <button class="btn btn-secondary" id="btnImportar">Importar</button>
+      </div>
+
+      <!-- Form importar -->
+      <div class="backup-form hidden" id="formImportar">
+        <div class="form-group">
+          <label class="form-label">Archivo de backup (.json)</label>
+          <input type="file" id="inputArchivoBackup" class="input"
+            accept=".json" style="padding: 8px;"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña maestra del backup</label>
+          <div class="input-group">
+            <input type="password" id="inputImportarPass" class="input"
+              placeholder="Contraseña maestra" autocomplete="off"/>
+            <button class="btn-icon" id="btnToggleImportarPass">👁</button>
+          </div>
+        </div>
+        <p class="error-msg hidden" id="errorImportar"></p>
+        <p class="success-msg hidden" id="successImportar"></p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-secondary" id="btnCancelarImportar">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmarImportar">Importar credenciales</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Sección: Zona de Peligro -->
+    <section class="settings-section danger-section">
+      <h2 class="section-title">⚠️ Zona de Peligro</h2>
       <div class="danger-row">
         <div class="setting-info">
           <span class="setting-name">Borrar todo</span>

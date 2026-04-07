@@ -331,4 +331,27 @@ body {
   font-weight: 600;
 }
 
+/* ── Backup ── */
+.backup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.backup-row:last-of-type { border-bottom: none; }
+
+.backup-form {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
 .hidden { display: none !important; }
