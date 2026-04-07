@@ -22,37 +22,43 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // ── Gestión del timer de inactividad ──
+// DECISIÓN DE SEGURIDAD: Usamos chrome.alarms en lugar de setTimeout
+// porque los service workers en Manifest V3 se "duermen" después de
+// 30 segundos — setTimeout se cancela. chrome.alarms persiste aunque
+// el service worker esté dormido.
 
 function iniciarTimerInactividad() {
-  detenerTimerInactividad();
-
   chrome.storage.local.get(['config'], (result) => {
     const minutos = result.config?.autoLock ?? 5;
     if (minutos === 0) return; // 0 = nunca bloquear
 
-    tiempoBloqueo = minutos * 60 * 1000;
-
-    timerInactividad = setTimeout(async () => {
-      await bloquearVault();
-      console.log('DacmosGroup: vault bloqueado por inactividad');
-    }, tiempoBloqueo);
+    // Crear alarma que sobrevive al sleep del service worker
+    chrome.alarms.create('autoLock', { delayInMinutes: minutos });
   });
 }
 
 function detenerTimerInactividad() {
-  if (timerInactividad) {
-    clearTimeout(timerInactividad);
-    timerInactividad = null;
-  }
+  chrome.alarms.clear('autoLock');
 }
 
 function resetearTimerInactividad() {
   chrome.storage.local.get(['sesionActiva'], (result) => {
     if (result.sesionActiva) {
+      // Reiniciar la alarma
+      detenerTimerInactividad();
       iniciarTimerInactividad();
     }
   });
 }
+
+// ── Escuchar alarmas ──
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'autoLock') {
+    bloquearVault();
+    console.log('DacmosGroup: vault bloqueado por inactividad');
+  }
+});
+
 
 // ── Bloquear vault ──
 async function bloquearVault() {
