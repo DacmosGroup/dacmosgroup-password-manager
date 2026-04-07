@@ -209,69 +209,114 @@ function solicitarAutocompletado() {
 function mostrarSelectorCredenciales(credenciales) {
   eliminarSelectorExistente();
 
-  const selector = document.createElement('div');
-  selector.id        = 'dacmos-credential-selector';
-  selector.innerHTML = `
+  const overlay = document.createElement('div');
+  overlay.id = 'dacmos-credential-selector';
+
+  Object.assign(overlay.style, {
+    position:   'fixed',
+    inset:      '0',
+    background: 'rgba(0,0,0,0.5)',
+    zIndex:     '2147483647',
+    display:    'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
+  });
+
+  overlay.innerHTML = `
     <div style="
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
       background: #16213e;
       border: 1px solid #2a3a5c;
-      border-radius: 8px;
-      padding: 16px;
-      z-index: 2147483647;
-      min-width: 280px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      border-radius: 10px;
+      padding: 20px;
+      min-width: 300px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     ">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <span style="color:#00d4ff; font-weight:700; font-size:14px;">🔐 DacmosGroup — Autocompletar</span>
-        <button id="dacmos-cerrar-selector" style="background:transparent; border:none; color:#8892a4; cursor:pointer; font-size:18px;">✕</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #2a3a5c;">
+        <span style="color:#00d4ff; font-weight:700; font-size:15px;">🔐 DacmosGroup</span>
+        <button id="dacmos-cerrar" style="background:transparent; border:none; color:#8892a4; cursor:pointer; font-size:20px; padding:0 4px;">✕</button>
       </div>
-      <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+      <p style="color:#8892a4; font-size:12px; margin-bottom:12px;">
+        Selecciona una credencial para autocompletar
+      </p>
+      <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; max-height:240px; overflow-y:auto;">
         ${credenciales.map((c, i) => `
           <li>
-            <button
-              class="dacmos-cred-option"
-              data-index="${i}"
-              style="
-                width:100%;
-                background:#0f3460;
-                border:1px solid #2a3a5c;
-                border-radius:6px;
-                padding:10px 14px;
-                color:#e8e8e8;
-                cursor:pointer;
-                text-align:left;
-                display:flex;
-                flex-direction:column;
-                gap:2px;
-              "
-            >
+            <button class="dacmos-cred-btn" data-index="${i}" style="
+              width:100%; background:#0f3460;
+              border:1px solid #2a3a5c; border-radius:8px;
+              padding:12px 14px; color:#e8e8e8; cursor:pointer;
+              text-align:left; display:flex; flex-direction:column; gap:3px;
+              transition: border-color 0.2s;
+            ">
               <span style="font-weight:600; font-size:13px;">${c.sitio}</span>
               <span style="color:#8892a4; font-size:12px;">${c.usuario}</span>
+              ${c.url ? `<span style="color:#00d4ff; font-size:11px;">${c.url}</span>` : ''}
             </button>
           </li>
         `).join('')}
       </ul>
+      <p style="color:#8892a4; font-size:11px; margin-top:12px; text-align:center;">
+        Zero-Knowledge · AES-256-GCM
+      </p>
     </div>
   `;
 
-  document.body.appendChild(selector);
+  document.body.appendChild(overlay);
 
-  // Cerrar selector
-  document.getElementById('dacmos-cerrar-selector').addEventListener('click', eliminarSelectorExistente);
+  // Cerrar al hacer clic en overlay
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) eliminarSelectorExistente();
+  });
 
-  // Seleccionar credencial
-  selector.querySelectorAll('.dacmos-cred-option').forEach(btn => {
+  // Cerrar con botón X
+  document.getElementById('dacmos-cerrar').addEventListener('click', eliminarSelectorExistente);
+
+  // Cerrar con Escape
+  const cerrarConEsc = (e) => {
+    if (e.key === 'Escape') {
+      eliminarSelectorExistente();
+      document.removeEventListener('keydown', cerrarConEsc);
+    }
+  };
+  document.addEventListener('keydown', cerrarConEsc);
+
+  // Hover effect en botones
+  overlay.querySelectorAll('.dacmos-cred-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+      btn.style.borderColor = '#0066cc';
+      btn.style.background  = '#1a3a6e';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.borderColor = '#2a3a5c';
+      btn.style.background  = '#0f3460';
+    });
+
+    // Seleccionar credencial
     btn.addEventListener('click', () => {
       const idx  = parseInt(btn.dataset.index);
       const cred = credenciales[idx];
       llenarCampos(cred);
       eliminarSelectorExistente();
+
+      // Feedback visual en los campos
+      mostrarFeedbackAutocompletado();
     });
+  });
+}
+
+// ── Feedback visual al autocompletar ──
+function mostrarFeedbackAutocompletado() {
+  [camposDetectados.usuario, camposDetectados.password].forEach(campo => {
+    if (!campo) return;
+    const estiloOriginal = campo.style.outline;
+    campo.style.outline = '2px solid #2ecc71';
+    campo.style.transition = 'outline 0.3s';
+    setTimeout(() => {
+      campo.style.outline = estiloOriginal;
+    }, 2000);
   });
 }
 

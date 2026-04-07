@@ -106,6 +106,15 @@ document.getElementById('btnUnlock').addEventListener('click', async () => {
       errorMsg.classList.add('hidden');
       // Guardar sesión activa — la clave vive solo en memoria de la página
       chrome.storage.local.set({ sesionActiva: true });
+
+      // Cargar y enviar credenciales al service worker para sesión
+    const { cargarVaultDescifrado } = await import('../../crypto/engine.js');
+    const credenciales = await cargarVaultDescifrado(clave);
+    chrome.runtime.sendMessage({
+      tipo:         'VAULT_DESBLOQUEADO',
+      credenciales: credenciales,
+    });
+    
       mostrarVista(viewUnlocked);
       actualizarEstado(true);
       cargarConteoCredenciales();

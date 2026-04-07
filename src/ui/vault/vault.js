@@ -75,6 +75,13 @@ async function desbloquear() {
     // Cargar credenciales descifradas
     credenciales = await cargarVaultDescifrado(claveSesion);
 
+    // Enviar credenciales descifradas al service worker para sesión
+    // DECISIÓN DE SEGURIDAD: viajan en memoria, nunca en disco
+    chrome.runtime.sendMessage({
+      tipo:         'VAULT_DESBLOQUEADO',
+      credenciales: credenciales,
+    });
+    
     // Mostrar vault
     unlockOverlay.classList.add('hidden');
     vaultWrapper.classList.remove('hidden');
