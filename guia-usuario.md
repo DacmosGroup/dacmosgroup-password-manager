@@ -439,7 +439,7 @@ Las credenciales se almacenan en `chrome.storage.local`, que puede borrarse al r
 
 **Sitio web:** [dacmosgroup.co](https://dacmosgroup.co)
 
-**Email de soporte:** security@dacmosgroup.com
+**Email de soporte:** dacmosgroup@gmail.com
 
 **Repositorio:** [github.com/DacmosGroup/dacmosgroup-password-manager](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 
