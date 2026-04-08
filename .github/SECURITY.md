@@ -10,7 +10,7 @@
 
 Si encuentras una vulnerabilidad de seguridad, **NO abras un Issue público**.
 
-Envía un reporte privado a: **security@dacmosgroup.com**
+Envía un reporte privado a: **dacmosgroup@gmail.com**
 
 Incluye:
 - Descripción del problema
