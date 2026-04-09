@@ -1,15 +1,11 @@
 // ================================================
-// DacmosGroup Password Manager — Service Worker
+// Dacmos Password Manager — Service Worker
 // E1.9: Lock automático + badge de credenciales
 // ================================================
 
-// ── Estado del timer de inactividad ──
-let timerInactividad = null;
-let tiempoBloqueo    = 5 * 60 * 1000; // Default: 5 minutos en ms
-
 // ── Al instalar la extensión ──
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('DacmosGroup Password Manager instalado');
+  console.log('Dacmos Password Manager instalado');
   chrome.storage.local.get(['config'], (result) => {
     if (!result.config) {
       chrome.storage.local.set({
@@ -155,9 +151,10 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
     return true;
   }
 
-  // Vault desbloqueado — iniciar timer y guardar credenciales
+  // Vault desbloqueado — marcar sesión activa, iniciar timer y guardar credenciales
   if (mensaje.tipo === 'VAULT_DESBLOQUEADO') {
     guardarCredencialesSesion(mensaje.credenciales).then(() => {
+      chrome.storage.local.set({ sesionActiva: true });
       iniciarTimerInactividad();
       sendResponse({ ok: true });
     });
@@ -187,6 +184,7 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
     });
 
     sendResponse({ ok: true });
+    return true;
   }
 
   // Content script solicita credenciales para autocompletar
@@ -208,13 +206,10 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
   }
 });
 
-// ── Resetear timer cuando cambia de pestaña ──
-chrome.tabs.onActivated.addListener(() => {
-  resetearTimerInactividad();
-});
-
-// ── Limpiar badge cuando cambia de pestaña ──
+// ── Resetear timer y actualizar badge cuando cambia de pestaña ──
 chrome.tabs.onActivated.addListener((activeInfo) => {
+  resetearTimerInactividad();
+
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (!tab.url) return;
     try {

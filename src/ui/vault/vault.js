@@ -1,5 +1,5 @@
 // ============================================
-// DacmosGroup Password Manager — Vault Logic
+// Dacmos Password Manager — Vault Logic
 // E1.5: CRUD completo de credenciales cifradas
 // ============================================
 

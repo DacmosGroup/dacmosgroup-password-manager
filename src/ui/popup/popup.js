@@ -1,5 +1,5 @@
 // ============================================
-// DacmosGroup Password Manager — Popup Logic
+// Dacmos Password Manager — Popup Logic
 // Conectado al motor de cifrado AES-256-GCM
 // ============================================
 

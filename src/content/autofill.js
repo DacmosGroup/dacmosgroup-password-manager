@@ -1,5 +1,5 @@
 // ================================================
-// DacmosGroup Password Manager — Content Script
+// Dacmos Password Manager — Content Script
 // E1.7: Autodetección de campos de login
 // Se inyecta en todas las páginas web
 // ================================================
@@ -116,12 +116,13 @@ function esFormularioLogin(form, campoPassword) {
 
 // ── Inyectar ícono 🔐 junto al campo ──
 function inyectarIcono(campo, tipo) {
-  // Evitar duplicados
+  // Evitar duplicados — verificar tanto el dataset como el DOM (SPAs desmontan/remontan campos)
   if (campo.dataset.dacmosIcono) return;
+  const padre = campo.parentElement;
+  if (padre && padre.querySelector('.dacmos-autofill-icon')) return;
   campo.dataset.dacmosIcono = 'true';
 
   // Asegurar que el padre tenga posición relativa
-  const padre = campo.parentElement;
   if (!padre) return;
 
   const estiloActual = window.getComputedStyle(padre).position;
@@ -205,6 +206,17 @@ function solicitarAutocompletado() {
   }
 }
 
+// ── Escapar caracteres HTML para prevenir XSS ──
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Mostrar selector de credenciales (preview — E1.8 lo expande) ──
 function mostrarSelectorCredenciales(credenciales) {
   eliminarSelectorExistente();
@@ -251,9 +263,9 @@ function mostrarSelectorCredenciales(credenciales) {
               text-align:left; display:flex; flex-direction:column; gap:3px;
               transition: border-color 0.2s;
             ">
-              <span style="font-weight:600; font-size:13px;">${c.sitio}</span>
-              <span style="color:#8892a4; font-size:12px;">${c.usuario}</span>
-              ${c.url ? `<span style="color:#00d4ff; font-size:11px;">${c.url}</span>` : ''}
+              <span style="font-weight:600; font-size:13px;">${escapeHtml(c.sitio)}</span>
+              <span style="color:#8892a4; font-size:12px;">${escapeHtml(c.usuario)}</span>
+              ${c.url ? `<span style="color:#00d4ff; font-size:11px;">${escapeHtml(c.url)}</span>` : ''}
             </button>
           </li>
         `).join('')}
@@ -350,17 +362,23 @@ function mostrarMensajeSinCredenciales() {
 }
 
 // ── Llenar campos con credencial seleccionada ──
+// Se disparan focus/blur además de input/change para compatibilidad con
+// React/Vue (inputs controlados que requieren estos eventos para sincronizar estado).
 function llenarCampos(credencial) {
   if (camposDetectados.usuario && credencial.usuario) {
+    camposDetectados.usuario.dispatchEvent(new Event('focus', { bubbles: true }));
     camposDetectados.usuario.value = credencial.usuario;
     camposDetectados.usuario.dispatchEvent(new Event('input', { bubbles: true }));
     camposDetectados.usuario.dispatchEvent(new Event('change', { bubbles: true }));
+    camposDetectados.usuario.dispatchEvent(new Event('blur', { bubbles: true }));
   }
 
   if (camposDetectados.password && credencial.password) {
+    camposDetectados.password.dispatchEvent(new Event('focus', { bubbles: true }));
     camposDetectados.password.value = credencial.password;
     camposDetectados.password.dispatchEvent(new Event('input', { bubbles: true }));
     camposDetectados.password.dispatchEvent(new Event('change', { bubbles: true }));
+    camposDetectados.password.dispatchEvent(new Event('blur', { bubbles: true }));
   }
 }
 
