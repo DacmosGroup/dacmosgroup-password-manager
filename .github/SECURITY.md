@@ -1,4 +1,4 @@
-# Política de Seguridad — DacmosGroup Password Manager
+# Política de Seguridad — Dacmos Password Manager
 
 ## Versiones Soportadas
 

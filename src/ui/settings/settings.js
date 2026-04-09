@@ -1,5 +1,5 @@
 // ================================================
-// DacmosGroup Password Manager — Settings Logic
+// Dacmos Password Manager — Settings Logic
 // E1.10: Export/Import vault cifrado
 // ================================================
 

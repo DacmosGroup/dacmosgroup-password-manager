@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "DacmosGroup Password Manager",
+  "name": "Dacmos Password Manager",
   "version": "0.1.0",
   "description": "Gestor de contraseñas local-first con cifrado AES-256-GCM. Zero-Knowledge, Zero-Trust.",
 
@@ -8,7 +8,6 @@
     "storage",
     "activeTab",
     "scripting",
-    "sessions",
     "alarms"
   ],
 

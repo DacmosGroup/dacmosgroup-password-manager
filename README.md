@@ -1,4 +1,4 @@
-# 🔐 DacmosGroup Password Manager
+# 🔐 Dacmos Password Manager
 
 **Gestor de contraseñas local-first para Chrome — construido en público por [DacmosGroup.com](https://dacmosgroup.co)**
 

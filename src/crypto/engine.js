@@ -1,5 +1,5 @@
 // ============================================================
-// DacmosGroup Password Manager — Motor de Cifrado
+// Dacmos Password Manager — Motor de Cifrado
 // Estándar: AES-256-GCM + PBKDF2-SHA256 (OWASP 2024)
 // Motor: Web Crypto API nativa — sin librerías de terceros
 // ============================================================
@@ -29,9 +29,15 @@ function bufferAString(buffer) {
 }
 
 // Convierte ArrayBuffer a Base64 (para almacenar en JSON)
+// NOTA: Se procesa en chunks de 8192 bytes para evitar stack overflow
+// con el spread operator en vaults grandes.
 function bufferABase64(buffer) {
   const bytes = new Uint8Array(buffer);
-  return btoa(String.fromCharCode(...bytes));
+  let result = '';
+  for (let i = 0; i < bytes.length; i += 8192) {
+    result += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  }
+  return btoa(result);
 }
 
 // Convierte Base64 a ArrayBuffer
@@ -292,7 +298,7 @@ async function exportarVaultBackup(passwordMaestra) {
   // Construir el objeto de backup
   const backup = {
     version:           '1.0',
-    app:               'DacmosGroup Password Manager',
+    app:               'Dacmos Password Manager',
     fecha:             new Date().toISOString(),
     cifrado:           'AES-256-GCM',
     kdf:               'PBKDF2-SHA256-600000',
@@ -315,7 +321,7 @@ async function importarVaultBackup(backup, passwordMaestra) {
     throw new Error('BACKUP_INVALIDO');
   }
 
-  if (backup.app !== 'DacmosGroup Password Manager') {
+  if (backup.app !== 'Dacmos Password Manager') {
     throw new Error('BACKUP_INVALIDO');
   }
 

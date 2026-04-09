@@ -1,5 +1,5 @@
 // ================================================
-// DacmosGroup Password Manager — Generator Logic
+// Dacmos Password Manager — Generator Logic
 // Generador criptográfico usando Web Crypto API
 // DECISIÓN DE SEGURIDAD: crypto.getRandomValues()
 // genera números aleatorios criptográficamente
