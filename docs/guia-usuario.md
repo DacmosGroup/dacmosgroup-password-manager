@@ -1,13 +1,13 @@
-# 📖 Guía de Usuario — DacmosGroup Password Manager
+# 📖 Guía de Usuario — Dacmos Password Manager
 
-**Versión 0.1.0 · Abril 2026**
+**Versión 0.1.1 · Abril 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 ---
 
 ## Tabla de Contenido
 
-1. [¿Qué es DacmosGroup Password Manager?](#1-qué-es-dacmosgroup-password-manager)
+1. [¿Qué es Dacmos Password Manager?](#1-qué-es-dacmosgroup-password-manager)
 2. [Modelo de Seguridad — Lo que debes saber](#2-modelo-de-seguridad)
 3. [Requisitos](#3-requisitos)
 4. [Instalación](#4-instalación)
@@ -24,9 +24,9 @@
 
 ---
 
-## 1. ¿Qué es DacmosGroup Password Manager?
+## 1. ¿Qué es Dacmos Password Manager?
 
-DacmosGroup Password Manager es una extensión para Chrome que te permite almacenar y gestionar tus contraseñas de forma segura, directamente en tu dispositivo.
+Dacmos Password Manager es una extensión para Chrome que te permite almacenar y gestionar tus contraseñas de forma segura, directamente en tu dispositivo.
 
 A diferencia de otros gestores de contraseñas, **tus datos nunca salen de tu computadora**. No existe ningún servidor externo que almacene tus credenciales — ni siquiera DacmosGroup tiene acceso a ellas.
 
@@ -102,7 +102,7 @@ Datos cifrados almacenados localmente
 ### Opción A — Chrome Web Store (Recomendada)
 
 1. Abre Chrome y ve a la Chrome Web Store
-2. Busca **"DacmosGroup Password Manager"**
+2. Busca **"Dacmos Password Manager"**
 3. Clic en **"Añadir a Chrome"**
 4. Confirma con **"Añadir extensión"**
 
@@ -418,7 +418,7 @@ Puedes auditar cada línea de código. No existen servidores externos ni telemet
 
 **Solución:**
 1. Ve a `chrome://extensions/`
-2. Busca DacmosGroup Password Manager
+2. Busca Dacmos Password Manager
 3. Clic en **"Errores"** para ver el detalle
 4. Clic en **"Borrar todo"** para limpiar errores anteriores
 5. Clic en 🔄 para recargar la extensión

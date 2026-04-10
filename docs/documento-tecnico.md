@@ -1,10 +1,10 @@
-# 🔐 Documento Técnico — DacmosGroup Password Manager
+# 🔐 Documento Técnico — Dacmos Password Manager
 
-**Versión 0.1.0 · Abril 2026**
+**Versión 0.1.1 · Abril 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
-> y diseño técnico del DacmosGroup Password Manager. Está orientado a desarrolladores,
+> y diseño técnico del Dacmos Password Manager. Está orientado a desarrolladores,
 > auditores de seguridad y a la audiencia técnica de DacmosGroup.
 
 ---
@@ -28,7 +28,7 @@
 
 ## 1. Visión General
 
-DacmosGroup Password Manager es una extensión Chrome construida con **Manifest V3** que implementa un gestor de contraseñas con modelo **Zero-Knowledge local-first**.
+Dacmos Password Manager es una extensión Chrome construida con **Manifest V3** que implementa un gestor de contraseñas con modelo **Zero-Knowledge local-first**.
 
 ### Principios de diseño
 
