@@ -48,7 +48,7 @@ Dacmos Password Manager es una extensión Chrome construida con **Manifest V3** 
 ├── Crypto:         Web Crypto API (nativa del browser)
 ├── Almacenamiento: chrome.storage.local / chrome.storage.session
 ├── UI:             HTML5 + CSS3 (Vanilla — sin frameworks)
-└── Versión:        0.1.0
+└── Versión:        0.1.1
 ```
 
 ---
@@ -66,7 +66,7 @@ En criptografía, un sistema Zero-Knowledge garantiza que el proveedor del servi
 | **Cloud con acceso** | El proveedor puede ver tus datos | Contraseñas en texto plano en servidor |
 | **Cloud cifrado por servidor** | El proveedor cifra pero tiene la clave | La mayoría de gestores SaaS |
 | **Zero-Knowledge** | Solo el usuario tiene la clave | DacmosGroup, Bitwarden, 1Password |
-| **Local-first** | Los datos nunca salen del dispositivo | DacmosGroup v0.1.0 |
+| **Local-first** | Los datos nunca salen del dispositivo | DacmosGroup v0.1.1 |
 
 ### Garantías del modelo
 
@@ -559,7 +559,7 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 1. **Sin protección contra keyloggers** — si el dispositivo está comprometido a nivel de sistema operativo, la master password puede capturarse al ingresarse
 2. **Sin protección contra extensiones maliciosas** — otras extensiones con permisos elevados podrían leer `chrome.storage.local`
 3. **Dependencia del modelo de seguridad de Chrome** — vulnerabilidades en Chrome podrían afectar el aislamiento de contextos
-4. **Sin 2FA** — no existe un segundo factor de autenticación en v0.1.0
+4. **Sin 2FA** — no existe un segundo factor de autenticación en v0.1.1
 
 ### Mitigaciones futuras planificadas
 

@@ -6,7 +6,7 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-En%20Revisión%20Chrome%20Web%20Store-blue)](https://dacmosgroup.co)
-[![Versión](https://img.shields.io/badge/Versión-0.1.0-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![Versión](https://img.shields.io/badge/Versión-0.1.1-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -68,7 +68,7 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ## 📦 Chrome Web Store
 
-> 🕐 **Pendiente de aprobación** — enviado a revisión el 7 de abril de 2026
+> 🕐 **Pendiente de aprobación** — enviado a revisión el 13 de abril de 2026
 
 Una vez aprobada, la extensión estará disponible en:
 `https://chrome.google.com/webstore/detail/dacmosgroup-password-manager`

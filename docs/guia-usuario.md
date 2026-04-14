@@ -339,7 +339,7 @@ No existe mecanismo de recuperación — esto es por diseño para garantizar el 
 
 **¿Puedo usar la extensión en múltiples computadoras?**
 
-La versión actual (0.1.0) es local-first — los datos viven en el dispositivo donde se instaló. Para usar en otra computadora, exporta el vault desde el dispositivo original e impórtalo en el nuevo.
+La versión actual (0.1.1) es local-first — los datos viven en el dispositivo donde se instaló. Para usar en otra computadora, exporta el vault desde el dispositivo original e impórtalo en el nuevo.
 
 La sincronización automática entre dispositivos está planeada para **Fase 2** (Azure Blob Storage).
 
