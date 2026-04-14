@@ -10,6 +10,8 @@ import {
   importarVaultBackup,
 } from '../../crypto/engine.js';
 
+import { inicializarWizardImport } from './import-wizard.js';
+
 // ── Referencias al DOM ──
 const inputNuevaMaster     = document.getElementById('inputNuevaMaster');
 const inputConfirmarMaster = document.getElementById('inputConfirmarMaster');
@@ -366,6 +368,9 @@ document.getElementById('btnToggleImportarPass').addEventListener('click', () =>
 
 // ── Event Listeners — Zona de peligro ──
 document.getElementById('btnBorrarTodo').addEventListener('click', borrarTodo);
+
+// ── Inicializar wizard de importación CSV (F1.1) ──
+inicializarWizardImport();
 
 // ── Arrancar ──
 inicializar();

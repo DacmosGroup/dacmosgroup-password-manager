@@ -355,3 +355,184 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* ════════════════════════════════════════
+   Wizard de Importación CSV (F1.1)
+   ════════════════════════════════════════ */
+
+/* ── Advertencia de seguridad ── */
+.import-warning {
+  background: rgba(243, 156, 18, 0.12);
+  border: 1px solid rgba(243, 156, 18, 0.4);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.import-warning strong {
+  display: block;
+  color: var(--color-warning);
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+/* ── Fila de formato detectado ── */
+.import-format-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Badge que muestra el resultado de la detección automática */
+.import-format-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.badge-detected {
+  background: rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.4);
+  color: var(--color-success);
+}
+
+.badge-generic {
+  background: rgba(243, 156, 18, 0.15);
+  border: 1px solid rgba(243, 156, 18, 0.4);
+  color: var(--color-warning);
+}
+
+.badge-unknown {
+  background: rgba(138, 146, 164, 0.15);
+  border: 1px solid rgba(138, 146, 164, 0.3);
+  color: var(--color-text-muted);
+}
+
+/* ── Panel de preview ── */
+.import-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Resumen numérico — "X nuevas · Y duplicadas" */
+.import-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.resumen-nuevas { color: var(--color-success); }
+.resumen-sep    { color: var(--color-text-muted); }
+.resumen-dup    { color: var(--color-text-muted); }
+
+/* ── Tabla de preview ── */
+.import-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.import-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface-2);
+}
+
+.import-table th {
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-accent);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.import-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(42, 58, 92, 0.5);
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+/* Filas coloreadas según estado */
+.fila-nueva     { background: rgba(46, 204, 113, 0.04); }
+.fila-duplicada { background: transparent; opacity: 0.5; }
+
+.fila-nueva:hover,
+.fila-duplicada:hover { background: rgba(255, 255, 255, 0.03); }
+
+/* URL truncada con ellipsis */
+.url-cell {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+/* Contraseña siempre enmascarada — nunca en texto plano en el DOM */
+.password-mask {
+  font-family: monospace;
+  letter-spacing: 2px;
+  color: var(--color-text-muted);
+}
+
+/* Badges de estado en la columna Estado */
+.badge-nueva {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.4);
+  color: var(--color-success);
+  white-space: nowrap;
+}
+
+.badge-dup {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(138, 146, 164, 0.12);
+  border: 1px solid rgba(138, 146, 164, 0.3);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Fila de nota de truncado de preview */
+.preview-truncado {
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: 8px 10px !important;
+  background: var(--color-surface) !important;
+}

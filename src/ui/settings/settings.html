@@ -235,6 +235,104 @@
 
     </section>
 
+    <!-- Sección: Importar desde gestor externo (F1.1) -->
+    <section class="settings-section">
+      <h2 class="section-title">📥 Importar desde gestor externo</h2>
+
+      <!-- Disparador del wizard -->
+      <div class="backup-row">
+        <div class="setting-info">
+          <span class="setting-name">Importar credenciales CSV</span>
+          <span class="setting-desc">Soporta Google, Bitwarden, LastPass, 1Password y CSV genérico</span>
+        </div>
+        <button class="btn btn-secondary" id="btnAbrirImportarCSV">Importar</button>
+      </div>
+
+      <!-- Panel del wizard (colapsable) -->
+      <div class="backup-form hidden" id="panelImportarCSV">
+
+        <!-- Advertencia de seguridad — siempre visible al abrir -->
+        <div class="import-warning">
+          <strong>⚠️ Advertencia de seguridad</strong>
+          <p>
+            Los archivos CSV de exportación contienen tus contraseñas en
+            <strong>texto plano sin cifrar</strong>.
+            Elimina el archivo del disco inmediatamente después de importar.
+            No lo almacenes en servicios de nube ni lo compartas por ningún medio.
+          </p>
+        </div>
+
+        <!-- Paso 1: Selección del archivo -->
+        <div class="form-group">
+          <label class="form-label">Selecciona el archivo CSV exportado</label>
+          <input type="file" id="inputArchivoCSV" class="input" accept=".csv"
+            style="padding: 8px;"/>
+        </div>
+
+        <!-- Formato detectado / selector manual (aparece tras seleccionar archivo) -->
+        <div class="form-group" id="grupoFormatoCSV" style="display:none;">
+          <label class="form-label">Formato</label>
+          <div class="import-format-row">
+            <span class="import-format-badge" id="badgeFormatoCSV"></span>
+            <select class="select" id="selectFormatoCSV">
+              <option value="">— Seleccionar manualmente —</option>
+              <option value="google">Google Password Manager</option>
+              <option value="bitwarden">Bitwarden</option>
+              <option value="lastpass">LastPass</option>
+              <option value="1password">1Password</option>
+              <option value="generico">CSV genérico</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Paso 2: Contraseña maestra + botón previsualizar -->
+        <div class="form-group" id="grupoPasswordImportCSV" style="display:none;">
+          <label class="form-label">Confirma tu contraseña maestra</label>
+          <div class="input-group">
+            <input type="password" id="inputPasswordImportCSV" class="input"
+              placeholder="Contraseña maestra" autocomplete="off"/>
+            <button class="btn-icon" id="btnTogglePasswordImportCSV">👁</button>
+          </div>
+          <button class="btn btn-primary" id="btnPrevisualizarCSV"
+            style="margin-top: 10px;">
+            Previsualizar importación
+          </button>
+        </div>
+
+        <!-- Mensaje de error del wizard -->
+        <p class="error-msg hidden" id="errorImportarCSV"></p>
+
+        <!-- Paso 3: Tabla de preview + acciones -->
+        <div class="import-preview hidden" id="panelPreviewCSV">
+          <div class="import-summary" id="resumenPreviewCSV"></div>
+
+          <div class="import-table-wrap">
+            <table class="import-table">
+              <thead>
+                <tr>
+                  <th>Sitio</th>
+                  <th>URL</th>
+                  <th>Usuario</th>
+                  <th>Contraseña</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyPreviewCSV"></tbody>
+            </table>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button class="btn btn-secondary" id="btnCancelarImportarCSV">Cancelar</button>
+            <button class="btn btn-primary"   id="btnConfirmarImportarCSV">Importar</button>
+          </div>
+        </div>
+
+        <!-- Mensaje de éxito final -->
+        <p class="success-msg hidden" id="successImportarCSV"></p>
+
+      </div><!-- /panelImportarCSV -->
+    </section>
+
     <!-- Sección: Zona de Peligro -->
     <section class="settings-section danger-section">
       <h2 class="section-title">⚠️ Zona de Peligro</h2>
