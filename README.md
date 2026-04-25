@@ -103,3 +103,5 @@ especializada en las cuatro mega-tendencias que dominan la industria:
 ## 📄 Licencia
 
 MIT License — ver [LICENSE](./LICENSE)
+
+Abril 2026
