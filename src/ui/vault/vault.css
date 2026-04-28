@@ -425,3 +425,85 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* ── Hint de formulario ── */
+.form-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  opacity: 0.8;
+}
+
+/* ── Badge TOTP en tarjeta de credencial ── */
+.totp-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 5px 8px;
+  background: rgba(0, 102, 204, 0.08);
+  border: 1px solid rgba(0, 102, 204, 0.25);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+/* Etiqueta "2FA" */
+.totp-etiqueta {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--color-accent);
+  background: rgba(0, 212, 255, 0.12);
+  padding: 2px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+/* Código TOTP de 6 dígitos (formateado "123 456") */
+.totp-codigo {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: 0.12em;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Contenedor de la barra de progreso */
+.totp-barra-wrap {
+  width: 52px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Barra de progreso — se reduce con el tiempo restante */
+.totp-barra {
+  height: 100%;
+  width: 100%;
+  background: var(--color-primary);
+  border-radius: 2px;
+  transition: width 0.85s linear;
+}
+
+/* Color de advertencia en los últimos 5 segundos */
+.totp-barra.totp-barra-expirando {
+  background: var(--color-warning);
+}
+
+/* Timer de cuenta regresiva */
+.totp-timer {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  min-width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.totp-timer.totp-timer-expirando {
+  color: var(--color-warning);
+  font-weight: 600;
+}
