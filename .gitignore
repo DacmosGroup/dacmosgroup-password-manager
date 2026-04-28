@@ -21,4 +21,5 @@ Thumbs.db
 
 # Archivos de prueba con datos reales
 *.vault.json
-test-credentials.*
+test-credentials.*settings.local.json
+settings.local.json
