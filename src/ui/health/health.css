@@ -1,0 +1,395 @@
+/* ============================================
+   Dacmos Password Manager — Health Dashboard
+   F1.3: Password Health Reports
+   ============================================ */
+
+:root {
+  --color-bg:            #1a1a2e;
+  --color-surface:       #16213e;
+  --color-surface-2:     #0f3460;
+  --color-primary:       #0066cc;
+  --color-primary-hover: #0052a3;
+  --color-accent:        #00d4ff;
+  --color-danger:        #e74c3c;
+  --color-success:       #2ecc71;
+  --color-warning:       #f39c12;
+  --color-info:          #3498db;
+  --color-text:          #e8e8e8;
+  --color-text-muted:    #8892a4;
+  --color-border:        #2a3a5c;
+  --radius:              8px;
+  --radius-sm:           4px;
+  --font:                'Segoe UI', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font);
+  font-size: 14px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--color-surface);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { font-size: 24px; }
+.logo-text { display: flex; flex-direction: column; line-height: 1.2; }
+.logo-title { font-weight: 700; font-size: 15px; color: var(--color-accent); }
+.logo-subtitle { font-size: 12px; color: var(--color-text-muted); }
+
+/* ── Banner de estado (HIBP / errores de red) ── */
+.status-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.status-banner.banner-info {
+  background: rgba(52, 152, 219, 0.10);
+  border-color: rgba(52, 152, 219, 0.30);
+  color: var(--color-info);
+}
+
+.status-banner.banner-warn {
+  background: rgba(243, 156, 18, 0.10);
+  border-color: rgba(243, 156, 18, 0.30);
+  color: var(--color-warning);
+}
+
+.status-banner.banner-ok {
+  background: rgba(46, 204, 113, 0.10);
+  border-color: rgba(46, 204, 113, 0.30);
+  color: var(--color-success);
+}
+
+/* ── Contenido principal ── */
+.health-content {
+  flex: 1;
+  padding: 24px;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Estados de carga y error ── */
+.loading-state,
+.empty-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.loading-icono,
+.empty-icono,
+.error-icono {
+  font-size: 48px;
+}
+
+.loading-state p,
+.empty-state p,
+.error-state p {
+  font-size: 13px;
+}
+
+.empty-state h3,
+.error-state h3 {
+  color: var(--color-accent);
+  font-size: 18px;
+}
+
+/* ── Grid de tarjetas de resumen ── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 540px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.summary-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.summary-card:hover { transform: translateY(-2px); }
+
+.summary-num {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.summary-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.card-ok     { border-top: 3px solid var(--color-success); }
+.card-ok     .summary-num { color: var(--color-success); }
+
+.card-warn   { border-top: 3px solid var(--color-warning); }
+.card-warn   .summary-num { color: var(--color-warning); }
+
+.card-info   { border-top: 3px solid var(--color-info); }
+.card-info   .summary-num { color: var(--color-info); }
+
+.card-danger { border-top: 3px solid var(--color-danger); }
+.card-danger .summary-num { color: var(--color-danger); }
+
+/* ── Barra de progreso HIBP ── */
+.hibp-progress {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hibp-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hibp-progress-label {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.hibp-progress-pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.hibp-progress-bar-wrap {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hibp-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.hibp-nota {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  opacity: 0.8;
+  line-height: 1.5;
+}
+
+/* ── Lista de credenciales ── */
+.health-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.health-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Ítem de credencial en el dashboard ── */
+.health-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  transition: border-color 0.2s;
+}
+
+.health-item.item-comprometida { border-left: 3px solid var(--color-danger); }
+.health-item.item-debil        { border-left: 3px solid var(--color-warning); }
+.health-item.item-reutilizada  { border-left: 3px solid var(--color-info); }
+.health-item.item-ok           { border-left: 3px solid var(--color-success); }
+
+.health-item-avatar {
+  width: 38px;
+  height: 38px;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.health-item-info { flex: 1; min-width: 0; }
+
+.health-item-site {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.health-item-user {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* Fila de badges de problema para esta credencial */
+.health-item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* Badge individual de problema */
+.hbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hbadge-ok {
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.35);
+  color: var(--color-success);
+}
+
+.hbadge-debil {
+  background: rgba(243, 156, 18, 0.12);
+  border: 1px solid rgba(243, 156, 18, 0.35);
+  color: var(--color-warning);
+}
+
+.hbadge-reutilizada {
+  background: rgba(52, 152, 219, 0.12);
+  border: 1px solid rgba(52, 152, 219, 0.35);
+  color: var(--color-info);
+}
+
+.hbadge-comprometida {
+  background: rgba(231, 76, 60, 0.12);
+  border: 1px solid rgba(231, 76, 60, 0.35);
+  color: var(--color-danger);
+}
+
+.hbadge-verificando {
+  background: rgba(138, 146, 164, 0.12);
+  border: 1px solid rgba(138, 146, 164, 0.25);
+  color: var(--color-text-muted);
+}
+
+.hbadge-error-hibp {
+  background: rgba(138, 146, 164, 0.08);
+  border: 1px solid rgba(138, 146, 164, 0.20);
+  color: var(--color-text-muted);
+}
+
+/* ── Botones ── */
+.btn {
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover { background: var(--color-border); }
+
+.btn-sm { padding: 6px 14px; font-size: 13px; }
+
+/* ── Footer ── */
+.footer {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: 8px 24px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.hidden { display: none !important; }

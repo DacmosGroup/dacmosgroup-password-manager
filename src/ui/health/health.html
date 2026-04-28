@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Health — Dacmos Password Manager</title>
+  <link rel="stylesheet" href="health.css">
+</head>
+<body>
+
+  <!-- Cabecera -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-icon">🔐</span>
+      <div class="logo-text">
+        <span class="logo-title">DacmosGroup</span>
+        <span class="logo-subtitle">Password Health</span>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-sm" id="btnVolver">← Vault</button>
+  </header>
+
+  <!-- Banner de estado HIBP — visible durante verificación o ante errores de red -->
+  <div class="status-banner hidden" id="statusBanner">
+    <span class="banner-icono" id="bannerIcono">⏳</span>
+    <span class="banner-texto" id="bannerTexto">Verificando con Have I Been Pwned...</span>
+  </div>
+
+  <!-- Contenido principal -->
+  <main class="health-content">
+
+    <!-- Estado de carga inicial -->
+    <div class="loading-state" id="loadingState">
+      <span class="loading-icono">⏳</span>
+      <p>Cargando reporte de salud...</p>
+    </div>
+
+    <!-- Estado vacío — vault sin credenciales -->
+    <div class="empty-state hidden" id="emptyState">
+      <span class="empty-icono">🗄️</span>
+      <h3>Sin credenciales</h3>
+      <p>Agrega credenciales a tu vault para ver el reporte de salud.</p>
+    </div>
+
+    <!-- Error — vault bloqueado o acceso directo sin reporte -->
+    <div class="error-state hidden" id="errorState">
+      <span class="error-icono">🔒</span>
+      <h3>Sesión no disponible</h3>
+      <p>Desbloquea tu vault y usa el botón "🛡 Health" para ver el reporte.</p>
+    </div>
+
+    <!-- Contenido del reporte (oculto hasta que el reporte esté disponible) -->
+    <div class="hidden" id="reporteContent">
+
+      <!-- Tarjetas de resumen -->
+      <div class="summary-grid">
+        <div class="summary-card card-ok">
+          <span class="summary-num" id="numSeguras">0</span>
+          <span class="summary-label">✅ Seguras</span>
+        </div>
+        <div class="summary-card card-warn">
+          <span class="summary-num" id="numDebiles">0</span>
+          <span class="summary-label">⚠️ Débiles</span>
+        </div>
+        <div class="summary-card card-info">
+          <span class="summary-num" id="numReutilizadas">0</span>
+          <span class="summary-label">🔁 Reutilizadas</span>
+        </div>
+        <div class="summary-card card-danger">
+          <span class="summary-num" id="numComprometidas">—</span>
+          <span class="summary-label">🚨 Comprometidas</span>
+        </div>
+      </div>
+
+      <!-- Barra de progreso de verificación HIBP -->
+      <div class="hibp-progress hidden" id="hibpProgress">
+        <div class="hibp-progress-header">
+          <span class="hibp-progress-label" id="hibpProgressLabel">
+            Verificando con Have I Been Pwned...
+          </span>
+          <span class="hibp-progress-pct" id="hibpProgressPct">0%</span>
+        </div>
+        <div class="hibp-progress-bar-wrap">
+          <div class="hibp-progress-bar" id="hibpProgressBar"></div>
+        </div>
+        <p class="hibp-nota">
+          Solo los primeros 5 caracteres del hash SHA-1 se envían a la API (k-anonymity).
+          Tu contraseña nunca abandona el dispositivo.
+        </p>
+      </div>
+
+      <!-- Lista detallada por credencial -->
+      <div class="health-list-wrap">
+        <h2 class="list-title">Detalle por credencial</h2>
+        <ul class="health-list" id="healthList"></ul>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Pie de página -->
+  <footer class="footer">
+    <span>DacmosGroup.com · Zero-Knowledge · AES-256-GCM</span>
+  </footer>
+
+  <script src="health.js" type="module"></script>
+</body>
+</html>

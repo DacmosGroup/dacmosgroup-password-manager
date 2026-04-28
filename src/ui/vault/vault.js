@@ -2,10 +2,12 @@
 // Dacmos Password Manager — Vault Logic
 // E1.5: CRUD completo de credenciales cifradas
 // F1.2: Generador TOTP integrado (RFC 6238)
+// F1.3: Password Health Reports
 // ============================================
 
 import { desbloquearVault, guardarVaultCifrado, cargarVaultDescifrado } from '../../crypto/engine.js'
 import { generarCodigo, esBase32Valido, segundosRestantes } from '../../crypto/totp.js'
+import { analizarSaludLocal } from '../../health/password-health.js'
 
 // ── Referencias al DOM ──
 const unlockOverlay      = document.getElementById('unlockOverlay')
@@ -21,6 +23,7 @@ const modalOverlay       = document.getElementById('modalOverlay')
 const modalTitle         = document.getElementById('modalTitle')
 const modalError         = document.getElementById('modalError')
 const btnNuevaCredencial = document.getElementById('btnNuevaCredencial')
+const btnHealth          = document.getElementById('btnHealth')
 const btnAgregarPrimero  = document.getElementById('btnAgregarPrimero')
 const btnCerrarModal     = document.getElementById('btnCerrarModal')
 const btnCancelar        = document.getElementById('btnCancelar')
@@ -34,6 +37,7 @@ const btnToggleTotp      = document.getElementById('btnToggleTotp')
 let credenciales       = []
 let credencialEditando = null
 let claveSesion        = null   // Clave AES en memoria — nunca va a storage
+let reporteSalud       = null   // Último reporte de salud local (sin contraseñas)
 
 // ── Estado del countdown TOTP ──
 let intervalCountdown = null
@@ -86,6 +90,9 @@ async function desbloquear() {
     btnNuevaCredencial.classList.remove('hidden')
 
     renderizarLista(credenciales)
+
+    // Análisis de salud en background — no bloquea la UI de desbloqueo
+    programarAnalisisSalud(credenciales)
 
     if (window._abrirModalAlDesbloquear) {
       abrirModal()
@@ -152,12 +159,21 @@ function crearItemCredencial(cred) {
       <button class="btn-icon btn-copiar-totp" data-id="${cred.id}" title="Copiar código 2FA">📋</button>
     </div>` : ''
 
+  // Badges de salud: si el reporte ya está disponible (re-render posterior al análisis),
+  // los inyectamos directamente; si no, dejamos un placeholder vacío que se rellena async.
+  const itemSalud   = reporteSalud?.items.find(i => i.id === cred.id)
+  const htmlSalud   = itemSalud ? htmlBadgesSaludVault(itemSalud) : ''
+  const badgesSalud = htmlSalud
+    ? `<div class="health-badge-row">${htmlSalud}</div>`
+    : `<div class="health-badge-row hidden" id="health-row-${cred.id}"></div>`
+
   li.innerHTML = `
     <div class="credential-avatar">${obtenerIcono(cred.sitio)}</div>
     <div class="credential-info">
       <div class="credential-site">${escapeHtml(cred.sitio)}</div>
       <div class="credential-user">${escapeHtml(cred.usuario)}</div>
       <div class="credential-date">Modificado: ${fecha}</div>
+      ${badgesSalud}
       ${badgeTotp}
     </div>
     <div class="credential-actions">
@@ -432,6 +448,8 @@ async function guardarCredencial() {
     await guardarVaultCifrado(credenciales, claveSesion)
     cerrarModal()
     renderizarLista(credenciales)
+    // Re-analizar salud tras cualquier cambio en el vault
+    programarAnalisisSalud(credenciales)
   } catch (error) {
     mostrarErrorModal('Error al guardar — intenta de nuevo')
   } finally {
@@ -443,6 +461,61 @@ async function guardarCredencial() {
 function mostrarErrorModal(mensaje) {
   modalError.textContent = mensaje
   modalError.classList.remove('hidden')
+}
+
+// ── F1.3: Salud de contraseñas ──
+
+// Genera el HTML de los badges de salud para una credencial.
+// Solo se muestran problemas detectados en el análisis local (sin HIBP).
+function htmlBadgesSaludVault(item) {
+  const badges = []
+  if (item.esDebil)       badges.push(`<span class="vault-hbadge badge-debil" title="Entropía baja: ${item.entropia} bits — usa contraseña más larga y variada">⚠ ${item.entropia}b</span>`)
+  if (item.esReutilizada) badges.push(`<span class="vault-hbadge badge-reutilizada" title="Misma contraseña en múltiples sitios">🔁</span>`)
+  return badges.join('')
+}
+
+// Ejecuta el análisis local de salud en background (no bloquea la UI).
+// Actualiza los badges en el DOM cuando el análisis termina.
+// Si el reporte ya estaba disponible al renderizar, los badges ya habrán aparecido
+// en crearItemCredencial(); esta función solo actualiza los placeholders vacíos.
+async function programarAnalisisSalud(creds) {
+  if (!creds.length) return
+  try {
+    reporteSalud = await analizarSaludLocal(creds)
+
+    // Mostrar el botón Health ahora que hay reporte disponible
+    btnHealth.classList.remove('hidden')
+
+    // Inyectar badges en los placeholders del DOM actual
+    for (const item of reporteSalud.items) {
+      const placeholder = document.getElementById(`health-row-${item.id}`)
+      if (!placeholder) continue  // El ítem puede estar filtrado por búsqueda
+      const html = htmlBadgesSaludVault(item)
+      if (html) {
+        placeholder.innerHTML = html
+        placeholder.classList.remove('hidden')
+      }
+    }
+  } catch (_) {
+    // Error silencioso — los badges no aparecen, lo que es seguro
+  }
+}
+
+// Abre el dashboard de salud: guarda el reporte en session y abre la página.
+async function abrirHealthDashboard() {
+  if (!credenciales.length || !reporteSalud) return
+
+  btnHealth.textContent = 'Analizando...'
+  btnHealth.disabled    = true
+
+  try {
+    // Guardar el reporte en session (sin contraseñas en texto plano)
+    await new Promise(r => chrome.storage.session.set({ healthReport: reporteSalud }, r))
+    chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/health/health.html') })
+  } finally {
+    btnHealth.textContent = '🛡 Health'
+    btnHealth.disabled    = false
+  }
 }
 
 // ── Evaluador de fortaleza ──
@@ -480,6 +553,9 @@ unlockInput.addEventListener('keydown', (e) => {
 document.getElementById('btnToggleUnlock').addEventListener('click', () => {
   unlockInput.type = unlockInput.type === 'password' ? 'text' : 'password'
 })
+
+// Health Dashboard
+btnHealth.addEventListener('click', abrirHealthDashboard)
 
 // Modal
 btnNuevaCredencial.addEventListener('click', abrirModal)

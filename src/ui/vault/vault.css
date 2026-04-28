@@ -507,3 +507,46 @@ body {
   color: var(--color-warning);
   font-weight: 600;
 }
+
+/* ── F1.3: Badges de salud en tarjeta de credencial ── */
+
+/* Contenedor de badges — oculto hasta que el análisis complete */
+.health-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+/* Badge base */
+.vault-hbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: default;
+}
+
+/* Contraseña débil — naranja advertencia */
+.vault-hbadge.badge-debil {
+  background: rgba(243, 156, 18, 0.12);
+  border: 1px solid rgba(243, 156, 18, 0.35);
+  color: var(--color-warning);
+}
+
+/* Contraseña reutilizada — azul informativo */
+.vault-hbadge.badge-reutilizada {
+  background: rgba(52, 152, 219, 0.12);
+  border: 1px solid rgba(52, 152, 219, 0.35);
+  color: #3498db;
+}
+
+/* ── Header actions — botones en fila ── */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
