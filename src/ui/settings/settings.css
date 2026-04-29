@@ -536,3 +536,35 @@ body {
   padding: 8px 10px !important;
   background: var(--color-surface) !important;
 }
+
+/* ════════════════════════════════════════
+   Exportar CSV — confirmación (F1.4)
+   ════════════════════════════════════════ */
+
+/* Fila del checkbox de aceptación de advertencia */
+.export-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.export-ack input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+/* Botón deshabilitado */
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}

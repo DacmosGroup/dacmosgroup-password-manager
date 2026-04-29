@@ -170,21 +170,20 @@
       </div>
     </section>
 
-    
-<!-- Sección: Backup -->
+
+    <!-- Sección: Backup (F1.4: exportación en múltiples formatos) -->
     <section class="settings-section">
       <h2 class="section-title">💾 Backup del Vault</h2>
 
-      <!-- Exportar -->
+      <!-- ── Exportar JSON cifrado (comportamiento original) ── -->
       <div class="backup-row">
         <div class="setting-info">
-          <span class="setting-name">Exportar vault cifrado</span>
-          <span class="setting-desc">Descarga un backup AES-256-GCM de tus credenciales</span>
+          <span class="setting-name">Exportar JSON cifrado</span>
+          <span class="setting-desc">Backup AES-256-GCM — seguro para guardar en cualquier lugar</span>
         </div>
         <button class="btn btn-secondary" id="btnExportar">Exportar</button>
       </div>
 
-      <!-- Modal exportar: pedir contraseña -->
       <div class="backup-form hidden" id="formExportar">
         <div class="form-group">
           <label class="form-label">Confirma tu contraseña maestra</label>
@@ -201,7 +200,95 @@
         </div>
       </div>
 
-      <!-- Importar -->
+      <!-- ── Exportar CSV genérico ── -->
+      <div class="backup-row">
+        <div class="setting-info">
+          <span class="setting-name">Exportar CSV genérico</span>
+          <span class="setting-desc">Texto plano — compatible con cualquier gestor de contraseñas</span>
+        </div>
+        <button class="btn btn-secondary" id="btnExportarCSVGenerico">Exportar</button>
+      </div>
+
+      <div class="backup-form hidden" id="formExportarCSVGenerico">
+        <!-- Advertencia de seguridad — visible e ineludible -->
+        <div class="import-warning">
+          <strong>⚠️ Advertencia de seguridad — Archivo en texto plano</strong>
+          <p>
+            Este archivo contendrá <strong>todas tus contraseñas sin ningún cifrado</strong>.
+            Cualquier persona con acceso al archivo podrá leer tus credenciales.
+            Elimínalo del disco inmediatamente después de usarlo. No lo almacenes
+            en servicios de nube ni lo compartas por ningún medio.
+          </p>
+        </div>
+
+        <!-- Checkbox de confirmación — requerido para continuar -->
+        <label class="export-ack">
+          <input type="checkbox" id="ackCSVGenerico"/>
+          <span>Entiendo que el archivo no estará cifrado y asumo la responsabilidad de protegerlo</span>
+        </label>
+
+        <!-- Campo de contraseña — aparece solo tras marcar el checkbox -->
+        <div class="form-group" id="grupoPassCSVGenerico" style="display:none;">
+          <label class="form-label">Confirma tu contraseña maestra</label>
+          <div class="input-group">
+            <input type="password" id="inputPassCSVGenerico" class="input"
+              placeholder="Contraseña maestra" autocomplete="off"/>
+            <button class="btn-icon" id="btnTogglePassCSVGenerico">👁</button>
+          </div>
+        </div>
+
+        <p class="error-msg hidden" id="errorCSVGenerico"></p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-secondary" id="btnCancelarCSVGenerico">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmarCSVGenerico" disabled>Descargar CSV</button>
+        </div>
+      </div>
+
+      <!-- ── Exportar CSV Bitwarden ── -->
+      <div class="backup-row">
+        <div class="setting-info">
+          <span class="setting-name">Exportar CSV Bitwarden</span>
+          <span class="setting-desc">Texto plano — para migrar a Bitwarden u otros gestores compatibles</span>
+        </div>
+        <button class="btn btn-secondary" id="btnExportarCSVBitwarden">Exportar</button>
+      </div>
+
+      <div class="backup-form hidden" id="formExportarCSVBitwarden">
+        <!-- Advertencia de seguridad — visible e ineludible -->
+        <div class="import-warning">
+          <strong>⚠️ Advertencia de seguridad — Archivo en texto plano</strong>
+          <p>
+            Este archivo contendrá <strong>todas tus contraseñas sin ningún cifrado</strong>
+            en formato compatible con Bitwarden.
+            Úsalo únicamente para migrar a otro gestor y elimínalo del disco inmediatamente.
+            No lo almacenes en servicios de nube ni lo compartas por ningún medio.
+          </p>
+        </div>
+
+        <!-- Checkbox de confirmación — requerido para continuar -->
+        <label class="export-ack">
+          <input type="checkbox" id="ackCSVBitwarden"/>
+          <span>Entiendo que el archivo no estará cifrado y asumo la responsabilidad de protegerlo</span>
+        </label>
+
+        <!-- Campo de contraseña — aparece solo tras marcar el checkbox -->
+        <div class="form-group" id="grupoPassCSVBitwarden" style="display:none;">
+          <label class="form-label">Confirma tu contraseña maestra</label>
+          <div class="input-group">
+            <input type="password" id="inputPassCSVBitwarden" class="input"
+              placeholder="Contraseña maestra" autocomplete="off"/>
+            <button class="btn-icon" id="btnTogglePassCSVBitwarden">👁</button>
+          </div>
+        </div>
+
+        <p class="error-msg hidden" id="errorCSVBitwarden"></p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-secondary" id="btnCancelarCSVBitwarden">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmarCSVBitwarden" disabled>Descargar CSV</button>
+        </div>
+      </div>
+
+      <!-- ── Importar vault (sin cambios) ── -->
       <div class="backup-row">
         <div class="setting-info">
           <span class="setting-name">Importar vault</span>
@@ -210,7 +297,6 @@
         <button class="btn btn-secondary" id="btnImportar">Importar</button>
       </div>
 
-      <!-- Form importar -->
       <div class="backup-form hidden" id="formImportar">
         <div class="form-group">
           <label class="form-label">Archivo de backup (.json)</label>
