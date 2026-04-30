@@ -1,12 +1,12 @@
 # 🔐 Dacmos Password Manager
 
-**Gestor de contraseñas local-first para Chrome — construido en público por [DacmosGroup.com](https://dacmosgroup.co)**
+**Gestor de contraseñas local-first para Chrome — construido en público por [DacmosGroup.co](https://dacmosgroup.co)**
 
 > Este proyecto es simultáneamente una herramienta funcional y contenido educativo
 > sobre seguridad de la información aplicada.
 
-[![Estado](https://img.shields.io/badge/Estado-En%20Revisión%20Chrome%20Web%20Store-blue)](https://dacmosgroup.co)
-[![Versión](https://img.shields.io/badge/Versión-0.1.1-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
+[![Versión](https://img.shields.io/badge/Versión-0.2.0-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -40,15 +40,26 @@
 | E1.9 | Lock automático por inactividad + badge | ✅ |
 | E1.10 | Export/Import vault cifrado | ✅ |
 
-### ⏳ Fase 2 — Sincronización Azure (PENDIENTE)
+### ✅ Fase 1.5 — Paridad competitiva v0.2.0 (COMPLETADA)
+
+| Feature | Descripción | Estado |
+|---------|-------------|--------|
+| F1.1 | Importar CSV desde Google PM, Bitwarden, LastPass, 1Password | ✅ |
+| F1.2 | Generador TOTP integrado (RFC 6238) con cuenta regresiva | ✅ |
+| F1.3 | Password Health Reports + HIBP k-anonymity | ✅ |
+| F1.4 | Exportar en CSV genérico y CSV Bitwarden | ✅ |
+| F1.5 | Tipos de credencial: Tarjeta de crédito e Identidad | ✅ |
+| F1.6 | URL matching mejorado con dominio base y wildcards | ✅ |
+
+### ⏳ Fase 2 — Sincronización multi-dispositivo (PENDIENTE)
 - Sincronización via **Azure Blob Storage**
 - El vault viaja cifrado — Azure nunca ve los datos en claro
 - Autenticación via Microsoft Account
 
-### 📱 Fase 3 — Android App (PENDIENTE)
-- React Native
-- Reutiliza motor de cifrado de Fase 1
-- Biometría con expo-local-authentication
+### 📱 Fase 3 — App móvil (PENDIENTE)
+- React Native (iOS + Android)
+- Reutiliza motor de cifrado
+- Biometría con Face ID / Touch ID
 
 ---
 
@@ -68,21 +79,22 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ## 📦 Chrome Web Store
 
-> 🕐 **Pendiente de aprobación** — enviado a revisión el 13 de abril de 2026
+Disponible en modo no listado — instalación via enlace directo:
 
-Una vez aprobada, la extensión estará disponible en:
-`https://chrome.google.com/webstore/detail/dacmosgroup-password-manager`
+`https://chromewebstore.google.com/detail/dacmos-password-manager/aflgjjkallibohcebggkkjdlhdnainai`
 
 ---
 
-## 🔑 Funciones Principales
+## 🔑 Funciones Principales v0.2.0
 
-- **Vault cifrado** — almacena credenciales con AES-256-GCM
-- **Autocompletado inteligente** — detecta formularios de login en cualquier sitio
-- **Generador de contraseñas** — criptográfico con cálculo de entropía en bits
-- **Lock automático** — bloqueo por inactividad con chrome.alarms
-- **Badge inteligente** — indica credenciales disponibles para el sitio actual
-- **Backup cifrado** — exportar e importar vault sin exponer datos
+- **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
+- **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
+- **TOTP integrado** — generador 2FA con cuenta regresiva, gratis
+- **Password Health** — entropía, reutilización, HIBP k-anonymity
+- **Exportar** — CSV genérico y CSV compatible con Bitwarden
+- **Autocompletado** — login, checkout (tarjetas) y registro (identidades)
+- **URL matching robusto** — dominio base, subdominios y wildcards
+- **Lock automático** — chrome.alarms, cero persistencia de clave
 
 ---
 
