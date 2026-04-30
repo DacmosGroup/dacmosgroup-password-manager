@@ -550,3 +550,115 @@ body {
   align-items: center;
   gap: 8px;
 }
+
+/* ── F1.5: Selector de tipo de credencial ── */
+.type-selector {
+  display: flex;
+  gap: 0;
+  padding: 12px 20px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.type-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  font-family: var(--font);
+}
+
+.type-tab:hover:not(:disabled) {
+  color: var(--color-text);
+}
+
+.type-tab.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.type-tab:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── F1.5: Formulario de dos columnas (vencimiento + CVV) ── */
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ── F1.5: Datos de tarjeta en la lista ── */
+.card-numero-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.card-numero-mask {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  letter-spacing: 0.08em;
+  transition: color 0.2s;
+}
+
+.card-numero-mask.campo-revelado {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.card-venc {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.card-cvv-mask {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-family: 'Courier New', monospace;
+  transition: color 0.2s;
+}
+
+.card-cvv-mask.campo-revelado {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.card-banco {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+/* ── F1.5: Botón de revelar campo sensible ── */
+.btn-revelar {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 3px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.btn-revelar:hover {
+  opacity: 1;
+}

@@ -189,7 +189,6 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
 
   // Content script solicita credenciales para autocompletar
   if (mensaje.tipo === 'SOLICITAR_AUTOCOMPLETADO') {
-    // Resetear timer — el usuario está activo
     resetearTimerInactividad();
 
     chrome.storage.local.get(['sesionActiva'], async (result) => {
@@ -198,8 +197,22 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
         return;
       }
 
-      const todasLasCredenciales = await obtenerCredencialesSesion();
-      const filtradas = filtrarPorDominio(todasLasCredenciales, mensaje.dominio);
+      const todas = await obtenerCredencialesSesion();
+      const tipo  = mensaje.tipoFormulario || 'login';
+      let filtradas;
+
+      if (tipo === 'tarjeta') {
+        // Las tarjetas son universales — no se filtran por dominio
+        filtradas = todas.filter(c => c.tipo === 'tarjeta');
+      } else if (tipo === 'identidad') {
+        // Las identidades son universales — no se filtran por dominio
+        filtradas = todas.filter(c => c.tipo === 'identidad');
+      } else {
+        // Login: filtrar por dominio como siempre
+        const soloLogin = todas.filter(c => !c.tipo || c.tipo === 'login');
+        filtradas = filtrarPorDominio(soloLogin, mensaje.dominio);
+      }
+
       sendResponse({ credenciales: filtradas });
     });
     return true;
