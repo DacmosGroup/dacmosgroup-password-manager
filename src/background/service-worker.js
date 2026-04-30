@@ -1,7 +1,10 @@
 // ================================================
 // Dacmos Password Manager — Service Worker
 // E1.9: Lock automático + badge de credenciales
+// F1.6: URL matching mejorado (dominio base, wildcards)
 // ================================================
+
+import { filtrarCredenciales } from '../utils/url-matcher.js'
 
 // ── Al instalar la extensión ──
 chrome.runtime.onInstalled.addListener(() => {
@@ -108,31 +111,6 @@ async function obtenerCredencialesSesion() {
   });
 }
 
-// ── Filtrar credenciales por dominio ──
-function filtrarPorDominio(credenciales, dominio) {
-  return credenciales.filter(cred => {
-    if (!cred.url && !cred.sitio) return false;
-    const dominioLower = dominio.toLowerCase();
-
-    if (cred.url) {
-      try {
-        const urlGuardada = new URL(cred.url).hostname.toLowerCase()
-          .replace('www.', '');
-        const dominioActual = dominioLower.replace('www.', '');
-        if (urlGuardada.includes(dominioActual) ||
-            dominioActual.includes(urlGuardada)) return true;
-      } catch (_) {}
-    }
-
-    if (cred.sitio) {
-      const sitioLower = cred.sitio.toLowerCase();
-      if (dominioLower.includes(sitioLower) ||
-          sitioLower.includes(dominioLower.split('.')[0])) return true;
-    }
-
-    return false;
-  });
-}
 
 // ── Escuchar mensajes ──
 chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
@@ -178,7 +156,7 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
     chrome.storage.local.get(['sesionActiva'], async (result) => {
       if (result.sesionActiva) {
         const credenciales = await obtenerCredencialesSesion();
-        const filtradas    = filtrarPorDominio(credenciales, mensaje.dominio);
+        const filtradas    = filtrarCredenciales(credenciales, mensaje.url);
         actualizarBadge(true, filtradas.length);
       }
     });
@@ -208,9 +186,8 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
         // Las identidades son universales — no se filtran por dominio
         filtradas = todas.filter(c => c.tipo === 'identidad');
       } else {
-        // Login: filtrar por dominio como siempre
-        const soloLogin = todas.filter(c => !c.tipo || c.tipo === 'login');
-        filtradas = filtrarPorDominio(soloLogin, mensaje.dominio);
+        // Login: filtrar por URL usando el módulo de matching
+        filtradas = filtrarCredenciales(todas, mensaje.url);
       }
 
       sendResponse({ credenciales: filtradas });
@@ -225,17 +202,14 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (!tab.url) return;
-    try {
-      const dominio = new URL(tab.url).hostname;
-      chrome.storage.local.get(['sesionActiva'], async (result) => {
-        if (result.sesionActiva) {
-          const credenciales = await obtenerCredencialesSesion();
-          const filtradas    = filtrarPorDominio(credenciales, dominio);
-          actualizarBadge(true, filtradas.length);
-        } else {
-          actualizarBadge(false, 0);
-        }
-      });
-    } catch (_) {}
+    chrome.storage.local.get(['sesionActiva'], async (result) => {
+      if (result.sesionActiva) {
+        const credenciales = await obtenerCredencialesSesion();
+        const filtradas    = filtrarCredenciales(credenciales, tab.url);
+        actualizarBadge(true, filtradas.length);
+      } else {
+        actualizarBadge(false, 0);
+      }
+    });
   });
 });
