@@ -33,6 +33,47 @@ function actualizarEstado(desbloqueado) {
   }
 }
 
+// ── Indicador de estado de sync (F2.4) ──
+
+const SYNC_UI = {
+  desconectado: { icon: '',   label: '',                       class: '' },
+  sincronizando:{ icon: '🔄', label: 'Sincronizando...',       class: 'sync-syncing' },
+  sincronizado: { icon: '✅', label: 'Sincronizado',           class: 'sync-ok' },
+  pendiente:    { icon: '⚠️', label: 'Sync pendiente',         class: 'sync-warn' },
+  error:        { icon: '❌', label: 'Error de sincronización', class: 'sync-error' },
+}
+
+async function actualizarIndicadorSync() {
+  const syncRow   = document.getElementById('syncRow')
+  const syncIcon  = document.getElementById('syncIcon')
+  const syncLabel = document.getElementById('syncLabel')
+  if (!syncRow) return
+
+  const estado = await new Promise(resolve =>
+    chrome.runtime.sendMessage({ tipo: 'SYNC_OBTENER_ESTADO' }, resolve)
+  )
+  const ui = SYNC_UI[estado?.estado] ?? SYNC_UI.desconectado
+
+  if (!ui.label) {
+    syncRow.classList.add('hidden')
+    return
+  }
+
+  syncIcon.textContent  = ui.icon
+  syncLabel.textContent = estado?.estado === 'sincronizado' && estado.ultimaSync
+    ? `✅ Sincronizado ${formatearTiempoRelativo(estado.ultimaSync)}`
+    : ui.label
+
+  syncRow.className = `sync-row ${ui.class}`
+}
+
+function formatearTiempoRelativo(isoString) {
+  const diff = Date.now() - new Date(isoString).getTime()
+  if (diff < 60_000)  return 'hace un momento'
+  if (diff < 3600_000) return `hace ${Math.floor(diff / 60_000)} min`
+  return `hace ${Math.floor(diff / 3600_000)}h`
+}
+
 // ── Inicialización ──
 async function inicializar() {
   const { vaultConfigurado, sesionActiva } = await obtenerEstado();
@@ -44,6 +85,7 @@ async function inicializar() {
     mostrarVista(viewUnlocked);
     actualizarEstado(true);
     cargarConteoCredenciales();
+    actualizarIndicadorSync();
   } else {
     mostrarVista(viewLocked);
     actualizarEstado(false);
@@ -118,6 +160,7 @@ document.getElementById('btnUnlock').addEventListener('click', async () => {
       mostrarVista(viewUnlocked);
       actualizarEstado(true);
       cargarConteoCredenciales();
+      actualizarIndicadorSync();
     } else {
       errorMsg.classList.remove('hidden');
       errorMsg.textContent = 'Contraseña incorrecta';

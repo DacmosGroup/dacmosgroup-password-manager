@@ -419,6 +419,48 @@
       </div><!-- /panelImportarCSV -->
     </section>
 
+    <!-- Sección: Sincronización (F2.1 — F2.3) -->
+    <section class="settings-section">
+      <h2 class="section-title">🔄 Sincronización multi-dispositivo</h2>
+      <p class="section-desc">
+        Tu vault siempre viaja cifrado (AES-256-GCM). El proveedor cloud
+        nunca recibe la clave — solo almacena bytes opacos.
+      </p>
+
+      <!-- Card: Google Drive -->
+      <div class="sync-card" id="syncCardGoogleDrive">
+        <div class="sync-card-header">
+          <div class="sync-provider-info">
+            <span class="sync-provider-icon">☁️</span>
+            <div class="sync-provider-text">
+              <span class="sync-provider-name">Google Drive</span>
+              <span class="sync-provider-desc">15 GB gratis · Carpeta privada (AppData)</span>
+            </div>
+          </div>
+          <span class="sync-badge sync-badge-off" id="syncBadgeGoogle">Desconectado</span>
+        </div>
+
+        <div class="sync-card-body" id="syncBodyGoogle">
+          <span class="sync-last-time" id="syncLastTime"></span>
+        </div>
+
+        <div class="sync-card-actions">
+          <button class="btn btn-secondary btn-sm hidden" id="btnSyncAhora">
+            Sincronizar ahora
+          </button>
+          <button class="btn btn-danger btn-sm hidden" id="btnDesconectarGoogle">
+            Desconectar
+          </button>
+          <button class="btn btn-primary btn-sm" id="btnConectarGoogle">
+            Conectar con Google
+          </button>
+        </div>
+      </div>
+
+      <p class="error-msg  hidden" id="errorSync"></p>
+      <p class="success-msg hidden" id="successSync"></p>
+    </section>
+
     <!-- Sección: Zona de Peligro -->
     <section class="settings-section danger-section">
       <h2 class="section-title">⚠️ Zona de Peligro</h2>

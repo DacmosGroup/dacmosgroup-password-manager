@@ -7,8 +7,14 @@
   "permissions": [
     "storage",
     "activeTab",
-    "alarms"
+    "alarms",
+    "identity"
   ],
+
+  "oauth2": {
+    "client_id": "386629612056-k49nk8rape6kr4uu6l7iq3rp101oae48.apps.googleusercontent.com",
+    "scopes": ["https://www.googleapis.com/auth/drive.appdata"]
+  },
 
   "host_permissions": [
     "<all_urls>"
