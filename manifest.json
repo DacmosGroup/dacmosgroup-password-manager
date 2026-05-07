@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "Dacmos Password Manager",
   "version": "0.2.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuclJGr9xniieyjEoQar0rn+xsWOa4OBuJ9JRd3VkXBD2LrBHCiswOLeVhI2JRjS1V4ggDNOFRpr5bzuqoZTiUOnIc09Da0sU4KrxkrAehioN56ee1sJMW15p0t8wMFD10X5LkO3iU8EBEsdQD+pjVQ0B968qqNY8NchgT+woMcb7EYwuOgBMfd7yfFVrIKzj/9d74C6Gp6bH4NBttFLQNBEt6+ZVVD4mZA6bUCCgAjdS3ziJCWItmRpNyf8NFZsnkIsrJI6SYq2ulP5AH1qZxdC07thj6QgqgqLxc+aeIk7oadSXJWZlS09wCtpfw7VdJbmM1h3oFu3Lw4ybMXALdQIDAQAB",
   "description": "Gestor de contraseñas local-first con cifrado AES-256-GCM. Zero-Knowledge, Zero-Trust.",
 
   "permissions": [
