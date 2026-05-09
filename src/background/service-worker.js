@@ -3,6 +3,7 @@
 // E1.9: Lock automático + badge de credenciales
 // F1.6: URL matching mejorado (dominio base, wildcards)
 // F2.1: Google Drive Sync (BYOC)
+// F2.2: OneDrive Sync (BYOC)
 // ================================================
 
 import { filtrarCredenciales } from '../utils/url-matcher.js'
@@ -12,6 +13,22 @@ import {
   desconectarGoogleDrive,
   obtenerEstadoSync,
 } from '../sync/sync-manager.js'
+import {
+  sincronizarOneDrive,
+  conectarOneDrive,
+  desconectarOneDrive,
+} from '../sync/onedrive-sync-manager.js'
+
+// Enruta la sincronización al adaptador activo según syncConfig.proveedor
+function dispararSync() {
+  chrome.storage.local.get(['syncConfig'], r => {
+    if (r.syncConfig?.proveedor === 'onedrive') {
+      sincronizarOneDrive()        // fire-and-forget
+    } else {
+      sincronizarTrasEscritura()   // google-drive (comportamiento anterior)
+    }
+  })
+}
 
 // ── Al instalar la extensión ──
 chrome.runtime.onInstalled.addListener(() => {
@@ -141,7 +158,7 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
     guardarCredencialesSesion(mensaje.credenciales).then(() => {
       chrome.storage.local.set({ sesionActiva: true });
       iniciarTimerInactividad();
-      sincronizarTrasEscritura();  // fire-and-forget — no bloquea el unlock
+      dispararSync();              // fire-and-forget — no bloquea el unlock
       sendResponse({ ok: true });
     });
     return true;
@@ -190,7 +207,25 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
   }
 
   if (mensaje.tipo === 'SYNC_SINCRONIZAR') {
-    sincronizarTrasEscritura()
+    // Delegar al adaptador activo
+    const cfg = new Promise(resolve =>
+      chrome.storage.local.get(['syncConfig'], r => resolve(r.syncConfig || {}))
+    )
+    cfg.then(c => c.proveedor === 'onedrive' ? sincronizarOneDrive() : sincronizarTrasEscritura())
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true
+  }
+
+  if (mensaje.tipo === 'SYNC_CONECTAR_ONEDRIVE') {
+    conectarOneDrive()
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true
+  }
+
+  if (mensaje.tipo === 'SYNC_DESCONECTAR_ONEDRIVE') {
+    desconectarOneDrive()
       .then(() => sendResponse({ ok: true }))
       .catch(err => sendResponse({ ok: false, error: err.message }))
     return true
@@ -246,7 +281,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return
   if ('_syncTs' in changes) return  // escritura interna de sync — ignorar
   if ('vaultCifrado' in changes) {
-    sincronizarTrasEscritura()      // fire-and-forget
+    dispararSync()                  // fire-and-forget — enruta según proveedor activo
   }
 })
 
