@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Versión 0.1.1 · Abril 2026**
+**Versión 0.3.0 · Mayo 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -22,7 +22,8 @@
 9. [Decisiones Técnicas Documentadas](#9-decisiones-técnicas)
 10. [Superficie de Ataque y Mitigaciones](#10-superficie-de-ataque)
 11. [Roadmap Técnico](#11-roadmap-técnico)
-12. [Referencias](#12-referencias)
+12. [Sincronización BYOC](#12-sincronización-byoc)
+13. [Referencias](#13-referencias)
 
 ---
 
@@ -48,7 +49,7 @@ Dacmos Password Manager es una extensión Chrome construida con **Manifest V3** 
 ├── Crypto:         Web Crypto API (nativa del browser)
 ├── Almacenamiento: chrome.storage.local / chrome.storage.session
 ├── UI:             HTML5 + CSS3 (Vanilla — sin frameworks)
-└── Versión:        0.1.1
+└── Versión:        0.3.0
 ```
 
 ---
@@ -571,37 +572,16 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 
 ## 11. Roadmap Técnico
 
-### Fase 2 — Sincronización Azure Blob Storage
-
-**Arquitectura propuesta:**
-
 ```
-[Vault cifrado local]
-        │
-        │  chrome.identity (OAuth Microsoft)
-        ▼
-[Azure Blob Storage]
-        │
-        │  El blob es opaco para Azure — solo ve bytes cifrados
-        ▼
-[Otro dispositivo]
-        │
-        │  Descarga blob cifrado
-        ▼
-[Descifra localmente con master password]
+v0.1.1 ✅  MVP — Chrome Extension Zero-Knowledge
+v0.2.0 ✅  Paridad competitiva (F1.1-F1.6)
+v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
+v0.4.0 ⏳  App móvil React Native (iOS + Android)
+v0.5.0 ⏳  Tier Premium $1-1.50/mes + Plan Familias
+v1.0.0 ⏳  Auditoría Cure53 + listado público Chrome Web Store
 ```
 
-**Decisión de seguridad:** Azure nunca recibe la clave de descifrado. El vault viaja como un blob AES-256-GCM completamente opaco. Esta arquitectura es equivalente a la de Bitwarden con su propio servidor.
-
-**Componentes técnicos:**
-- `chrome.identity` para OAuth con cuenta Microsoft
-- Azure Blob Storage REST API
-- Merge de conflictos por timestamp de modificación
-- Indicador de estado de sincronización en el popup
-
-### Fase 3 — Android App (React Native)
-
-**Reutilización del motor de cifrado:**
+### Fase 4 — Android App (React Native)
 
 La lógica de cifrado se portará a React Native usando:
 - `expo-crypto` para acceso a primitivas nativas
@@ -611,7 +591,134 @@ La lógica de cifrado se portará a React Native usando:
 
 ---
 
-## 12. Referencias
+## 12. Sincronización BYOC
+
+La v0.3.0 introduce sincronización multi-dispositivo con arquitectura **BYOC (Bring Your Own Cloud)**. El usuario elige dónde vive su vault cifrado. El proveedor cloud nunca recibe la clave — solo almacena bytes opacos AES-256-GCM. Zero-Knowledge se mantiene intacto.
+
+### StorageAdapter — Interfaz base
+
+Todos los adaptadores implementan la misma interfaz definida en `src/sync/storage-adapter.js`:
+
+```javascript
+export class StorageAdapter {
+  async guardar(vaultCifrado)    { throw new Error('No implementado') }
+  async cargar()                 { throw new Error('No implementado') }
+  async ultimaModificacion()     { throw new Error('No implementado') }
+  async verificarConexion()      { throw new Error('No implementado') }
+  nombreProveedor()              { throw new Error('No implementado') }
+}
+```
+
+### GoogleDriveAdapter
+
+Implementado en `src/sync/google-drive-adapter.js`:
+
+- Autenticación OAuth via `chrome.identity` con scope `drive.appdata`
+- Almacena el vault en la carpeta privada de la app — no visible en la UI de Drive
+- El archivo es un blob JSON `{ iv, datos }` completamente opaco para Google
+- Usa la REST API de Google Drive v3
+
+**Flujo de autenticación:**
+
+```
+chrome.identity.getAuthToken({ interactive: true })
+        │
+        ▼
+[Token OAuth scope: drive.appdata]
+        │
+        ▼
+[Subir / descargar blob AES-256-GCM vía Drive API]
+```
+
+### OneDriveAdapter
+
+Implementado en `src/sync/onedrive-adapter.js`:
+
+- Autenticación OAuth via `chrome.identity` con cuenta Microsoft
+- Almacena el vault en `/me/drive/special/approot` via Microsoft Graph API
+- Mismo blob opaco que Google Drive — Microsoft nunca ve los datos en claro
+- Scope mínimo: `Files.ReadWrite.AppFolder`
+
+### SyncManager
+
+Orquestador en `src/sync/sync-manager.js`. Coordina los adaptadores y resuelve conflictos:
+
+```javascript
+// Flujo principal de sincronización
+async function sincronizar(adapter) {
+  const tsLocal  = await obtenerTimestampLocal()
+  const tsRemoto = await adapter.ultimaModificacion()
+
+  if (tsLocal > tsRemoto)  return await subirVault(adapter)
+  if (tsRemoto > tsLocal)  return await descargarYFusionar(adapter)
+  // Igual timestamp → sin cambios
+}
+```
+
+### Flujo de sincronización completo
+
+```
+[Usuario conecta proveedor en Settings]
+        │
+        ▼
+[OAuth → Token almacenado en chrome.storage.local (cifrado)]
+        │
+        ▼
+[SyncManager compara timestamps local vs. remoto]
+        │
+        ├── Local más reciente  → subir vault cifrado
+        ├── Remoto más reciente → descargar y fusionar
+        └── Igual               → no hacer nada
+        │
+        ▼
+[Badge en popup: ✅ Sincronizado / ⚠️ Pendiente / ❌ Error]
+```
+
+### Resolución de conflictos — Last Write Wins (LWW)
+
+Estrategia **LWW por timestamp** a nivel de credencial individual:
+
+```
+Si ambos dispositivos modificaron el vault desde la última sync:
+  1. Descargar versión remota
+  2. Unión de arrays por ID de credencial
+  3. En colisiones por ID → conservar el campo modificado más reciente
+  4. Subir versión fusionada
+  5. Notificar al usuario el resultado
+```
+
+### Guardia anti-loop `_syncTs`
+
+Para evitar que dos dispositivos se sincronicen mutuamente en cascada, cada operación de subida incluye un timestamp `_syncTs` en los metadatos del archivo. El SyncManager ignora una descarga si `_syncTs` coincide con la última subida propia.
+
+```javascript
+// Prevención de loop: no procesar una descarga que yo mismo subí
+if (metadatos._syncTs === ultimaSubidaPropia) return
+```
+
+### Seguridad Zero-Knowledge mantenida
+
+| Principio | Implementación en v0.3.0 |
+|-----------|--------------------------|
+| El proveedor nunca ve la clave | La clave AES permanece en memoria RAM local — nunca se sube |
+| El vault viaja cifrado | Blob `{ iv, datos }` — AES-256-GCM opaco |
+| OAuth scope mínimo | `drive.appdata` (Google) / `Files.ReadWrite.AppFolder` (Microsoft) |
+| Token OAuth protegido | Almacenado en `chrome.storage.local` con cifrado de Chrome |
+| Sin servidor de DacmosGroup | Todo en la cuenta del usuario — zero infraestructura propia |
+
+### Árbol de archivos de sync
+
+```
+src/sync/
+├── storage-adapter.js       ← Interfaz base (clase abstracta)
+├── google-drive-adapter.js  ← Adaptador Google Drive (drive.appdata)
+├── onedrive-adapter.js      ← Adaptador OneDrive (Graph API)
+└── sync-manager.js          ← Orquestador: timestamps, conflictos, estado
+```
+
+---
+
+## 13. Referencias
 
 ### Estándares y especificaciones
 

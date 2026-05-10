@@ -165,7 +165,7 @@
         </div>
         <div class="info-item">
           <span class="info-label">Versión</span>
-          <span class="info-value">0.1.1</span>
+          <span class="info-value">0.3.0</span>
         </div>
       </div>
     </section>
@@ -417,6 +417,78 @@
         <p class="success-msg hidden" id="successImportarCSV"></p>
 
       </div><!-- /panelImportarCSV -->
+    </section>
+
+    <!-- Sección: Sincronización (F2.1 — F2.3) -->
+    <section class="settings-section">
+      <h2 class="section-title">🔄 Sincronización multi-dispositivo</h2>
+      <p class="section-desc">
+        Tu vault siempre viaja cifrado (AES-256-GCM). El proveedor cloud
+        nunca recibe la clave — solo almacena bytes opacos.
+      </p>
+
+      <!-- Card: Google Drive -->
+      <div class="sync-card" id="syncCardGoogleDrive">
+        <div class="sync-card-header">
+          <div class="sync-provider-info">
+            <span class="sync-provider-icon">☁️</span>
+            <div class="sync-provider-text">
+              <span class="sync-provider-name">Google Drive</span>
+              <span class="sync-provider-desc">15 GB gratis · Carpeta privada (AppData)</span>
+            </div>
+          </div>
+          <span class="sync-badge sync-badge-off" id="syncBadgeGoogle">Desconectado</span>
+        </div>
+
+        <div class="sync-card-body" id="syncBodyGoogle">
+          <span class="sync-last-time" id="syncLastTime"></span>
+        </div>
+
+        <div class="sync-card-actions">
+          <button class="btn btn-secondary btn-sm hidden" id="btnSyncAhora">
+            Sincronizar ahora
+          </button>
+          <button class="btn btn-danger btn-sm hidden" id="btnDesconectarGoogle">
+            Desconectar
+          </button>
+          <button class="btn btn-primary btn-sm" id="btnConectarGoogle">
+            Conectar con Google
+          </button>
+        </div>
+      </div>
+
+      <!-- Card: OneDrive -->
+      <div class="sync-card" id="syncCardOneDrive">
+        <div class="sync-card-header">
+          <div class="sync-provider-info">
+            <span class="sync-provider-icon">☁️</span>
+            <div class="sync-provider-text">
+              <span class="sync-provider-name">OneDrive</span>
+              <span class="sync-provider-desc">5 GB gratis · Carpeta privada (AppData)</span>
+            </div>
+          </div>
+          <span class="sync-badge sync-badge-off" id="syncBadgeOneDrive">Desconectado</span>
+        </div>
+
+        <div class="sync-card-body" id="syncBodyOneDrive">
+          <span class="sync-last-time" id="syncLastTimeOneDrive"></span>
+        </div>
+
+        <div class="sync-card-actions">
+          <button class="btn btn-secondary btn-sm hidden" id="btnSyncAhoraOneDrive">
+            Sincronizar ahora
+          </button>
+          <button class="btn btn-danger btn-sm hidden" id="btnDesconectarOneDrive">
+            Desconectar
+          </button>
+          <button class="btn btn-primary btn-sm" id="btn-conectar-onedrive">
+            Conectar con Microsoft
+          </button>
+        </div>
+      </div>
+
+      <p class="error-msg  hidden" id="errorSync"></p>
+      <p class="success-msg hidden" id="successSync"></p>
     </section>
 
     <!-- Sección: Zona de Peligro -->

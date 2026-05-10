@@ -2,9 +2,33 @@
 // Dacmos Password Manager — Service Worker
 // E1.9: Lock automático + badge de credenciales
 // F1.6: URL matching mejorado (dominio base, wildcards)
+// F2.1: Google Drive Sync (BYOC)
+// F2.2: OneDrive Sync (BYOC)
 // ================================================
 
 import { filtrarCredenciales } from '../utils/url-matcher.js'
+import {
+  sincronizarTrasEscritura,
+  conectarGoogleDrive,
+  desconectarGoogleDrive,
+  obtenerEstadoSync,
+} from '../sync/sync-manager.js'
+import {
+  sincronizarOneDrive,
+  conectarOneDrive,
+  desconectarOneDrive,
+} from '../sync/onedrive-sync-manager.js'
+
+// Enruta la sincronización al adaptador activo según syncConfig.proveedor
+function dispararSync() {
+  chrome.storage.local.get(['syncConfig'], r => {
+    if (r.syncConfig?.proveedor === 'onedrive') {
+      sincronizarOneDrive()        // fire-and-forget
+    } else {
+      sincronizarTrasEscritura()   // google-drive (comportamiento anterior)
+    }
+  })
+}
 
 // ── Al instalar la extensión ──
 chrome.runtime.onInstalled.addListener(() => {
@@ -134,6 +158,7 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
     guardarCredencialesSesion(mensaje.credenciales).then(() => {
       chrome.storage.local.set({ sesionActiva: true });
       iniciarTimerInactividad();
+      dispararSync();              // fire-and-forget — no bloquea el unlock
       sendResponse({ ok: true });
     });
     return true;
@@ -163,6 +188,54 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
 
     sendResponse({ ok: true });
     return true;
+  }
+
+  // ── Handlers de sincronización (F2.1) ──
+
+  if (mensaje.tipo === 'SYNC_CONECTAR') {
+    conectarGoogleDrive()
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true
+  }
+
+  if (mensaje.tipo === 'SYNC_DESCONECTAR') {
+    desconectarGoogleDrive()
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true
+  }
+
+  if (mensaje.tipo === 'SYNC_SINCRONIZAR') {
+    // Delegar al adaptador activo
+    const cfg = new Promise(resolve =>
+      chrome.storage.local.get(['syncConfig'], r => resolve(r.syncConfig || {}))
+    )
+    cfg.then(c => c.proveedor === 'onedrive' ? sincronizarOneDrive() : sincronizarTrasEscritura())
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true
+  }
+
+  if (mensaje.tipo === 'SYNC_CONECTAR_ONEDRIVE') {
+    conectarOneDrive()
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true
+  }
+
+  if (mensaje.tipo === 'SYNC_DESCONECTAR_ONEDRIVE') {
+    desconectarOneDrive()
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true
+  }
+
+  if (mensaje.tipo === 'SYNC_OBTENER_ESTADO') {
+    obtenerEstadoSync()
+      .then(estado => sendResponse(estado))
+      .catch(() => sendResponse({ estado: 'error', mensaje: '', ultimaSync: null, proveedor: null }))
+    return true
   }
 
   // Content script solicita credenciales para autocompletar
@@ -195,6 +268,22 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
     return true;
   }
 });
+
+// ── Sync: disparar sincronización cuando vaultCifrado cambia ──
+// DECISIÓN: Usamos onChanged en lugar de un mensaje VAULT_GUARDADO explícito
+// porque cubre TODOS los paths de escritura, incluyendo cambiarMasterPassword()
+// que escribe directamente en storage sin pasar por guardarVaultCifrado().
+//
+// GUARDIA ANTI-LOOP: Si el cambio incluye _syncTs, fue escrito por sync-manager
+// al descargar desde Drive. En ese caso se omite redisparar para evitar
+// el ciclo descarga → onChanged → subida innecesaria.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return
+  if ('_syncTs' in changes) return  // escritura interna de sync — ignorar
+  if ('vaultCifrado' in changes) {
+    dispararSync()                  // fire-and-forget — enruta según proveedor activo
+  }
+})
 
 // ── Resetear timer y actualizar badge cuando cambia de pestaña ──
 chrome.tabs.onActivated.addListener((activeInfo) => {

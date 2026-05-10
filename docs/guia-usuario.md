@@ -1,6 +1,6 @@
 # 📖 Guía de Usuario — Dacmos Password Manager
 
-**Versión 0.1.1 · Abril 2026**
+**Versión 0.3.0 · Mayo 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 ---
@@ -18,6 +18,7 @@
    - 6.3 [Generador de Contraseñas](#63-generador-de-contraseñas)
    - 6.4 [Configuración y Seguridad](#64-configuración-y-seguridad)
    - 6.5 [Backup del Vault](#65-backup-del-vault)
+   - 6.6 [Sincronización multi-dispositivo](#66-sincronización-multi-dispositivo)
 7. [Preguntas Frecuentes](#7-preguntas-frecuentes)
 8. [Solución de Problemas](#8-solución-de-problemas)
 9. [Contacto y Soporte](#9-contacto-y-soporte)
@@ -47,6 +48,7 @@ A diferencia de otros gestores de contraseñas, **tus datos nunca salen de tu co
 | 🔒 Lock automático | Bloquea el vault tras inactividad configurable |
 | 💾 Backup | Exporta e importa tu vault de forma segura |
 | 🔢 Badge | Muestra cuántas credenciales tienes para cada sitio |
+| 🔄 Sincronización | Vault cifrado en Google Drive u OneDrive — multi-dispositivo |
 
 ---
 
@@ -326,6 +328,56 @@ Es importante realizar backups periódicos de tu vault.
 
 ---
 
+### 6.6 Sincronización multi-dispositivo
+
+La sincronización te permite mantener tu vault actualizado en todos tus dispositivos usando tu propio almacenamiento en la nube (**BYOC — Bring Your Own Cloud**). Tu vault siempre viaja cifrado — el proveedor nunca recibe tu clave maestra.
+
+#### Conectar Google Drive
+
+1. Ve a Configuración → sección **"🔄 Sincronización multi-dispositivo"**
+2. En la card **Google Drive**, clic en **"Conectar con Google"**
+3. Se abrirá la ventana de autorización de Google
+4. Inicia sesión y acepta el permiso solicitado
+   > Solo pedimos acceso a la carpeta privada de la app (`drive.appdata`) — no a tus archivos personales de Drive
+5. El badge cambiará a **✅ Sincronizado**
+6. Tu vault se sincronizará automáticamente al desbloquear y al guardar cambios
+
+#### Conectar OneDrive
+
+1. Ve a Configuración → sección **"🔄 Sincronización multi-dispositivo"**
+2. En la card **OneDrive**, clic en **"Conectar con Microsoft"**
+3. Se abrirá la ventana de autorización de Microsoft
+4. Inicia sesión con tu cuenta Microsoft (Outlook, Xbox, Office)
+5. Acepta el permiso de acceso a la carpeta de la app
+6. El badge cambiará a **✅ Sincronizado**
+
+#### ¿Qué significa cada estado?
+
+| Estado | Significado |
+|--------|------------|
+| **Desconectado** | No hay proveedor configurado — vault solo local |
+| **Sincronizando…** | Subiendo o descargando el vault cifrado |
+| **Sincronizado** | El vault local y la copia remota están al día |
+| **Pendiente** | Hay cambios locales aún no subidos |
+| **Error** | Problema de red o de permisos — intenta "Sincronizar ahora" |
+
+#### Sincronizar manualmente
+
+Cuando el estado sea **Pendiente** o **Error**, puedes forzar la sincronización:
+1. Ve a Configuración → sección de Sincronización
+2. Clic en **"Sincronizar ahora"** en la card del proveedor conectado
+
+#### Desconectar un proveedor
+
+1. Clic en **"Desconectar"** en la card del proveedor
+2. Tu vault local **no se borra** — solo se revoca el acceso al proveedor cloud
+
+#### Nota de seguridad
+
+> El proveedor cloud (Google o Microsoft) **nunca recibe tu clave maestra**. Lo que se almacena en Drive u OneDrive es un blob cifrado con AES-256-GCM — completamente ilegible sin tu contraseña maestra. Zero-Knowledge se mantiene intacto incluso con la sincronización activa.
+
+---
+
 ## 7. Preguntas Frecuentes
 
 **¿Qué pasa si olvido mi contraseña maestra?**
@@ -339,9 +391,9 @@ No existe mecanismo de recuperación — esto es por diseño para garantizar el 
 
 **¿Puedo usar la extensión en múltiples computadoras?**
 
-La versión actual (0.1.1) es local-first — los datos viven en el dispositivo donde se instaló. Para usar en otra computadora, exporta el vault desde el dispositivo original e impórtalo en el nuevo.
+Sí. Desde v0.3.0 puedes conectar Google Drive u OneDrive para sincronizar tu vault automáticamente entre dispositivos. Ve a Configuración → sección **"Sincronización multi-dispositivo"** y conecta tu proveedor preferido.
 
-La sincronización automática entre dispositivos está planeada para **Fase 2** (Azure Blob Storage).
+Si prefieres no usar la nube, también puedes exportar el vault desde el dispositivo original e importarlo en el nuevo.
 
 ---
 
