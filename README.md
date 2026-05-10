@@ -6,7 +6,7 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
-[![Versión](https://img.shields.io/badge/Versión-0.2.0-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![Versión](https://img.shields.io/badge/Versión-0.3.0-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -51,10 +51,14 @@
 | F1.5 | Tipos de credencial: Tarjeta de crédito e Identidad | ✅ |
 | F1.6 | URL matching mejorado con dominio base y wildcards | ✅ |
 
-### ⏳ Fase 2 — Sincronización multi-dispositivo (PENDIENTE)
-- Sincronización via **Azure Blob Storage**
-- El vault viaja cifrado — Azure nunca ve los datos en claro
-- Autenticación via Microsoft Account
+### ✅ Fase 2 — Sincronización BYOC v0.3.0 (COMPLETADA)
+
+| Feature | Descripción | Estado |
+|---------|-------------|--------|
+| F2.1 | Google Drive Sync — OAuth drive.appdata, Zero-Knowledge | ✅ |
+| F2.2 | OneDrive Sync — Microsoft Graph API, Zero-Knowledge | ✅ |
+| F2.3 | Selector de proveedor en Settings — cards Google Drive / OneDrive | ✅ |
+| F2.4 | Indicador de estado en popup — Sincronizado / Pendiente / Error | ✅ |
 
 ### 📱 Fase 3 — App móvil (PENDIENTE)
 - React Native (iOS + Android)
@@ -85,7 +89,7 @@ Disponible en modo no listado — instalación via enlace directo:
 
 ---
 
-## 🔑 Funciones Principales v0.2.0
+## 🔑 Funciones Principales v0.3.0
 
 - **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
 - **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
@@ -95,6 +99,9 @@ Disponible en modo no listado — instalación via enlace directo:
 - **Autocompletado** — login, checkout (tarjetas) y registro (identidades)
 - **URL matching robusto** — dominio base, subdominios y wildcards
 - **Lock automático** — chrome.alarms, cero persistencia de clave
+- **Sync Google Drive** — OAuth drive.appdata, vault cifrado opaco, Zero-Knowledge
+- **Sync OneDrive** — Microsoft Graph API, misma garantía de privacidad
+- **BYOC** — tú eliges el proveedor cloud; DacmosGroup no almacena nada
 
 ---
 
