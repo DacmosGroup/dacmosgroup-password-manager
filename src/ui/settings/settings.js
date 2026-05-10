@@ -142,11 +142,116 @@ async function syncAhora() {
   }
 }
 
+// ── Sincronización OneDrive (F2.x) ──
+
+async function cargarEstadoSyncOneDrive() {
+  const estado = await new Promise(resolve =>
+    chrome.runtime.sendMessage({ tipo: 'SYNC_OBTENER_ESTADO' }, resolve)
+  )
+
+  const badge    = document.getElementById('syncBadgeOneDrive')
+  const btnCon   = document.getElementById('btn-conectar-onedrive')
+  const btnDes   = document.getElementById('btnDesconectarOneDrive')
+  const btnSync  = document.getElementById('btnSyncAhoraOneDrive')
+  const lastTime = document.getElementById('syncLastTimeOneDrive')
+
+  if (!badge) return
+
+  const conectado = estado?.proveedor === 'onedrive'
+  const ui = conectado ? (SYNC_BADGE[estado?.estado] ?? SYNC_BADGE.desconectado) : SYNC_BADGE.desconectado
+  badge.textContent = ui.texto
+  badge.className   = `sync-badge ${ui.cls}`
+
+  btnCon.classList.toggle('hidden',  conectado)
+  btnDes.classList.toggle('hidden', !conectado)
+  btnSync.classList.toggle('hidden', !conectado)
+
+  if (conectado && estado.ultimaSync) {
+    const fecha = new Date(estado.ultimaSync).toLocaleString('es', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+    })
+    lastTime.textContent = `Última sync: ${fecha}`
+  } else {
+    lastTime.textContent = ''
+  }
+}
+
+async function conectarOneDrive() {
+  const btnCon    = document.getElementById('btn-conectar-onedrive')
+  const errorEl   = document.getElementById('errorSync')
+  const successEl = document.getElementById('successSync')
+  errorEl.classList.add('hidden')
+  successEl.classList.add('hidden')
+
+  btnCon.textContent = 'Conectando…'
+  btnCon.disabled    = true
+
+  const resp = await new Promise(resolve =>
+    chrome.runtime.sendMessage({ tipo: 'SYNC_CONECTAR_ONEDRIVE' }, resolve)
+  )
+
+  btnCon.textContent = 'Conectar con Microsoft'
+  btnCon.disabled    = false
+
+  if (resp?.ok) {
+    mostrarExito(successEl, '✅ OneDrive conectado — vault sincronizando')
+    await cargarEstadoSyncOneDrive()
+  } else {
+    mostrarError(errorEl, resp?.error || 'Error al conectar con Microsoft')
+  }
+}
+
+async function desconectarOneDrive() {
+  if (!confirm('¿Desconectar OneDrive? Tu vault local no se borra.')) return
+
+  const errorEl   = document.getElementById('errorSync')
+  const successEl = document.getElementById('successSync')
+  errorEl.classList.add('hidden')
+  successEl.classList.add('hidden')
+
+  const resp = await new Promise(resolve =>
+    chrome.runtime.sendMessage({ tipo: 'SYNC_DESCONECTAR_ONEDRIVE' }, resolve)
+  )
+
+  if (resp?.ok) {
+    mostrarExito(successEl, '✅ OneDrive desconectado')
+    await cargarEstadoSyncOneDrive()
+  } else {
+    mostrarError(errorEl, resp?.error || 'Error al desconectar')
+  }
+}
+
+async function syncAhoraOneDrive() {
+  const btnSync   = document.getElementById('btnSyncAhoraOneDrive')
+  const errorEl   = document.getElementById('errorSync')
+  const successEl = document.getElementById('successSync')
+  errorEl.classList.add('hidden')
+  successEl.classList.add('hidden')
+
+  btnSync.textContent = 'Sincronizando…'
+  btnSync.disabled    = true
+
+  const resp = await new Promise(resolve =>
+    chrome.runtime.sendMessage({ tipo: 'SYNC_SINCRONIZAR_ONEDRIVE' }, resolve)
+  )
+
+  btnSync.textContent = 'Sincronizar ahora'
+  btnSync.disabled    = false
+
+  if (resp?.ok) {
+    mostrarExito(successEl, '✅ Vault sincronizado')
+    await cargarEstadoSyncOneDrive()
+  } else {
+    mostrarError(errorEl, resp?.error || 'Error al sincronizar')
+  }
+}
+
 // ── Inicialización ──
 async function inicializar() {
   await cargarConfiguracion()
   await determinarPanel()
   await cargarEstadoSync()
+  await cargarEstadoSyncOneDrive()
 }
 
 async function determinarPanel() {
@@ -672,6 +777,10 @@ document.getElementById('btnToggleImportarPass').addEventListener('click', () =>
 document.getElementById('btnConectarGoogle').addEventListener('click', conectarGoogle)
 document.getElementById('btnDesconectarGoogle').addEventListener('click', desconectarGoogle)
 document.getElementById('btnSyncAhora').addEventListener('click', syncAhora)
+
+document.getElementById('btn-conectar-onedrive').addEventListener('click', conectarOneDrive)
+document.getElementById('btnDesconectarOneDrive').addEventListener('click', desconectarOneDrive)
+document.getElementById('btnSyncAhoraOneDrive').addEventListener('click', syncAhoraOneDrive)
 
 // ── Zona de peligro ──
 document.getElementById('btnBorrarTodo').addEventListener('click', borrarTodo)
