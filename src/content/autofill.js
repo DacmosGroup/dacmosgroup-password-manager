@@ -82,10 +82,12 @@ function detectarCamposLogin() {
   const camposPassword = document.querySelectorAll(SELECTORES_PASSWORD.join(','))
   if (camposPassword.length === 0) return
 
-  camposPassword.forEach(campoPass => {
+  // Priorizar el primer campo password válido — evita que "Confirm password"
+  // sobreescriba "Create password" en formularios de registro con dos campos
+  for (const campoPass of camposPassword) {
     const form = campoPass.closest('form')
     const campoUsuario = encontrarCampoUsuario(form, campoPass)
-    if (!esFormularioLogin(form, campoPass)) return
+    if (!esFormularioLogin(form, campoPass)) continue
 
     tipoFormularioDetectado = 'login'
     camposDetectados.usuario    = campoUsuario
@@ -95,7 +97,8 @@ function detectarCamposLogin() {
     if (campoUsuario) inyectarIcono(campoUsuario, 'usuario')
     inyectarIcono(campoPass, 'password')
     notificarDeteccion('login')
-  })
+    break  // Primer campo válido encontrado — no procesar campos siguientes
+  }
 }
 
 function encontrarCampoUsuario(form, campoPassword) {
