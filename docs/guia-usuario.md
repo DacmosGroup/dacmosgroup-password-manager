@@ -1,6 +1,6 @@
 # 📖 Guía de Usuario — Dacmos Password Manager
 
-**Versión 0.3.0 · Mayo 2026**
+**Versión 0.3.1 · Mayo 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 ---
@@ -149,7 +149,6 @@ La primera vez que abras la extensión verás la pantalla de **Bienvenida**.
 3. En la sección **"Contraseña Maestra"** ingresa una contraseña segura:
    - Mínimo 12 caracteres
    - Combina mayúsculas, minúsculas, números y símbolos
-   - Ejemplo: `DacmosGroup2024!`
 4. Confírmala en el segundo campo
 5. Observa el indicador de fortaleza — busca **"Muy fuerte"** o **"Excelente"**
 6. Clic en **"Guardar contraseña maestra"**
@@ -175,40 +174,23 @@ El Vault es donde se almacenan todas tus credenciales cifradas.
 
 **Acceder al Vault:**
 - Desde el popup → clic en **"Mi Vault"**
-- O desde la barra de navegación → **"Vault"**
 
 **Agregar una credencial:**
 1. Clic en **"+ Nueva"** o **"+ Agregar credencial"**
-2. Llena los campos:
-   - **Sitio / Servicio** *(obligatorio)*: nombre del sitio (ej. Gmail, GitHub)
-   - **URL** *(opcional)*: dirección web (ej. https://gmail.com)
-   - **Usuario / Email** *(obligatorio)*: tu nombre de usuario o email
-   - **Contraseña** *(obligatorio)*: tu contraseña
-   - **Notas** *(opcional)*: información adicional
+2. Llena los campos requeridos
 3. Usa el botón ⚡ para generar una contraseña segura automáticamente
-4. Observa el indicador de fortaleza
-5. Clic en **"Guardar"**
-
-**Editar una credencial:**
-- Pasa el mouse sobre la credencial
-- Clic en el ícono ✏️
-- Modifica los campos necesarios
-- Clic en **"Guardar"**
+4. Clic en **"Guardar"**
 
 **Copiar una contraseña:**
-- Pasa el mouse sobre la credencial
-- Clic en el ícono 📋
-- La contraseña se copia al portapapeles
-- Se borrará automáticamente después de 30 segundos (configurable)
-
-**Eliminar una credencial:**
-- Pasa el mouse sobre la credencial
-- Clic en el ícono 🗑️
-- Confirma la eliminación
+- Pasa el mouse sobre la credencial → clic en el ícono 📋
+- La contraseña se borra del portapapeles automáticamente después de 30 segundos
 
 **Buscar credenciales:**
-- Usa la barra de búsqueda en la parte superior
-- Filtra por nombre del sitio, usuario o URL en tiempo real
+- Usa la barra de búsqueda en la parte superior para filtrar en tiempo real
+
+**Navegar entre secciones:**
+- Todas las vistas (Vault, Health, Generator, Settings) tienen un botón **← Inicio**
+  en la esquina superior izquierda para volver al punto de partida.
 
 ---
 
@@ -222,18 +204,22 @@ El autocompletado detecta formularios de login en las páginas web y completa tu
 2. Verás el ícono 🔐 dentro del campo de contraseña
 3. Asegúrate de tener el vault **desbloqueado**
 4. Haz clic en el ícono 🔐
-5. Si tienes credenciales guardadas para ese sitio, aparecerá un selector
-6. Selecciona la credencial deseada
-7. Los campos se llenarán automáticamente
+5. Selecciona la credencial deseada en el selector
+6. Los campos se llenarán automáticamente
 
-**Badge inteligente:**
-- El ícono de la extensión muestra un número azul cuando hay credenciales disponibles para el sitio actual
-- Por ejemplo: **🔐 2** significa que tienes 2 credenciales para ese dominio
+**Formularios de registro (Create/Confirm password):**
+El autocompletado detecta correctamente el primer campo password del formulario.
+En formularios con "Create password" y "Confirm password", la contraseña
+se llena en el campo correcto (Create), no en la confirmación.
 
-**¿No aparece el ícono?**
-- Verifica que el vault esté desbloqueado
-- Algunos sitios con diseños especiales pueden no detectarse automáticamente
-- En ese caso, copia la contraseña manualmente desde el Vault
+**¿El ícono aparece pero dice "No hay credenciales"?**
+
+Lo más probable es que el vault esté bloqueado. Verifica el badge del ícono de
+la extensión — si aparece en rojo o sin número, desbloquea el vault primero
+y vuelve a intentarlo.
+
+> 💡 Configura el **bloqueo automático** en 5 minutos o más si usas el
+> autocompletado con frecuencia (Configuración → Bloqueo automático).
 
 ---
 
@@ -241,46 +227,25 @@ El autocompletado detecta formularios de login en las páginas web y completa tu
 
 El generador crea contraseñas seguras usando el motor criptográfico del navegador.
 
-**Acceder al generador:**
-- Desde el popup → clic en **"Generar"** en la barra de navegación
-
 **Opciones disponibles:**
 
-| Opción | Descripción | Valor por defecto |
-|--------|-------------|------------------|
-| Longitud | Número de caracteres (8-64) | 16 |
-| Mayúsculas (A-Z) | Incluir letras mayúsculas | ✅ Activado |
-| Minúsculas (a-z) | Incluir letras minúsculas | ✅ Activado |
-| Números (0-9) | Incluir dígitos | ✅ Activado |
-| Símbolos (!@#$...) | Incluir caracteres especiales | ✅ Activado |
-| Excluir ambiguos | Excluir 0, O, l, 1, I | ❌ Desactivado |
+| Opción | Valor por defecto |
+|--------|------------------|
+| Longitud (8-64) | 16 |
+| Mayúsculas (A-Z) | ✅ Activado |
+| Minúsculas (a-z) | ✅ Activado |
+| Números (0-9) | ✅ Activado |
+| Símbolos (!@#$...) | ✅ Activado |
+| Excluir ambiguos | ❌ Desactivado |
 
 **Indicadores de calidad:**
-- **Fortaleza:** Muy débil / Débil / Regular / Fuerte / Muy fuerte / Excelente
-- **Entropía:** Bits de aleatoriedad (80+ bits es seguro; 100+ es excelente)
-
-**Historial:**
-- Las últimas 5 contraseñas generadas aparecen en el historial
-- Puedes copiar cualquiera con el botón 📋
-- Clic en **"Limpiar"** para borrar el historial
+- **Entropía:** 100+ bits es excelente; 80+ bits es seguro
 
 ---
 
 ### 6.4 Configuración y Seguridad
 
-**Acceder a configuración:**
-- Desde el popup → clic en **"Config"** en la barra de navegación
-
-**Cambiar contraseña maestra:**
-1. En la sección **"Contraseña Maestra"** verás el panel de cambio
-2. Ingresa tu contraseña actual
-3. Ingresa y confirma la nueva contraseña
-4. Clic en **"Cambiar contraseña maestra"**
-
-> 🔒 **Nota de seguridad:** Al cambiar la contraseña maestra, todo el vault se re-cifra con la nueva clave. Este proceso puede tardar unos segundos.
-
-**Bloqueo automático:**
-Configura cuánto tiempo puede estar el vault desbloqueado sin actividad:
+**Bloqueo automático — recomendaciones:**
 
 | Opción | Recomendado para |
 |--------|-----------------|
@@ -288,93 +253,60 @@ Configura cuánto tiempo puede estar el vault desbloqueado sin actividad:
 | 5 minutos | Uso personal (recomendado) |
 | 15 minutos | Trabajo intensivo |
 | 30 minutos | Sesiones largas |
-| Nunca | No recomendado |
 
-**Limpiar portapapeles:**
-Tiempo tras el cual se borra automáticamente la contraseña copiada:
-- Recomendado: **30 segundos**
-
-**Bloquear manualmente:**
-- Desde el popup → clic en **"Bloquear"** en la barra de navegación
+> 💡 Un tiempo de bloqueo muy corto (1 minuto) puede hacer que el vault
+> se bloquee mientras navegas entre tabs, lo que afecta el autocompletado.
+> **5 minutos es el balance recomendado** entre seguridad y comodidad.
 
 ---
 
 ### 6.5 Backup del Vault
 
-Es importante realizar backups periódicos de tu vault.
-
 **Exportar vault:**
 1. Ve a Configuración → sección **"Backup del Vault"**
-2. Clic en **"Exportar"**
-3. Ingresa tu contraseña maestra para confirmar
-4. Clic en **"Descargar backup"**
-5. Se descargará un archivo: `dacmosgroup-vault-backup-FECHA.json`
+2. Clic en **"Exportar"** → ingresa tu contraseña maestra → **"Descargar backup"**
+3. Archivo: `dacmosgroup-vault-backup-FECHA.json`
 
-> 🔒 **El archivo exportado está cifrado con AES-256-GCM.** Sin tu contraseña maestra es completamente ilegible. Puedes guardarlo en la nube sin riesgo.
+> 🔒 El archivo exportado está cifrado con AES-256-GCM. Sin tu contraseña
+> maestra es completamente ilegible.
 
 **Importar vault:**
-1. Ve a Configuración → sección **"Backup del Vault"**
-2. Clic en **"Importar"**
-3. Selecciona el archivo `.json` de backup
-4. Ingresa la contraseña maestra del backup
-5. Clic en **"Importar credenciales"**
-
-> 💡 **Fusión inteligente:** Al importar, las credenciales se fusionan con las existentes — no se pierden datos actuales.
-
-**¿Con qué frecuencia hacer backup?**
-- Al agregar nuevas credenciales importantes
-- Al menos una vez por semana si lo usas frecuentemente
-- Antes de cambiar la contraseña maestra
+1. Ve a Configuración → **"Importar"**
+2. Selecciona el archivo `.json` de backup
+3. Ingresa la contraseña maestra del backup
 
 ---
 
 ### 6.6 Sincronización multi-dispositivo
 
-La sincronización te permite mantener tu vault actualizado en todos tus dispositivos usando tu propio almacenamiento en la nube (**BYOC — Bring Your Own Cloud**). Tu vault siempre viaja cifrado — el proveedor nunca recibe tu clave maestra.
+La sincronización mantiene tu vault actualizado en todos tus dispositivos usando
+tu propio almacenamiento en la nube (**BYOC — Bring Your Own Cloud**).
 
 #### Conectar Google Drive
 
-1. Ve a Configuración → sección **"🔄 Sincronización multi-dispositivo"**
-2. En la card **Google Drive**, clic en **"Conectar con Google"**
-3. Se abrirá la ventana de autorización de Google
-4. Inicia sesión y acepta el permiso solicitado
-   > Solo pedimos acceso a la carpeta privada de la app (`drive.appdata`) — no a tus archivos personales de Drive
-5. El badge cambiará a **✅ Sincronizado**
-6. Tu vault se sincronizará automáticamente al desbloquear y al guardar cambios
+1. Ve a Configuración → **"🔄 Sincronización multi-dispositivo"**
+2. Clic en **"Conectar con Google"**
+3. Acepta el permiso `drive.appdata` (solo carpeta privada de la app)
+4. El badge cambiará a **✅ Sincronizado**
 
 #### Conectar OneDrive
 
-1. Ve a Configuración → sección **"🔄 Sincronización multi-dispositivo"**
-2. En la card **OneDrive**, clic en **"Conectar con Microsoft"**
-3. Se abrirá la ventana de autorización de Microsoft
-4. Inicia sesión con tu cuenta Microsoft (Outlook, Xbox, Office)
-5. Acepta el permiso de acceso a la carpeta de la app
-6. El badge cambiará a **✅ Sincronizado**
+1. Ve a Configuración → **"🔄 Sincronización multi-dispositivo"**
+2. Clic en **"Conectar con Microsoft"**
+3. Acepta el permiso de acceso a la carpeta de la app
 
-#### ¿Qué significa cada estado?
+#### Estados de sincronización
 
 | Estado | Significado |
 |--------|------------|
-| **Desconectado** | No hay proveedor configurado — vault solo local |
+| **Desconectado** | Vault solo local |
 | **Sincronizando…** | Subiendo o descargando el vault cifrado |
-| **Sincronizado** | El vault local y la copia remota están al día |
+| **Sincronizado** | Local y remoto al día |
 | **Pendiente** | Hay cambios locales aún no subidos |
-| **Error** | Problema de red o de permisos — intenta "Sincronizar ahora" |
+| **Error** | Problema de red — intenta "Sincronizar ahora" |
 
-#### Sincronizar manualmente
-
-Cuando el estado sea **Pendiente** o **Error**, puedes forzar la sincronización:
-1. Ve a Configuración → sección de Sincronización
-2. Clic en **"Sincronizar ahora"** en la card del proveedor conectado
-
-#### Desconectar un proveedor
-
-1. Clic en **"Desconectar"** en la card del proveedor
-2. Tu vault local **no se borra** — solo se revoca el acceso al proveedor cloud
-
-#### Nota de seguridad
-
-> El proveedor cloud (Google o Microsoft) **nunca recibe tu clave maestra**. Lo que se almacena en Drive u OneDrive es un blob cifrado con AES-256-GCM — completamente ilegible sin tu contraseña maestra. Zero-Knowledge se mantiene intacto incluso con la sincronización activa.
+> El proveedor cloud nunca recibe tu clave maestra. Zero-Knowledge se
+> mantiene intacto con la sincronización activa.
 
 ---
 
@@ -382,51 +314,46 @@ Cuando el estado sea **Pendiente** o **Error**, puedes forzar la sincronización
 
 **¿Qué pasa si olvido mi contraseña maestra?**
 
-No existe mecanismo de recuperación — esto es por diseño para garantizar el modelo Zero-Knowledge. Si olvidas la contraseña maestra, no podrás acceder a tus credenciales guardadas. Por eso es crucial:
-- Recordarla bien
-- Tener un backup reciente
-- Guardar la contraseña en un lugar físico seguro
+No existe mecanismo de recuperación — esto es por diseño. Realiza backups
+periódicos y guarda tu contraseña maestra en un lugar físico seguro.
+
+---
+
+**El autocompletado muestra "No hay credenciales guardadas" pero sí tengo credenciales.**
+
+Casi siempre es porque el vault se bloqueó. Abre el popup de la extensión,
+desbloquea con tu contraseña maestra, y vuelve a intentar el autocompletado.
+Considera aumentar el tiempo de bloqueo automático a 5 minutos.
 
 ---
 
 **¿Puedo usar la extensión en múltiples computadoras?**
 
-Sí. Desde v0.3.0 puedes conectar Google Drive u OneDrive para sincronizar tu vault automáticamente entre dispositivos. Ve a Configuración → sección **"Sincronización multi-dispositivo"** y conecta tu proveedor preferido.
-
-Si prefieres no usar la nube, también puedes exportar el vault desde el dispositivo original e importarlo en el nuevo.
-
----
-
-**¿Qué tan seguro es el archivo de backup?**
-
-El archivo `.json` exportado está cifrado con AES-256-GCM usando tu contraseña maestra. Sin esa contraseña, el archivo es completamente ilegible. Puedes almacenarlo en servicios de nube como Google Drive o OneDrive sin riesgo.
+Sí. Conecta Google Drive u OneDrive en Configuración → **"Sincronización
+multi-dispositivo"** para sincronizar automáticamente.
 
 ---
 
 **¿Por qué tarda unos segundos al desbloquear?**
 
-Esto es intencional y es una característica de seguridad. El proceso PBKDF2-SHA256 con 600,000 iteraciones tarda ~1 segundo en derivar la clave criptográfica. Este tiempo es insignificante para el usuario pero hace computacionalmente inviable un ataque de fuerza bruta.
+Es intencional. PBKDF2-SHA256 con 600,000 iteraciones tarda ~1 segundo
+para hacer computacionalmente inviable un ataque de fuerza bruta.
 
 ---
 
 **¿La extensión funciona sin internet?**
 
-Sí, completamente. Todo el cifrado y almacenamiento es local. No necesitas conexión a internet para usar ninguna función.
-
----
-
-**¿Qué sitios detecta el autocompletado?**
-
-El autocompletado detecta cualquier página web que tenga un campo de tipo `password`. Funciona en la gran mayoría de sitios. En casos excepcionales donde el diseño del sitio sea muy inusual, puede que no detecte los campos automáticamente.
+Sí, completamente offline. La sincronización requiere conexión, pero
+todas las demás funciones son locales.
 
 ---
 
 **¿Puedo confiar en esta extensión?**
 
-El código fuente es completamente abierto y disponible en:
+El código fuente es completamente abierto:
 `github.com/DacmosGroup/dacmosgroup-password-manager`
 
-Puedes auditar cada línea de código. No existen servidores externos ni telemetría. Todo ocurre en tu dispositivo.
+No hay servidores externos ni telemetría. Todo ocurre en tu dispositivo.
 
 ---
 
@@ -434,56 +361,38 @@ Puedes auditar cada línea de código. No existen servidores externos ni telemet
 
 ### El ícono 🔐 no aparece en los campos de login
 
-**Solución:**
-1. Verifica que el vault esté desbloqueado (badge verde en el ícono)
+1. Verifica que el vault esté desbloqueado
 2. Recarga la página con F5
-3. Si persiste, ve a `chrome://extensions/` y recarga la extensión con el botón 🔄
+3. Si persiste, ve a `chrome://extensions/` y recarga la extensión con 🔄
+
+---
+
+### "No hay credenciales guardadas" al hacer clic en el ícono 🔐
+
+**Causa más probable:** el vault se bloqueó automáticamente.
+
+1. Haz clic en el ícono de la extensión en la barra de Chrome
+2. Desbloquea con tu contraseña maestra
+3. Vuelve a hacer clic en el ícono 🔐 del formulario
+
+Si el problema persiste con el vault desbloqueado, verifica que la URL
+de la credencial guardada corresponda al dominio del sitio actual.
 
 ---
 
 ### "Contraseña incorrecta" al desbloquear
 
-**Posibles causas:**
-- Escribiste la contraseña con Caps Lock activado
-- Hay un espacio al inicio o final de la contraseña
-
-**Solución:**
 1. Usa el ícono 👁 para ver la contraseña mientras la escribes
-2. Verifica que no haya espacios extras
-
----
-
-### El autocompletado no encuentra credenciales para un sitio
-
-**Posibles causas:**
-- La URL guardada no coincide con el dominio actual
-- El vault se bloqueó — necesitas desbloquearlo de nuevo
-
-**Solución:**
-1. Desbloquea el vault desde el popup
-2. Verifica que la URL de la credencial guardada sea correcta
-3. Edita la credencial y actualiza la URL
-
----
-
-### La extensión muestra errores en `chrome://extensions/`
-
-**Solución:**
-1. Ve a `chrome://extensions/`
-2. Busca Dacmos Password Manager
-3. Clic en **"Errores"** para ver el detalle
-4. Clic en **"Borrar todo"** para limpiar errores anteriores
-5. Clic en 🔄 para recargar la extensión
+2. Verifica que Caps Lock no esté activado
+3. Verifica que no haya espacios al inicio o final
 
 ---
 
 ### Perdí mis credenciales después de reinstalar Chrome
 
-Las credenciales se almacenan en `chrome.storage.local`, que puede borrarse al reinstalar Chrome o cambiar de perfil.
-
-**Prevención:** Realiza backups periódicos desde Configuración → Exportar vault.
-
-**Si tienes un backup:** Importa el archivo desde Configuración → Importar vault.
+Las credenciales se almacenan en `chrome.storage.local`, que se borra al
+reinstalar Chrome. **Prevención:** realiza backups periódicos desde
+Configuración → Exportar vault.
 
 ---
 

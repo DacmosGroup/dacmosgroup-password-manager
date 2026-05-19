@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Versión 0.3.0 · Mayo 2026**
+**Versión 0.3.1 · Mayo 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -49,7 +49,7 @@ Dacmos Password Manager es una extensión Chrome construida con **Manifest V3** 
 ├── Crypto:         Web Crypto API (nativa del browser)
 ├── Almacenamiento: chrome.storage.local / chrome.storage.session
 ├── UI:             HTML5 + CSS3 (Vanilla — sin frameworks)
-└── Versión:        0.3.0
+└── Versión:        0.3.1
 ```
 
 ---
@@ -112,10 +112,16 @@ dacmosgroup-password-manager/
 │   │   └── autofill.js        ← Inyectado en páginas web — detección y autocompletado
 │   ├── crypto/
 │   │   └── engine.js          ← Motor AES-256-GCM + PBKDF2 (núcleo de seguridad)
+│   ├── sync/
+│   │   ├── storage-adapter.js       ← Interfaz base (clase abstracta)
+│   │   ├── google-drive-adapter.js  ← Adaptador Google Drive
+│   │   ├── onedrive-adapter.js      ← Adaptador OneDrive
+│   │   └── sync-manager.js          ← Orquestador de sincronización
 │   └── ui/
 │       ├── popup/             ← Punto de entrada — estado del vault
 │       ├── vault/             ← CRUD de credenciales
 │       ├── settings/          ← Configuración y gestión de master password
+│       ├── health/            ← Password Health Reports
 │       └── generator/         ← Generador criptográfico de contraseñas
 └── assets/
     └── icons/                 ← Íconos de la extensión
@@ -135,7 +141,7 @@ dacmosgroup-password-manager/
      ▼
 [Credenciales descifradas en sesión]
 
-[UI: popup/vault/settings]
+[UI: popup/vault/settings/health/generator]
      │  (import directo — ES Modules)
      ▼
 [Motor de cifrado: engine.js]
@@ -383,6 +389,23 @@ El autocompletado es el componente más complejo desde el punto de vista de segu
 [Página web recibe valores — sin acceso a la clave]
 ```
 
+### Selección del campo password objetivo
+
+En formularios con múltiples campos password (ej. "Create password" + "Confirm password"),
+el autofill prioriza siempre el **primer** campo password válido del formulario:
+
+```javascript
+// Correcto — for...of con break garantiza que el primer campo gana
+for (const campoPass of camposPassword) {
+  if (!esFormularioLogin(form, campoPass)) continue
+  camposDetectados.password = campoPass
+  break  // Primer campo válido — no procesar campos siguientes
+}
+```
+
+> **Decisión técnica:** El patrón `forEach` con `return` actúa como `continue`,
+> no como `break`. Causa: el último campo sobreescribe al primero. Corregido en v0.3.1.
+
 ### Aislamiento de contextos
 
 Chrome Extension Manifest V3 garantiza que el content script y la página web operan en **mundos JavaScript separados**:
@@ -560,13 +583,7 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 1. **Sin protección contra keyloggers** — si el dispositivo está comprometido a nivel de sistema operativo, la master password puede capturarse al ingresarse
 2. **Sin protección contra extensiones maliciosas** — otras extensiones con permisos elevados podrían leer `chrome.storage.local`
 3. **Dependencia del modelo de seguridad de Chrome** — vulnerabilidades en Chrome podrían afectar el aislamiento de contextos
-4. **Sin 2FA** — no existe un segundo factor de autenticación en v0.1.1
-
-### Mitigaciones futuras planificadas
-
-- Fase 2: Cifrado adicional con clave derivada del dispositivo (hardware binding)
-- Fase 2: Verificación de integridad del vault (detectar manipulación)
-- Fase 3: Soporte para autenticación biométrica en Android
+4. **Sin 2FA para el vault** — no existe un segundo factor para desbloquear el vault en sí (el vault gestiona 2FA/TOTP de terceros)
 
 ---
 
@@ -576,6 +593,7 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 v0.1.1 ✅  MVP — Chrome Extension Zero-Knowledge
 v0.2.0 ✅  Paridad competitiva (F1.1-F1.6)
 v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
+v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
 v0.4.0 ⏳  App móvil React Native (iOS + Android)
 v0.5.0 ⏳  Tier Premium $1-1.50/mes + Plan Familias
 v1.0.0 ⏳  Auditoría Cure53 + listado público Chrome Web Store
@@ -611,110 +629,31 @@ export class StorageAdapter {
 
 ### GoogleDriveAdapter
 
-Implementado en `src/sync/google-drive-adapter.js`:
-
 - Autenticación OAuth via `chrome.identity` con scope `drive.appdata`
 - Almacena el vault en la carpeta privada de la app — no visible en la UI de Drive
 - El archivo es un blob JSON `{ iv, datos }` completamente opaco para Google
 - Usa la REST API de Google Drive v3
 
-**Flujo de autenticación:**
-
-```
-chrome.identity.getAuthToken({ interactive: true })
-        │
-        ▼
-[Token OAuth scope: drive.appdata]
-        │
-        ▼
-[Subir / descargar blob AES-256-GCM vía Drive API]
-```
-
 ### OneDriveAdapter
-
-Implementado en `src/sync/onedrive-adapter.js`:
 
 - Autenticación OAuth via `chrome.identity` con cuenta Microsoft
 - Almacena el vault en `/me/drive/special/approot` via Microsoft Graph API
 - Mismo blob opaco que Google Drive — Microsoft nunca ve los datos en claro
 - Scope mínimo: `Files.ReadWrite.AppFolder`
 
-### SyncManager
-
-Orquestador en `src/sync/sync-manager.js`. Coordina los adaptadores y resuelve conflictos:
-
-```javascript
-// Flujo principal de sincronización
-async function sincronizar(adapter) {
-  const tsLocal  = await obtenerTimestampLocal()
-  const tsRemoto = await adapter.ultimaModificacion()
-
-  if (tsLocal > tsRemoto)  return await subirVault(adapter)
-  if (tsRemoto > tsLocal)  return await descargarYFusionar(adapter)
-  // Igual timestamp → sin cambios
-}
-```
-
-### Flujo de sincronización completo
-
-```
-[Usuario conecta proveedor en Settings]
-        │
-        ▼
-[OAuth → Token almacenado en chrome.storage.local (cifrado)]
-        │
-        ▼
-[SyncManager compara timestamps local vs. remoto]
-        │
-        ├── Local más reciente  → subir vault cifrado
-        ├── Remoto más reciente → descargar y fusionar
-        └── Igual               → no hacer nada
-        │
-        ▼
-[Badge en popup: ✅ Sincronizado / ⚠️ Pendiente / ❌ Error]
-```
-
 ### Resolución de conflictos — Last Write Wins (LWW)
 
-Estrategia **LWW por timestamp** a nivel de credencial individual:
-
-```
-Si ambos dispositivos modificaron el vault desde la última sync:
-  1. Descargar versión remota
-  2. Unión de arrays por ID de credencial
-  3. En colisiones por ID → conservar el campo modificado más reciente
-  4. Subir versión fusionada
-  5. Notificar al usuario el resultado
-```
-
-### Guardia anti-loop `_syncTs`
-
-Para evitar que dos dispositivos se sincronicen mutuamente en cascada, cada operación de subida incluye un timestamp `_syncTs` en los metadatos del archivo. El SyncManager ignora una descarga si `_syncTs` coincide con la última subida propia.
-
-```javascript
-// Prevención de loop: no procesar una descarga que yo mismo subí
-if (metadatos._syncTs === ultimaSubidaPropia) return
-```
+Estrategia **LWW por timestamp** a nivel de credencial individual. Guardia anti-loop `_syncTs` para evitar sincronizaciones en cascada entre dispositivos.
 
 ### Seguridad Zero-Knowledge mantenida
 
-| Principio | Implementación en v0.3.0 |
+| Principio | Implementación en v0.3.0+ |
 |-----------|--------------------------|
 | El proveedor nunca ve la clave | La clave AES permanece en memoria RAM local — nunca se sube |
 | El vault viaja cifrado | Blob `{ iv, datos }` — AES-256-GCM opaco |
 | OAuth scope mínimo | `drive.appdata` (Google) / `Files.ReadWrite.AppFolder` (Microsoft) |
 | Token OAuth protegido | Almacenado en `chrome.storage.local` con cifrado de Chrome |
 | Sin servidor de DacmosGroup | Todo en la cuenta del usuario — zero infraestructura propia |
-
-### Árbol de archivos de sync
-
-```
-src/sync/
-├── storage-adapter.js       ← Interfaz base (clase abstracta)
-├── google-drive-adapter.js  ← Adaptador Google Drive (drive.appdata)
-├── onedrive-adapter.js      ← Adaptador OneDrive (Graph API)
-└── sync-manager.js          ← Orquestador: timestamps, conflictos, estado
-```
 
 ---
 
