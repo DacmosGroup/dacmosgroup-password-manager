@@ -226,6 +226,9 @@ async function copiarPassword(password, btn) {
 
 // ── Event Listeners ──
 
+// Botón de retorno al inicio — cierra la pestaña
+document.getElementById('btnInicio').addEventListener('click', () => window.close());
+
 // Slider de longitud
 longitudSlider.addEventListener('input', () => {
   longitudValue.textContent = longitudSlider.value;

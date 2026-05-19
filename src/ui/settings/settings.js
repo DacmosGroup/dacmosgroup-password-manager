@@ -667,6 +667,9 @@ function mostrarExito(elemento, mensaje) {
 // Event Listeners
 // ══════════════════════════════════════════
 
+// Botón de retorno al inicio — cierra la pestaña
+document.getElementById('btnInicio').addEventListener('click', () => window.close())
+
 // ── Panel Configurar ──
 inputNuevaMaster.addEventListener('input', (e) => {
   evaluarFortaleza(e.target.value, strengthFill, strengthLabel)

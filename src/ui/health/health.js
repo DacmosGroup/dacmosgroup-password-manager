@@ -6,7 +6,7 @@
 import { verificarHIBP } from '../../health/password-health.js'
 
 // ── Referencias al DOM ──
-const btnVolver         = document.getElementById('btnVolver')
+const btnInicio         = document.getElementById('btnInicio')
 const statusBanner      = document.getElementById('statusBanner')
 const bannerIcono       = document.getElementById('bannerIcono')
 const bannerTexto       = document.getElementById('bannerTexto')
@@ -34,10 +34,8 @@ function leerSesion(claves) {
   return new Promise(r => chrome.storage.session.get(claves, r))
 }
 
-// ── Navegación ──
-btnVolver.addEventListener('click', () => {
-  window.location.href = chrome.runtime.getURL('src/ui/vault/vault.html')
-})
+// ── Navegación — cierra la pestaña y regresa al inicio ──
+btnInicio.addEventListener('click', () => window.close())
 
 // ── Renderizado del ícono de sitio (consistente con vault.js) ──
 function obtenerIcono(sitio) {
