@@ -6,7 +6,7 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
-[![Versión](https://img.shields.io/badge/Versión-0.3.0-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![Versión](https://img.shields.io/badge/Versión-0.3.1-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -60,6 +60,15 @@
 | F2.3 | Selector de proveedor en Settings — cards Google Drive / OneDrive | ✅ |
 | F2.4 | Indicador de estado en popup — Sincronizado / Pendiente / Error | ✅ |
 
+### ✅ Fase 2.5 — UX Polish v0.3.1 (COMPLETADA)
+
+| Feature | Descripción | Estado |
+|---------|-------------|--------|
+| F3.1 | Botón ← Inicio consistente en todas las vistas de pestaña completa | ✅ |
+| F3.3 | Legibilidad mejorada en cards del vault (TOTP, timestamps, textos) | ✅ |
+| F3.4 | Versión dinámica en Settings — leída desde manifest.json | ✅ |
+| F3.5 | Fix autocompletado en formularios Create/Confirm password | ✅ |
+
 ### 📱 Fase 3 — App móvil (PENDIENTE)
 - React Native (iOS + Android)
 - Reutiliza motor de cifrado
@@ -89,7 +98,7 @@ Disponible en modo no listado — instalación via enlace directo:
 
 ---
 
-## 🔑 Funciones Principales v0.3.0
+## 🔑 Funciones Principales v0.3.1
 
 - **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
 - **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
@@ -102,6 +111,8 @@ Disponible en modo no listado — instalación via enlace directo:
 - **Sync Google Drive** — OAuth drive.appdata, vault cifrado opaco, Zero-Knowledge
 - **Sync OneDrive** — Microsoft Graph API, misma garantía de privacidad
 - **BYOC** — tú eliges el proveedor cloud; DacmosGroup no almacena nada
+- **Navegación consistente** — botón ← Inicio en todas las vistas
+- **UX mejorada** — legibilidad de cards, versión dinámica, fix formularios registro
 
 ---
 
@@ -123,4 +134,4 @@ especializada en las cuatro mega-tendencias que dominan la industria:
 
 MIT License — ver [LICENSE](./LICENSE)
 
-Abril 2026
+Mayo 2026
