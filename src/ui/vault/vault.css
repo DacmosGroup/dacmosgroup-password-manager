@@ -151,7 +151,7 @@ body {
 }
 
 .credential-user {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -159,9 +159,9 @@ body {
 }
 
 .credential-date {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--color-text-muted);
-  opacity: 0.7;
+  opacity: 0.85;
   margin-top: 2px;
 }
 
@@ -212,6 +212,16 @@ body {
 .btn-danger:hover { background: rgba(231,76,60,0.1); }
 
 .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+/* Botón de retorno al inicio — se queda a la izquierda empujando header-actions a la derecha */
+.btn-inicio {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  padding: 6px 14px;
+  font-size: 13px;
+  margin-right: auto;
+}
+.btn-inicio:hover { background: var(--color-border); }
 
 .btn-icon {
   background: var(--color-surface);
@@ -448,7 +458,7 @@ body {
 
 /* Etiqueta "2FA" */
 .totp-etiqueta {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--color-accent);
   background: rgba(0, 212, 255, 0.12);
@@ -462,7 +472,7 @@ body {
 /* Código TOTP de 6 dígitos (formateado "123 456") */
 .totp-codigo {
   font-family: 'Courier New', monospace;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-text);
   letter-spacing: 0.12em;
@@ -496,7 +506,7 @@ body {
 
 /* Timer de cuenta regresiva */
 .totp-timer {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--color-text-muted);
   min-width: 24px;
   text-align: right;

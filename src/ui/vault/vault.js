@@ -32,6 +32,7 @@ const searchInput        = document.getElementById('searchInput')
 const modalOverlay       = document.getElementById('modalOverlay')
 const modalTitle         = document.getElementById('modalTitle')
 const modalError         = document.getElementById('modalError')
+const btnInicio          = document.getElementById('btnInicio')
 const btnNuevaCredencial = document.getElementById('btnNuevaCredencial')
 const btnHealth          = document.getElementById('btnHealth')
 const btnAgregarPrimero  = document.getElementById('btnAgregarPrimero')
@@ -641,6 +642,9 @@ function evaluarFortaleza(password) {
 }
 
 // ── Event Listeners ──
+
+// Botón de retorno al inicio — cierra la pestaña
+btnInicio.addEventListener('click', () => window.close())
 
 // Desbloqueo
 btnDesbloquear.addEventListener('click', desbloquear)

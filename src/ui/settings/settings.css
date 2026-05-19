@@ -51,6 +51,23 @@ body {
 .logo-title { font-weight: 700; font-size: 15px; color: var(--color-accent); }
 .logo-subtitle { font-size: 12px; color: var(--color-text-muted); }
 
+/* Contenedor de acciones del header — se empuja a la derecha con margin-left: auto */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Botón de retorno al inicio */
+.btn-inicio {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  padding: 6px 14px;
+  font-size: 13px;
+}
+.btn-inicio:hover { background: var(--color-border); }
+
 /* ── Contenido principal ── */
 .settings-content {
   flex: 1;
