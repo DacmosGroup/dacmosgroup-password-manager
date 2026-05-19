@@ -248,6 +248,10 @@ async function syncAhoraOneDrive() {
 
 // ── Inicialización ──
 async function inicializar() {
+  // Inyectar versión dinámica desde el manifest — evita desincronización con bumps
+  const { version } = chrome.runtime.getManifest()
+  document.getElementById('versionActual').textContent = version
+
   await cargarConfiguracion()
   await determinarPanel()
   await cargarEstadoSync()
