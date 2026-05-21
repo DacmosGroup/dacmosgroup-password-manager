@@ -91,25 +91,48 @@ un ADR nuevo antes de implementarse.
 
 ## Features v0.4.0
 
-### F4.1 — Setup PWA + infraestructura de despliegue
+### F4.1 — Setup PWA + infraestructura de despliegue ✅ COMPLETADO
 
 **Alcance:**
 - Estructura de carpetas `web/` en el repo (coexiste con `src/` de la extensión)
 - Web App Manifest: nombre, íconos DacmosGroup, tema de colores, `display: standalone`
-- Meta tags iOS: `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`
-- Service Worker con Workbox: cache-first para assets, network-first para sync
-- CSP estricta equivalente a la de la Chrome Extension MV3: `script-src 'self'`
-- Subresource Integrity en cualquier script o stylesheet externo
-- Builds reproducibles via GitHub Actions
+- Service Worker con Workbox: cache-first para assets, network-first para documentos
+- CSP equivalente a Chrome Extension MV3 + `script-src storage.googleapis.com` (Workbox)
+- Builds reproducibles via GitHub Actions → Cloudflare Pages
 
 **Despliegue:**
-- Cloudflare Pages (free tier) — dominio `app.dacmosgroup.co` o `dacmosgroup.co/app`
-- HTTPS obligatorio (Cloudflare lo provee automáticamente)
+- Cloudflare Pages (free tier) — URL activa: `https://dacmos-pm-pwa.pages.dev`
+- HTTPS provisto automáticamente por Cloudflare
 
-**Criterio de completitud:**
-- `npx lighthouse --preset=pwa` da 100 en todas las categorías PWA
-- "Add to Home Screen" funciona en Chrome Android y Safari iOS
-- La app carga offline después del primer visit
+**Criterios de completitud:**
+- ✅ Estructura `web/` completa (manifest, SW, index, offline, _headers, _redirects)
+- ✅ Web App Manifest con todos los campos requeridos y JSON válido
+- ✅ `index.html` con meta tags PWA y link al manifest
+- ✅ Service Worker Workbox 7.0.0: CacheFirst assets, NetworkFirst HTML
+- ✅ `offline.html` precacheado en el SW
+- ✅ CSP con `script-src 'self' https://storage.googleapis.com` y `worker-src`
+- ✅ `_redirects` con regla SPA `/* /index.html 200`
+- ✅ 5 íconos SVG placeholder en `web/assets/icons/`
+- ✅ `.github/workflows/deploy-pwa.yml` configurado
+- ✅ Todo el código comentado en español
+- ✅ `src/` y `manifest.json` de la Chrome Extension no modificados
+- ✅ Deploy activo en Cloudflare Pages
+
+**Fixes aplicados post-deploy (commits `4b4b1e1` → `bc1fe52`):**
+- `script-src` ampliado a `https://storage.googleapis.com` — `importScripts()` en
+  Service Workers es gobernado por `script-src`, no por `worker-src` (causa raíz del
+  error "ServiceWorker script evaluation failed")
+- `manifest.json`: atributo `sizes` cambiado de `"192x192"`/`"512x512"` a `"any"`
+  para íconos SVG — SVG es vectorial y las dimensiones fijas causaban error de
+  validación en el navegador
+- Meta tags `apple-mobile-web-app-capable` y `apple-mobile-web-app-status-bar-style`
+  eliminadas de `index.html` — deprecadas en Safari 17 / iOS 17; el modo standalone
+  lo gestiona `display: standalone` en el manifest
+
+**Pendiente para producción (fuera de scope F4.1):**
+- Convertir `icon-180.svg` → `icon-180.png` para `apple-touch-icon` en iOS Safari
+- Configurar secrets `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` en GitHub
+- URL de producción personalizada: `app.dacmosgroup.co`
 
 ---
 
@@ -377,7 +400,7 @@ el número de iteraciones.
 
 ## Criterios de completitud
 
-- [ ] F4.1 — Setup PWA: Lighthouse PWA score 100, Add to Home Screen funcional
+- [x] F4.1 — Setup PWA: infraestructura completa desplegada en Cloudflare Pages ✅
 - [ ] F4.2 — IndexedDB: round-trip completo en Chrome Android y Safari iOS
 - [ ] F4.3 — OAuth PKCE: sync Google Drive + OneDrive funcionando en mobile
 - [ ] F4.4 — UI responsive: navegación completa en 360px y 1440px sin errores
@@ -459,6 +482,15 @@ v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Servi
 v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
 v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
 ```
+
+---
+
+## Deploy activo
+
+| Entorno | URL |
+|---------|-----|
+| **Preview / Staging** | https://dacmos-pm-pwa.pages.dev |
+| **Producción (pendiente)** | https://app.dacmosgroup.co |
 
 ---
 

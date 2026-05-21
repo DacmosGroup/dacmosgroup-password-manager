@@ -67,6 +67,57 @@ App Nativa (v0.5.0+):
 └── Distribución:   Google Play Store + App Store
 ```
 
+### Decisiones técnicas F4.1
+
+Tres hallazgos durante la implementación y deploy de F4.1 que no son obvios
+y deben recordarse en features posteriores:
+
+#### CSP: `script-src` vs `worker-src` para `importScripts()`
+
+Las directivas CSP tienen responsabilidades distintas para Service Workers:
+
+| Directiva | Controla |
+|-----------|----------|
+| `worker-src` | La URL desde la que se **registra** el SW (`navigator.serviceWorker.register()`) |
+| `script-src` | Los scripts que el SW carga via **`importScripts()`** |
+
+Consecuencia: cargar Workbox desde CDN via `importScripts()` requiere que
+`https://storage.googleapis.com` esté en **`script-src`**, no solo en `worker-src`.
+Un `script-src 'self'` estricto sin esta excepción provoca "ServiceWorker script
+evaluation failed" aunque `worker-src` sea permisivo.
+
+La CSP correcta para esta PWA:
+```
+script-src 'self' https://storage.googleapis.com;
+worker-src 'self' https://storage.googleapis.com;
+```
+
+#### Íconos SVG en el Web App Manifest: usar `"sizes": "any"`
+
+SVG es un formato vectorial — no tiene dimensiones raster fijas. Declarar
+`"sizes": "192x192"` en un ícono `image/svg+xml` hace que el navegador intente
+validar dimensiones de píxeles que no existen en el formato, produciendo
+"resource isn't a valid image". El valor correcto para cualquier ícono SVG es:
+
+```json
+{ "sizes": "any", "type": "image/svg+xml" }
+```
+
+Para Lighthouse PWA installability score, eventualmente se requieren PNGs
+(al menos 192×192). Los SVGs con `"any"` resuelven el error de validación
+pero no satisfacen completamente el criterio de instalabilidad de Chrome.
+
+#### `apple-mobile-web-app-capable` deprecada desde iOS 17
+
+Apple deprecó `<meta name="apple-mobile-web-app-capable" content="yes">` en
+Safari 17 (iOS 17, septiembre 2023). El modo standalone en iOS 15.4+ lo
+gestiona el Web App Manifest con `display: standalone`.
+
+Implicación: `apple-mobile-web-app-status-bar-style` también pierde efecto
+sin la meta tag que la activa. El reemplazo moderno es `viewport-fit=cover`
+en el viewport + `env(safe-area-inset-*)` en CSS para manejar el notch y la
+Dynamic Island correctamente (se implementa en F4.4 con la UI real).
+
 ---
 
 ## 2. Modelo de Seguridad Zero-Knowledge
