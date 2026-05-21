@@ -136,7 +136,7 @@ un ADR nuevo antes de implementarse.
 
 ---
 
-### F4.2 — Migración a IndexedDB (reemplazo de chrome.storage)
+### F4.2 — Migración a IndexedDB (reemplazo de chrome.storage) ✅ COMPLETADO
 
 **El único cambio de almacenamiento del proyecto.** El vault cifrado
 viaja en el mismo formato `{ iv, datos }` — solo cambia el mecanismo
@@ -326,7 +326,7 @@ en el mercado primario.
 
 ---
 
-### F4.7 — Versionado del blob desde v0.4.0
+### F4.7 — Versionado del blob desde v0.4.0 ✅ COMPLETADO
 
 **Este es el cambio técnico más importante del release para la sostenibilidad
 futura del proyecto.** Sin él, añadir Argon2id en v0.7.0 requiere una
@@ -374,6 +374,13 @@ el número de iteraciones.
 - Vault creado en Chrome Extension v0.3.1 descifrable en PWA v0.4.0 ✅
 - Campo `__version` presente en todos los blobs nuevos ✅
 
+**Implementación — commit `1a403aa` (branch `feature/v0.4.0`):**
+- `web/src/crypto/engine.js` — constantes `BLOB_VERSION`/`BLOB_KDF`, capa L2
+  (`serializarAAD`, `cifrarConVersion`, `descifrarConVersion`, `detectarVersionBlob`),
+  exportación de `detectarVersionBlob`, captura de `VAULT_VERSION_INCOMPATIBLE` en
+  `desbloquearVault` e `importarVaultBackup` (×3 call sites)
+- `src/crypto/engine.js` — lógica idéntica para la Chrome Extension
+
 ---
 
 ## Lo que NO está en v0.4.0
@@ -406,7 +413,7 @@ el número de iteraciones.
 - [ ] F4.4 — UI responsive: navegación completa en 360px y 1440px sin errores
 - [ ] F4.5 — Persistencia: `navigator.storage.persist()` + UX educativa en iOS
 - [ ] F4.6 — Distribución: APK TWA en GitHub Releases + IzzyOnDroid submisión
-- [ ] F4.7 — Versionado del blob: campo `__version` en todos los blobs nuevos
+- [x] F4.7 — Versionado del blob: campo `__version` en todos los blobs nuevos ✅
 - [ ] Compatibilidad cruzada PWA ↔ Chrome Extension verificada (round-trip)
 - [ ] Android Developer Console gratuito registrado (antes de sep 2026)
 - [ ] Versión bumpeada a 0.4.0 en manifest de la extensión Y en PWA manifest

@@ -79,7 +79,7 @@
 | F4.4 | UI responsive — mobile-first, touch-friendly | 🔄 |
 | F4.5 | Persistencia robusta — navigator.storage.persist() + manejo eviction iOS | 🔄 |
 | F4.6 | APK Android via TWA — distribución sin Play Store | 🔄 |
-| F4.7 | Formato versionado del blob — habilita migración no destructiva a Argon2id | 🔄 |
+| F4.7 | Formato versionado del blob — habilita migración no destructiva a Argon2id | ✅ |
 
 ### ⏳ Fase 4 — App Nativa v0.5.0 (PENDIENTE)
 
