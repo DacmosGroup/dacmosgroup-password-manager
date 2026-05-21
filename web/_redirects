@@ -1,0 +1,8 @@
+# _redirects — Cloudflare Pages: enrutamiento SPA
+#
+# Regla catch-all: cualquier ruta que no coincida con un archivo estático
+# se sirve como index.html con código 200 (no redirección 301/302).
+# Esto permite que el router del lado del cliente (F4.4) maneje rutas
+# como /vault, /settings, /health sin recibir un 404 de Cloudflare.
+
+/*    /index.html    200

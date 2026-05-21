@@ -1,0 +1,27 @@
+<!--
+  icon-192.svg — Ícono PWA 192×192 (placeholder)
+  Propósito: "any" — usado por Chrome Android y escritorio para Add to Home Screen
+  Paleta: --color-bg #1a1a2e | --color-primary #0066cc | --color-accent #00d4ff
+  PRODUCCIÓN: reemplazar por PNG 192×192 generado desde los assets finales de marca
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 192 192"
+     width="192" height="192">
+
+  <!-- Fondo cuadrado con esquinas redondeadas — estilo ícono de app -->
+  <rect width="192" height="192" rx="36" fill="#1a1a2e"/>
+
+  <!-- Cuerpo del candado (rectángulo redondeado) -->
+  <rect x="52" y="96" width="88" height="64" rx="12" fill="#0066cc"/>
+
+  <!-- Ojo del candado -->
+  <circle cx="96" cy="128" r="10" fill="#1a1a2e"/>
+
+  <!-- Arco del candado -->
+  <path d="M68 96V76a28 28 0 0 1 56 0v20"
+        stroke="#00d4ff"
+        stroke-width="10"
+        stroke-linecap="round"
+        fill="none"/>
+
+</svg>

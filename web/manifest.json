@@ -1,0 +1,39 @@
+{
+  "name": "Dacmos Password Manager",
+  "short_name": "Dacmos PM",
+  "description": "Gestor de contraseñas Zero-Knowledge — DacmosGroup.co",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0066cc",
+  "background_color": "#1a1a2e",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mi Vault",
+      "url": "/vault",
+      "description": "Abrir el vault de contraseñas"
+    }
+  ]
+}

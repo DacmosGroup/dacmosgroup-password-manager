@@ -1,0 +1,36 @@
+# _headers — Cloudflare Pages: cabeceras de seguridad para la PWA
+#
+# Formato: una sección por patrón de ruta.
+# Las cabeceras se aplican a todas las respuestas que coincidan con el patrón.
+#
+# IMPORTANTE — connect-src se amplía en F4.3 cuando se integre OAuth
+# (Google Identity Services + MSAL.js). Por ahora solo las URLs
+# estrictamente necesarias para el SW y Workbox están autorizadas.
+#
+# IMPORTANTE — worker-src incluye storage.googleapis.com porque el SW
+# carga Workbox via importScripts() desde ese CDN. Sin esta directiva,
+# el navegador bloquea el script y el SW no se registra.
+
+/*
+  # ── Content Security Policy ─────────────────────────────────────────
+  # Equivalente a la CSP de la Chrome Extension MV3: script-src 'self'
+  # Sin eval(), sin scripts inline, sin recursos de terceros no declarados
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://www.googleapis.com https://graph.microsoft.com https://accounts.google.com; worker-src 'self' https://storage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+
+  # ── Prevención de clickjacking ───────────────────────────────────────
+  # Refuerza frame-ancestors 'none' para navegadores que no leen CSP
+  X-Frame-Options: DENY
+
+  # ── Prevención de MIME sniffing ──────────────────────────────────────
+  # Fuerza al navegador a respetar el Content-Type declarado
+  X-Content-Type-Options: nosniff
+
+  # ── Política de referrer ─────────────────────────────────────────────
+  # Envía el origen completo solo a peticiones del mismo origen;
+  # a orígenes externos envía solo el origen (sin path ni query)
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # ── Permisos de hardware ─────────────────────────────────────────────
+  # Deshabilita acceso a geolocalización, cámara y micrófono.
+  # La PWA no necesita ninguno de estos permisos.
+  Permissions-Policy: geolocation=(), camera=(), microphone=()
