@@ -13,10 +13,11 @@
   <meta name="theme-color" content="#0066cc">
 
   <!-- ── PWA: iOS / Safari ─────────────────────────────────────────────
-       Safari no lee el manifest para la instalación en Home Screen;
-       requiere estas meta tags propias. -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+       El modo standalone en iOS 15.4+ lo gestiona el manifest.json
+       con display: standalone. apple-mobile-web-app-capable fue
+       deprecado en Safari 17 (iOS 17) — se elimina.
+       El efecto visual del status bar se preserva via viewport-fit=cover
+       y env(safe-area-inset-*) en la UI (F4.4). -->
   <meta name="apple-mobile-web-app-title" content="Dacmos PM">
   <!-- iOS necesita PNG para el icono de Home Screen.
        Reemplazar icon-180.svg → icon-180.png antes de producción. -->
