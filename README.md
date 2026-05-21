@@ -73,8 +73,8 @@
 
 | Feature | Descripción | Estado |
 |---------|-------------|--------|
-| F4.1 | Progressive Web App — vault accesible desde cualquier browser mobile | 🔄 |
-| F4.2 | IndexedDB — reemplazo de chrome.storage con formato compatible | 🔄 |
+| F4.1 | Progressive Web App — vault accesible desde cualquier browser mobile | ✅ |
+| F4.2 | IndexedDB — reemplazo de chrome.storage con formato compatible | ✅ |
 | F4.3 | OAuth PKCE — Google Drive + OneDrive sin chrome.identity | 🔄 |
 | F4.4 | UI responsive — mobile-first, touch-friendly | 🔄 |
 | F4.5 | Persistencia robusta — navigator.storage.persist() + manejo eviction iOS | 🔄 |

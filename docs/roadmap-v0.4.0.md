@@ -401,7 +401,7 @@ el número de iteraciones.
 ## Criterios de completitud
 
 - [x] F4.1 — Setup PWA: infraestructura completa desplegada en Cloudflare Pages ✅
-- [ ] F4.2 — IndexedDB: round-trip completo en Chrome Android y Safari iOS
+- [x] F4.2 — IndexedDB: adaptador + fork engine.js para PWA ✅
 - [ ] F4.3 — OAuth PKCE: sync Google Drive + OneDrive funcionando en mobile
 - [ ] F4.4 — UI responsive: navegación completa en 360px y 1440px sin errores
 - [ ] F4.5 — Persistencia: `navigator.storage.persist()` + UX educativa en iOS

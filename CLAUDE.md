@@ -100,3 +100,41 @@ Injected into all URLs at `document_idle`. Detects login forms by heuristic (pre
 ### CSP Constraint
 
 `manifest.json` enforces `script-src 'self'` — no inline scripts, no `eval`, no external scripts. All JS must be in files loaded by the extension itself.
+
+---
+
+## PWA — web/ (v0.4.0+)
+
+The PWA lives entirely in `web/`. It coexists with the Chrome Extension — the extension source (`src/`, `manifest.json`) is never modified by PWA work.
+
+### New files added in F4.2
+
+| File | Purpose |
+|------|---------|
+| `web/src/storage/indexeddb-adapter.js` | Drop-in replacement for `chrome.storage.local`. Exposes `idbStorage.set/get/remove/clear`. DB: `dacmos-pm`, store: `vault`, keyPath: `clave`. |
+| `web/src/crypto/engine.js` | Fork of `src/crypto/engine.js`. Identical crypto logic — only difference is the 7 `chrome.storage.local` calls replaced by `idbStorage`. Import path: `../storage/indexeddb-adapter.js`. |
+
+### Key architectural rules for PWA work
+
+- `web/src/crypto/engine.js` is a **fork**, not a symlink. Changes to `src/crypto/engine.js` (Chrome Extension) do NOT automatically apply to the PWA fork — they must be ported manually.
+- The AES `CryptoKey` never enters IndexedDB. Only encrypted blobs `{ iv, datos }` are persisted.
+- Session state (`claveSesion`, `credencialesSesion`) lives in JS module memory only — no `sessionStorage` write for crypto material.
+- `idbStorage.set()` uses a single `readwrite` transaction for all keys — this is intentional for atomicity (critical in `cambiarMasterPassword`).
+
+### Testing the PWA locally
+
+The PWA is deployed to Cloudflare Pages. To test locally, serve `web/` with any static server:
+
+```bash
+# Option A — Python
+python -m http.server 8080 --directory web
+
+# Option B — npx
+npx serve web
+```
+
+Then open `http://localhost:8080`. Service Worker requires HTTPS in production (Cloudflare Pages handles this automatically).
+
+### F4.2 completion criterion
+
+Round-trip: unlock → create credential → close tab → reopen → unlock → credential persists. Must pass on Chrome Android and Safari iOS.
