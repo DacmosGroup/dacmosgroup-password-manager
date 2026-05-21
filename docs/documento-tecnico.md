@@ -24,8 +24,9 @@
 11. [Roadmap Técnico](#11-roadmap-técnico)
 12. [Sincronización BYOC](#12-sincronización-byoc)
 13. [Formato Canónico Versionado del Blob](#13-formato-canónico-versionado-del-blob)
-14. [Arquitectura Sync Per-Item](#14-arquitectura-sync-per-item)
-15. [Referencias](#15-referencias)
+14. [Decisiones de Implementación — F4.7](#14-decisiones-de-implementación--f47)
+15. [Arquitectura Sync Per-Item](#15-arquitectura-sync-per-item)
+16. [Referencias](#16-referencias)
 
 ---
 
@@ -893,7 +894,101 @@ const datosCifrados = await crypto.subtle.encrypt(
 
 ---
 
-## 14. Arquitectura Sync Per-Item
+## 14. Decisiones de Implementación — F4.7
+
+Esta sección captura las decisiones de diseño tomadas
+durante la implementación de F4.7 (versionado del blob).
+Está orientada a futuros contribuidores y auditores que
+modifiquen engine.js.
+
+### Arquitectura en capas — L1 / L2 / L3
+
+El motor de cifrado se organiza en tres capas:
+
+| Capa | Contenido | Regla |
+|------|-----------|-------|
+| L1 — Primitivos | `cifrar()`, `descifrar()` | Nunca se modifican. Sin conocimiento de versiones. |
+| L2 — Versionado | `cifrarConVersion()`, `descifrarConVersion()`, `serializarAAD()`, `detectarVersionBlob()` | Toda la lógica de versiones vive aquí. |
+| L3 — API pública | `guardarVaultCifrado()`, `cargarVaultDescifrado()`, `configurarVault()`, etc. | Llaman a L2, nunca a L1 directamente. |
+
+**Regla de oro:** ninguna función de L3 debe llamar a
+`cifrar()` o `descifrar()` directamente. Todo acceso
+pasa por L2. Violar esto rompe la protección AAD en
+blobs v1.
+
+### Contrato de serialización del AAD — decisión crítica
+
+El AAD usa un **template literal explícito**, no
+`JSON.stringify` de un objeto:
+
+```javascript
+// ✅ CORRECTO — orden estructural, no dependiente del objeto
+`{"__version":${version},"kdf":${JSON.stringify(kdf)},"kdfIterations":${kdfIterations}}`
+
+// ❌ PELIGROSO — el orden de keys depende del orden
+//    del literal de objeto; refactoring silencioso lo rompe
+JSON.stringify({ __version: version, kdf, kdfIterations })
+```
+
+El AAD canónico para v1 produce siempre:
+
+```
+{"__version":1,"kdf":"PBKDF2-SHA256","kdfIterations":600000}
+```
+
+**Este string debe ser bit-a-bit idéntico** entre
+`cifrarConVersion()` y `descifrarConVersion()`, en todos
+los clientes (Chrome Extension, PWA, Capacitor), en todas
+las versiones futuras. Cualquier diferencia — incluso un
+espacio — hace que todos los vaults v1 existentes sean
+indescifrados.
+
+### tokenVerificacion — Opción A (versionar el token)
+
+El `tokenVerificacion` (sistema double-salt) también usa
+`cifrarConVersion()`, no el primitivo `cifrar()`.
+
+**Razón:** consistencia arquitectural y preparación para
+v0.7.0. Si en v0.7.0 el KDF de verificación migra a
+Argon2id, el campo `__version` del token será la señal
+para saber qué derivación se usó. Sin esa señal, hay que
+asumir — y asumir en crypto es un antipatrón.
+
+**Consecuencia conocida y aceptada:** backups generados
+en v0.4.0+ no son importables en Chrome Extension v0.3.1.
+Este comportamiento está documentado en la tabla de
+compatibilidad de la Sección 13.
+
+### Riesgos identificados durante F4.7
+
+| # | Riesgo | Severidad | Mitigación aplicada |
+|---|--------|-----------|---------------------|
+| R1 | Key order en AAD | Crítico | Template literal explícito en `serializarAAD()` |
+| R2 | Call sites de `descifrar()` en L3 no migrados | Alto | Todos los call sites auditados y migrados a L2 |
+| R3 | `VAULT_VERSION_INCOMPATIBLE` no capturado en UI | Medio | Capturado en `desbloquearVault` e `importarVaultBackup` (×3) |
+| R4 | Blob v1 enviado a Extension v0.3.1 | Medio | Documentado — error controlado, no corrupción |
+| R5 | `importarVaultBackup()` tiene 3 call sites | Medio | Auditados: CS1 (token), CS2 (vault backup), CS3 (vault merge) |
+| R6 | Argon2id (v0.7.0) necesitará campos adicionales en AAD | Bajo | Aceptable para v1; el AAD se extiende en v2 |
+
+### Patrón de captura de versión incompatible
+
+Todos los callers de `descifrarConVersion()` deben
+capturar este error específico para mostrar un mensaje
+orientado al usuario:
+
+```javascript
+} catch (error) {
+  if (error.message.startsWith('VAULT_VERSION_INCOMPATIBLE')) {
+    // Mostrar en UI: "Tu vault fue creado con una versión
+    // más nueva de la app. Actualiza Dacmos PM para continuar."
+  }
+  throw error; // re-throw para otros errores
+}
+```
+
+---
+
+## 15. Arquitectura Sync Per-Item
 
 *(Implementación en v0.5.0 — documentada aquí como referencia arquitectural)*
 
@@ -1011,7 +1106,7 @@ El modelo per-item no cambia la garantía Zero-Knowledge:
 
 ---
 
-## 15. Referencias
+## 16. Referencias
 
 ### Estándares y especificaciones
 
