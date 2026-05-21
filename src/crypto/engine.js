@@ -16,6 +16,15 @@ const AES_BITS           = 256;
 const SALT_BYTES         = 32;  // 256 bits de sal aleatoria
 const IV_BYTES           = 12;  // 96 bits — recomendado por NIST para GCM
 
+// ── Constantes de versión del blob ──
+// BLOB_VERSION identifica el formato activo del outer envelope.
+// Incrementar solo al cambiar el KDF o sus parámetros de seguridad.
+// v0 (sin campo)  = legacy PBKDF2-SHA256×600k (v0.3.1 y anteriores)
+// v1              = PBKDF2-SHA256×600k + AAD en AES-GCM (desde v0.4.0)
+// v2 (reservado)  = Argon2id (v0.7.0)
+const BLOB_VERSION = 1;
+const BLOB_KDF     = 'PBKDF2-SHA256';
+
 // ── UTILIDADES DE CODIFICACIÓN ──
 
 // Convierte un string UTF-8 a ArrayBuffer (requerido por Web Crypto API)
@@ -93,8 +102,10 @@ async function derivarClave(password, sal) {
   return clave;
 }
 
-// ── CIFRADO AES-256-GCM ──
-// Cifra datos arbitrarios con la clave derivada
+// ── L1: CIFRADO AES-256-GCM (primitivo interno) ──
+// Primitivo sin metadatos de versión ni AAD. Solo para uso interno
+// como backend de descifrarConVersion() en blobs legacy (v0).
+// Para crear nuevos blobs, usar cifrarConVersion().
 // DECISIÓN DE SEGURIDAD: Cada operación de cifrado usa un IV único.
 // Reutilizar un IV con la misma clave rompe la seguridad de GCM — nunca
 // hardcodear ni reutilizar IVs.
@@ -120,7 +131,9 @@ async function cifrar(datos, clave) {
   };
 }
 
-// ── DESCIFRADO AES-256-GCM ──
+// ── L1: DESCIFRADO AES-256-GCM (primitivo interno) ──
+// Primitivo sin AAD. Solo para blobs legacy v0 (sin campo __version).
+// Para descifrar blobs v1+, usar descifrarConVersion().
 // DECISIÓN DE SEGURIDAD: AES-GCM incluye autenticación (AEAD).
 // Si el vault fue manipulado o la contraseña es incorrecta,
 // el descifrado lanza un error — nunca devuelve datos corruptos silenciosamente.
@@ -140,6 +153,97 @@ async function descifrar(paquete, clave) {
   return JSON.parse(bufferAString(datosDescifrados));
 }
 
+// ── L2: SERIALIZACIÓN CANÓNICA DEL AAD ──
+// CONTRATO CRÍTICO: template literal explícito — el orden de los campos
+// debe ser idéntico en cifrado y descifrado, en Chrome Extension, PWA
+// y Capacitor, hoy y en todas las versiones futuras del proyecto.
+// NO usar JSON.stringify({...}): el orden de keys depende del motor JS
+// y puede cambiar si se refactoriza el objeto literal — rompería todos
+// los vaults existentes sin ningún error en tiempo de desarrollo.
+// AAD canónico v1: {"__version":1,"kdf":"PBKDF2-SHA256","kdfIterations":600000}
+function serializarAAD(version, kdf, kdfIterations) {
+  return new TextEncoder().encode(
+    `{"__version":${version},"kdf":${JSON.stringify(kdf)},"kdfIterations":${kdfIterations}}`
+  );
+}
+
+// ── L2: DETECCIÓN DE VERSIÓN DEL BLOB ──
+// Retorna 0 para blobs legacy sin __version (v0.3.1 y anteriores).
+// Exportada para que sync-manager pueda inspeccionar versiones remotas.
+function detectarVersionBlob(blob) {
+  return blob.__version ?? 0;
+}
+
+// ── L2: CIFRADO CON VERSIÓN ──
+// Cifra datos e incluye metadatos KDF en el outer envelope + AAD.
+// Reemplaza a cifrar() en todos los usos de L3 desde v0.4.0.
+// DECISIÓN DE SEGURIDAD: los metadatos __version, kdf, kdfIterations se
+// autentican via AAD en AES-GCM. Un atacante que modifique esos campos
+// en el blob almacenado (ej. reducir kdfIterations para facilitar
+// brute-force) invalida el auth tag — el descifrado falla inmediatamente.
+async function cifrarConVersion(datos, clave) {
+  const iv  = crypto.getRandomValues(new Uint8Array(IV_BYTES));
+  const aad = serializarAAD(BLOB_VERSION, BLOB_KDF, PBKDF2_ITERACIONES);
+
+  const datosCifrados = await crypto.subtle.encrypt(
+    {
+      name:           AES_ALGORITMO,
+      iv:             iv,
+      additionalData: aad,
+    },
+    clave,
+    stringABuffer(JSON.stringify(datos))
+  );
+
+  return {
+    __version:     BLOB_VERSION,
+    kdf:           BLOB_KDF,
+    kdfIterations: PBKDF2_ITERACIONES,
+    iv:            bufferABase64(iv.buffer),
+    datos:         bufferABase64(datosCifrados),
+  };
+}
+
+// ── L2: DESCIFRADO CON DISPATCH POR VERSIÓN ──
+// v0 (sin __version): path legacy sin AAD — backward compat con v0.3.1.
+// v1: reconstruye AAD desde los campos del blob con el mismo orden canónico
+//     que se usó en cifrarConVersion() — cualquier tampering invalida el auth tag.
+// v2+: lanza VAULT_VERSION_INCOMPATIBLE. Los callers capturan este error
+//      y muestran al usuario: "Este vault fue creado con una versión más
+//      reciente de Dacmos Password Manager. Actualiza la aplicación para abrirlo."
+async function descifrarConVersion(blob, clave) {
+  const version = detectarVersionBlob(blob);
+
+  switch (version) {
+    case 0:
+      // Blob legacy (v0.3.1 y anteriores) — sin AAD, backward compat garantizada.
+      return await descifrar(blob, clave);
+
+    case 1: {
+      // Reconstruir AAD en el mismo orden canónico que en cifrarConVersion().
+      const aad   = serializarAAD(blob.__version, blob.kdf, blob.kdfIterations);
+      const iv    = base64ABuffer(blob.iv);
+      const datos = base64ABuffer(blob.datos);
+
+      const datosDescifrados = await crypto.subtle.decrypt(
+        {
+          name:           AES_ALGORITMO,
+          iv:             iv,
+          additionalData: aad,
+        },
+        clave,
+        datos
+      );
+
+      return JSON.parse(bufferAString(datosDescifrados));
+    }
+
+    default:
+      // Versión futura (ej. v2 = Argon2id, v0.7.0) — la app debe actualizarse.
+      throw new Error(`VAULT_VERSION_INCOMPATIBLE:${version}`);
+  }
+}
+
 // ── GENERACIÓN DE HASH DE VERIFICACIÓN ──
 // Para verificar la contraseña maestra sin almacenarla ni su clave derivada.
 // DECISIÓN DE SEGURIDAD: Derivamos una segunda clave con una sal diferente
@@ -148,9 +252,9 @@ async function descifrar(paquete, clave) {
 async function generarHashVerificacion(password, sal) {
   const claveVerif = await derivarClave(password, sal);
 
-  // Ciframos un token conocido para verificación
+  // Ciframos un token conocido para verificación (blob v1 con AAD)
   const token = { verificacion: 'DACMOSGROUP_VAULT_OK', version: '1.0' };
-  return await cifrar(token, claveVerif);
+  return await cifrarConVersion(token, claveVerif);
 }
 
 // ── API PÚBLICA DEL MOTOR ──
@@ -167,8 +271,8 @@ async function configurarVault(passwordMaestra) {
   const sal2 = generarSal(); // Segunda sal independiente para verificación
   const tokenVerificacion = await generarHashVerificacion(passwordMaestra, sal2);
 
-  // Vault vacío cifrado inicialmente
-  const vaultVacio = await cifrar({ credenciales: [] }, clave);
+  // Vault vacío cifrado inicialmente (blob v1 con AAD)
+  const vaultVacio = await cifrarConVersion({ credenciales: [] }, clave);
 
   // Guardar en chrome.storage.local
   await new Promise((resolve) => {
@@ -184,8 +288,10 @@ async function configurarVault(passwordMaestra) {
   return clave; // Retorna la clave en memoria para la sesión activa
 }
 
-// Desbloquea el vault verificando la contraseña maestra
-// Retorna la clave si es correcta, null si es incorrecta
+// Desbloquea el vault verificando la contraseña maestra.
+// Retorna la clave si es correcta, null si es incorrecta.
+// Propaga VAULT_VERSION_INCOMPATIBLE sin convertirla a null — el caller
+// debe mostrar: "Actualiza la aplicación para abrir este vault."
 async function desbloquearVault(passwordMaestra) {
   const datos = await new Promise((resolve) => {
     chrome.storage.local.get(
@@ -197,12 +303,12 @@ async function desbloquearVault(passwordMaestra) {
   if (!datos.sal) return null; // Vault no configurado
 
   try {
-    const sal2  = new Uint8Array(base64ABuffer(datos.sal2));
+    const sal2       = new Uint8Array(base64ABuffer(datos.sal2));
     const claveVerif = await derivarClave(passwordMaestra, sal2);
 
-    // Intentar descifrar el token de verificación
-    // Si la contraseña es incorrecta, esto lanzará un error
-    const token = await descifrar(datos.tokenVerificacion, claveVerif);
+    // Intentar descifrar el token de verificación con dispatch por versión.
+    // Si la contraseña es incorrecta, esto lanzará un error.
+    const token = await descifrarConVersion(datos.tokenVerificacion, claveVerif);
 
     if (token.verificacion !== 'DACMOSGROUP_VAULT_OK') return null;
 
@@ -213,14 +319,16 @@ async function desbloquearVault(passwordMaestra) {
     return clave;
 
   } catch (error) {
-    // AES-GCM lanza error si la contraseña es incorrecta — comportamiento esperado
+    // VAULT_VERSION_INCOMPATIBLE no es contraseña incorrecta — propagar al caller.
+    if (error.message?.startsWith('VAULT_VERSION_INCOMPATIBLE')) throw error;
+    // AES-GCM lanza error si la contraseña es incorrecta — comportamiento esperado.
     return null;
   }
 }
 
 // Cifra y guarda el vault completo en storage
 async function guardarVaultCifrado(credenciales, clave) {
-  const vaultCifrado = await cifrar({ credenciales }, clave);
+  const vaultCifrado = await cifrarConVersion({ credenciales }, clave);
   await new Promise((resolve) => {
     chrome.storage.local.set({ vaultCifrado }, resolve);
   });
@@ -234,7 +342,7 @@ async function cargarVaultDescifrado(clave) {
 
   if (!datos.vaultCifrado) return [];
 
-  const vault = await descifrar(datos.vaultCifrado, clave);
+  const vault = await descifrarConVersion(datos.vaultCifrado, clave);
   return vault.credenciales || [];
 }
 
@@ -258,11 +366,11 @@ async function cambiarMasterPassword(passwordActual, passwordNueva) {
   // Paso 4: Derivar nueva clave con PBKDF2
   const claveNueva = await derivarClave(passwordNueva, salNueva);
 
-  // Paso 5: Generar nuevo token de verificación
+  // Paso 5: Generar nuevo token de verificación (blob v1 con AAD)
   const tokenNuevo = await generarHashVerificacion(passwordNueva, sal2Nueva);
 
-  // Paso 6: Re-cifrar vault con nueva clave
-  const vaultNuevo = await cifrar({ credenciales }, claveNueva);
+  // Paso 6: Re-cifrar vault con nueva clave (blob v1 con AAD)
+  const vaultNuevo = await cifrarConVersion({ credenciales }, claveNueva);
 
   // Paso 7: Guardar todo atómicamente
   await new Promise((resolve) => {
@@ -284,6 +392,7 @@ async function cambiarMasterPassword(passwordActual, passwordNueva) {
 // El archivo resultante es inútil sin la contraseña maestra.
 async function exportarVaultBackup(passwordMaestra) {
   // Verificar contraseña antes de exportar
+  // desbloquearVault propaga VAULT_VERSION_INCOMPATIBLE si es necesario
   const clave = await desbloquearVault(passwordMaestra);
   if (!clave) throw new Error('PASSWORD_INCORRECTA');
 
@@ -313,8 +422,8 @@ async function exportarVaultBackup(passwordMaestra) {
 
 // ── IMPORTAR VAULT DESDE BACKUP ──
 // DECISIÓN DE SEGURIDAD: Verificamos la contraseña maestra contra
-// el backup ANTES de importar. Si la verificación falla, el backup
-// es inválido o la contraseña es incorrecta.
+// el backup ANTES de importar. Propaga VAULT_VERSION_INCOMPATIBLE sin
+// convertirla a PASSWORD_INCORRECTA — son errores semánticamente distintos.
 async function importarVaultBackup(backup, passwordMaestra) {
   // Validar estructura del backup
   if (!backup.sal || !backup.sal2 || !backup.tokenVerificacion || !backup.vaultCifrado) {
@@ -325,24 +434,27 @@ async function importarVaultBackup(backup, passwordMaestra) {
     throw new Error('BACKUP_INVALIDO');
   }
 
-  // Verificar contraseña contra el backup
+  // Call site 1: verificar contraseña contra el token del backup
   try {
-    const sal2   = new Uint8Array(base64ABuffer(backup.sal2));
+    const sal2       = new Uint8Array(base64ABuffer(backup.sal2));
     const claveVerif = await derivarClave(passwordMaestra, sal2);
-    const token  = await descifrar(backup.tokenVerificacion, claveVerif);
+    const token      = await descifrarConVersion(backup.tokenVerificacion, claveVerif);
 
     if (token.verificacion !== 'DACMOSGROUP_VAULT_OK') {
       throw new Error('PASSWORD_INCORRECTA');
     }
   } catch (error) {
     if (error.message === 'PASSWORD_INCORRECTA') throw error;
+    // Vault de versión futura en el backup — no es contraseña incorrecta.
+    if (error.message?.startsWith('VAULT_VERSION_INCOMPATIBLE')) throw error;
     throw new Error('PASSWORD_INCORRECTA');
   }
 
-  // Descifrar vault del backup
-  const sal      = new Uint8Array(base64ABuffer(backup.sal));
-  const claveNew = await derivarClave(passwordMaestra, sal);
-  const vaultBackup = await descifrar(backup.vaultCifrado, claveNew);
+  // Call site 2: descifrar vault del backup
+  // VAULT_VERSION_INCOMPATIBLE se propaga naturalmente al caller.
+  const sal         = new Uint8Array(base64ABuffer(backup.sal));
+  const claveNew    = await derivarClave(passwordMaestra, sal);
+  const vaultBackup = await descifrarConVersion(backup.vaultCifrado, claveNew);
 
   // Obtener credenciales actuales para fusionar
   const datosActuales = await new Promise((resolve) => {
@@ -351,20 +463,22 @@ async function importarVaultBackup(backup, passwordMaestra) {
 
   let credencialesFinales = vaultBackup.credenciales || [];
 
-  // Fusionar con vault actual si existe
+  // Call site 3: descifrar vault actual para fusionar (si existe)
   if (datosActuales.vaultCifrado && datosActuales.sal) {
     try {
-      const salActual   = new Uint8Array(base64ABuffer(datosActuales.sal));
-      const claveActual = await derivarClave(passwordMaestra, salActual);
-      const vaultActual = await descifrar(datosActuales.vaultCifrado, claveActual);
+      const salActual    = new Uint8Array(base64ABuffer(datosActuales.sal));
+      const claveActual  = await derivarClave(passwordMaestra, salActual);
+      const vaultActual  = await descifrarConVersion(datosActuales.vaultCifrado, claveActual);
       const credActuales = vaultActual.credenciales || [];
 
       // Fusionar — evitar duplicados por ID
       const idsBackup = new Set(credencialesFinales.map(c => c.id));
       const nuevas    = credActuales.filter(c => !idsBackup.has(c.id));
       credencialesFinales = [...credencialesFinales, ...nuevas];
-    } catch (_) {
-      // Si no se puede descifrar el vault actual, usar solo el backup
+    } catch (error) {
+      // VAULT_VERSION_INCOMPATIBLE en el vault local es error irrecuperable — propagar.
+      if (error.message?.startsWith('VAULT_VERSION_INCOMPATIBLE')) throw error;
+      // Cualquier otro error: vault local no descifrable — usar solo el backup.
     }
   }
 
@@ -386,8 +500,8 @@ export {
   cambiarMasterPassword,
   exportarVaultBackup,
   importarVaultBackup,
+  detectarVersionBlob,
   generarSal,
   bufferABase64,
   base64ABuffer,
 };
-
