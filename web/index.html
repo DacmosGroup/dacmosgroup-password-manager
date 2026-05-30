@@ -129,6 +129,11 @@
     </div>
   </main>
 
+  <!-- F4.3: Google Identity Services JS — carga async antes de app.js.
+       google-auth.js espera a que window.google.accounts esté disponible
+       via la promesa interna _gisListo antes de cualquier operación OAuth. -->
+  <script src="https://accounts.google.com/gsi/client" async></script>
+
   <!-- Registro del Service Worker y lógica de arranque de la PWA -->
   <script src="/src/app.js" type="module"></script>
 

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dacmos Password Manager — OAuth Redirect</title>
+</head>
+<body>
+  <!--
+    Página de redirect interna para MSAL.js v3 — flujo popup OAuth.
+
+    Flujo:
+      1. microsoft-auth.js llama msalInstance.loginPopup() o acquireTokenPopup()
+      2. El browser abre esta URL en un popup
+      3. Microsoft autentica al usuario y redirige al popup a esta página
+         con ?code=...&state=... en la URL
+      4. MSAL inicializado aquí detecta el código de autorización, lo procesa
+         y notifica a la ventana padre via window.opener.postMessage()
+      5. El popup se cierra automáticamente
+
+    IMPORTANTE: la configuración de clientId, authority y redirectUri
+    debe ser idéntica a la de microsoft-auth.js para que MSAL pueda
+    validar el state PKCE y emparejar la respuesta correctamente.
+  -->
+  <script type="module">
+    import * as msal from '/libs/msal-browser.esm.min.js'
+
+    // Instancia mínima — misma configuración que microsoft-auth.js
+    const msalInstance = new msal.PublicClientApplication({
+      auth: {
+        clientId:    'e344398b-b03a-4819-8679-f12ff50e7c4d',
+        authority:   'https://login.microsoftonline.com/common',
+        redirectUri: window.location.origin + '/blank.html',
+      },
+      cache: {
+        cacheLocation:          'sessionStorage',
+        storeAuthStateInCookie: false,
+      },
+    })
+
+    await msalInstance.initialize()
+
+    // Procesa el código de autorización en la URL actual y envía
+    // el AuthenticationResult a la ventana padre via postMessage.
+    // Si no hay parámetros de auth en la URL, esta llamada es no-op.
+    await msalInstance.handleRedirectPromise()
+  </script>
+</body>
+</html>
