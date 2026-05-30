@@ -28,7 +28,8 @@
 15. [Arquitectura Sync Per-Item](#15-arquitectura-sync-per-item)
 16. [Decisiones de Implementación — F4.3](#16-decisiones-de-implementación--f43)
 17. [Decisiones de Implementación — F4.4 + F4.5](#17-decisiones-de-implementación--f44--f45)
-18. [Referencias](#18-referencias)
+18. [Decisiones de Implementación — F4.6](#18-decisiones-de-implementación--f46)
+19. [Referencias](#19-referencias)
 
 ---
 
@@ -61,7 +62,7 @@ PWA Mobile (v0.4.0+):
 ├── Lenguaje:       JavaScript (ES Modules — mismo código)
 ├── Crypto:         Web Crypto API (crypto.subtle — idéntica)
 ├── Almacenamiento: IndexedDB (reemplazo de chrome.storage.local)
-└── Despliegue:     Cloudflare Pages (app.dacmosgroup.co)
+└── Despliegue:     Cloudflare Pages (dpm.dacmosgroup.co)
 
 App Nativa (v0.5.0+):
 ├── Plataforma:     Capacitor (iOS + Android)
@@ -1400,7 +1401,122 @@ automático del vault cifrado.
 
 ---
 
-## 18. Referencias
+## 18. Decisiones de Implementación — F4.6
+
+Esta sección captura las decisiones de diseño tomadas durante la
+implementación de F4.6 (distribución: dominio de producción + APK
+Android via TWA). Orientada a futuros contribuidores y auditores.
+
+### URL de producción definitiva: dpm.dacmosgroup.co
+
+El dominio de producción es `dpm.dacmosgroup.co`, no `app.dacmosgroup.co`.
+
+**Razón:** convención de subdominio multi-producto de DacmosGroup basada
+en abreviaturas del producto. Escala limpiamente:
+
+```
+dpm.dacmosgroup.co   ← Dacmos Password Manager
+pg.dacmosgroup.co    ← Dacmos PolicyGen (futuro)
+```
+
+Un subdominio tipo `app.` implicaría que todos los productos de la marca
+comparten el mismo punto de entrada, lo que genera ambigüedad a medida que
+el portafolio crece. La abreviatura del producto como subdominio establece
+la identidad individual desde el primer día.
+
+### Package name Android: co.dacmosgroup.dpm
+
+Convención `reverse-domain + abreviatura`:
+
+```
+co.dacmosgroup.dpm   (Dacmos Password Manager)
+```
+
+El package name es inmutable una vez publicado el APK. Si se publica bajo
+`co.dacmosgroup.pm` y luego se quiere cambiar a `co.dacmosgroup.dpm`, la
+identidad de la app se pierde y los usuarios existentes no reciben
+actualizaciones. `dpm` es la abreviatura canónica del producto desde los
+primeros commits.
+
+### Keystore de firma: dacmos-release.keystore
+
+| Campo | Valor |
+|-------|-------|
+| Alias | `dacmos-dpm` |
+| Algoritmo | RSA 2048 |
+| Firma | SHA256withRSA |
+| Validez | 9.125 días (~25 años, vence 24 mayo 2051) |
+| SHA-256 | `B0:A1:FC:98:88:FB:8B:EE:F1:34:49:F8:FE:49:92:7C:E6:D2:4D:2E:FD:D0:0C:17:75:A0:E7:33:8F:8E:DE:0D` |
+
+El archivo `.keystore` está excluido por `.gitignore` (`*.keystore`).
+La documentación operativa (fingerprints, backup, comandos) vive en
+`docs/f4.6-keystore.md` que SÍ está en el repo para sobrevivir re-clones.
+
+### Digital Asset Links: web/.well-known/assetlinks.json
+
+El archivo `assetlinks.json` crea la relación de confianza entre el dominio
+`dpm.dacmosgroup.co` y el APK `co.dacmosgroup.dpm`. Sin este archivo en
+producción, el APK funciona pero no es una TWA legítima — el navegador
+muestra la barra de URL del Chrome, eliminando la experiencia de app nativa.
+
+**Regla crítica:** el `sha256_cert_fingerprints` en `assetlinks.json` debe
+coincidir exactamente con el fingerprint del keystore usado para firmar el
+APK. Cualquier discrepancia hace que la TWA caiga silenciosamente a Custom
+Tabs (con barra de URL visible).
+
+**Regla de Content-Type:** el archivo debe servirse con `Content-Type: application/json`.
+Configurado en `web/_headers`. Sin esta cabecera, algunos dispositivos Android
+rechazan el archivo aunque el contenido sea válido JSON.
+
+**Regla de _redirects:** la regla SPA `/* /index.html 200` captura
+`/.well-known/assetlinks.json` si no existe una regla más específica antes.
+Añadida `/.well-known/* /.well-known/:splat 200` antes de la catch-all.
+
+### Íconos PNG como requisito de bubblewrap
+
+`bubblewrap` requiere íconos PNG para generar el launcher icon del APK.
+Los SVG con `"sizes": "any"` son válidos para la PWA en el browser, pero
+el proceso de generación del APK necesita rasterizar el ícono para las
+densidades de pantalla Android (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi).
+
+Los PNG añadidos al manifest son placeholders de color sólido (`#0066cc`
+brand color) generados con Node.js nativo (zlib, fs — sin dependencias).
+**Deben reemplazarse con el arte final de DacmosGroup antes del release.**
+
+### Herramienta de distribución: bubblewrap + twa-manifest.json
+
+El archivo `twa-manifest.json` en la raíz del repo reemplaza la necesidad
+de ejecutar `bubblewrap init` cada vez (que requiere la URL de producción
+activa). Con `twa-manifest.json` presente, solo se necesita:
+
+```bash
+bubblewrap build --skipPwaValidation
+```
+
+### Canales de distribución v0.4.0
+
+| Canal | Estado |
+|-------|--------|
+| `dpm.dacmosgroup.co` (PWA — todos los dispositivos) | ✅ Dominio activo |
+| GitHub Releases (`dacmos-pm-v0.4.0.apk`) | ✅ APK firmado |
+| IzzyOnDroid | 🔄 Pendiente submisión (2–7 días revisión) |
+| F-Droid main repo | ⏳ v0.4.x (requiere build reproducible) |
+| Google Play Store | ⏳ v0.5.0 ($25 Play Console) |
+| Apple App Store | ⏳ v0.6.0 ($99/año Developer Program) |
+
+### Android Developer Console gratuita — deadline septiembre 2026
+
+Google exige registro en la Android Developer Console (gratuita, distinta
+de Play Console) para distribución directa de APKs en LATAM a partir de
+septiembre 2026. No afecta GitHub Releases ni IzzyOnDroid hoy, pero es un
+prerequisito para distribución directa en el mercado latinoamericano.
+
+Registro: `play.google.com/console/about/` → "Crear cuenta gratuita".
+Solo requiere verificación de identidad (documento + selfie). Sin costo.
+
+---
+
+## 19. Referencias
 
 ### Estándares y especificaciones
 

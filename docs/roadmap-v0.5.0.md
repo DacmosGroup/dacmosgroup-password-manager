@@ -134,7 +134,7 @@ usuario no abre la app por semanas.
 En la app Capacitor, los popups OAuth del browser no funcionan igual que
 en la PWA. Se reemplaza por el flujo nativo con redirect a la app.
 
-**iOS:** Universal Links con dominio propio (`app.dacmosgroup.co`)
+**iOS:** Universal Links con dominio propio (`dpm.dacmosgroup.co`)
 **Android:** App Links con `assetlinks.json` en el dominio
 
 Esto elimina la fricción del popup de browser que el usuario ve en v0.4.0
