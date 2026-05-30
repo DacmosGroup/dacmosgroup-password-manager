@@ -19,7 +19,7 @@
 // registrado en Google Cloud Console (distinto del Client ID de la
 // extensión Chrome, que es de tipo "Extensión de Chrome").
 // Ver docs/f4.3-oauth-setup.md para el paso a paso de registro.
-const CLIENT_ID = 'TU_GOOGLE_CLIENT_ID'
+const CLIENT_ID = '386629612056-g253j3h0f4iahkqeavhqbbvquc7sa2q1.apps.googleusercontent.com'
 const SCOPES    = 'https://www.googleapis.com/auth/drive.appdata'
 
 // ── Estado interno del módulo ──
