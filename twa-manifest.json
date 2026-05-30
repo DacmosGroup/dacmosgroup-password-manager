@@ -1,0 +1,46 @@
+{
+  "packageId": "co.dacmosgroup.dpm",
+  "host": "dpm.dacmosgroup.co",
+  "name": "Dacmos Password Manager",
+  "launcherName": "Dacmos PM",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#0066cc",
+  "navigationColor": "#0066cc",
+  "navigationColorDark": "#000d1a",
+  "navigationDividerColor": "#0066cc",
+  "navigationDividerColorDark": "#000d1a",
+  "backgroundColor": "#1a1a2e",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://dpm.dacmosgroup.co/assets/icons/icon-512.png",
+  "maskableIconUrl": "https://dpm.dacmosgroup.co/assets/icons/icon-maskable.png",
+  "monochromeIconUrl": "",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:/DacmosGroup/03_PasswordManager/dacmosgroup-password-manager/dacmos-release.keystore",
+    "alias": "dacmos-dpm"
+  },
+  "appVersionCode": 1,
+  "appVersionName": "0.4.0",
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://dpm.dacmosgroup.co/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": false
+    },
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fingerprints": [],
+  "serviceAccountJsonFile": ""
+}

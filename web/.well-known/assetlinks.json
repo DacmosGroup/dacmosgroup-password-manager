@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "co.dacmosgroup.dpm",
+    "sha256_cert_fingerprints": [
+      "B0:A1:FC:98:88:FB:8B:EE:F1:34:49:F8:FE:49:92:7C:E6:D2:4D:2E:FD:D0:0C:17:75:A0:E7:33:8F:8E:DE:0D"
+    ]
+  }
+}]

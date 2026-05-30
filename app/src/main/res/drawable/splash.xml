@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash screen placeholder: fondo sólido con el background_color de la PWA (#1a1a2e). -->
+<!-- Reemplazar con artwork final antes del release público en Play Store. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/backgroundColor"/>
+        </shape>
+    </item>
+</layer-list>

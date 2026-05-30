@@ -5,4 +5,5 @@
 # Esto permite que el router del lado del cliente (F4.4) maneje rutas
 # como /vault, /settings, /health sin recibir un 404 de Cloudflare.
 
+/.well-known/*    /.well-known/:splat    200
 /*    /index.html    200
