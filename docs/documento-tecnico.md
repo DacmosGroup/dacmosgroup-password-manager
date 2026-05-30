@@ -27,7 +27,8 @@
 14. [Decisiones de Implementación — F4.7](#14-decisiones-de-implementación--f47)
 15. [Arquitectura Sync Per-Item](#15-arquitectura-sync-per-item)
 16. [Decisiones de Implementación — F4.3](#16-decisiones-de-implementación--f43)
-17. [Referencias](#17-referencias)
+17. [Decisiones de Implementación — F4.4 + F4.5](#17-decisiones-de-implementación--f44--f45)
+18. [Referencias](#18-referencias)
 
 ---
 
@@ -1262,7 +1263,144 @@ Sin `frame-src`: los popups OAuth son ventanas del browser, no iframes.
 
 ---
 
-## 17. Referencias
+## 17. Decisiones de Implementación — F4.4 + F4.5
+
+Esta sección captura las decisiones de diseño tomadas durante la
+implementación de F4.4 (UI responsive mobile-first) y F4.5
+(persistencia robusta). Orientada a futuros contribuidores y a
+v0.5.0 (Capacitor) que reutilizará esta arquitectura de UI.
+
+### Módulo implícito: session.js
+
+La especificación en CLAUDE.md indica *"Session state lives in JS
+module memory only"* pero no detalla cómo compartirlo entre vistas.
+La solución adoptada es `web/src/storage/session.js`: un módulo ES
+con variables a nivel de módulo (`_claveSesion`, `_credenciales`)
+y funciones getter/setter exportadas.
+
+Este patrón funciona porque los ES Modules son singletons — el
+browser carga cada módulo una sola vez y todas las importaciones
+comparten la misma instancia. Cualquier vista que importe `session.js`
+accede al mismo estado en memoria.
+
+**Consecuencia operativa:** la sesión se pierde al recargar la página.
+El usuario debe volver a ingresar la contraseña maestra. Este
+comportamiento es idéntico al de la extensión Chrome cuando el
+service worker se reinicia y es correcto por diseño (Zero-Knowledge:
+la clave AES no persiste).
+
+### Fork web/src/health/password-health.js
+
+Mismo patrón que `web/src/sync/storage-adapter.js` (F4.3): Cloudflare
+Pages sirve desde `web/` como raíz del servidor. Una ruta como
+`../../src/health/password-health.js` desde `web/src/ui/views/health.js`
+saldría del directorio servido y devolvería 404 en producción.
+
+El fork es literal — sin cambios de lógica. Solo cambia el lugar
+en el sistema de archivos. Cuando `src/health/password-health.js`
+reciba actualizaciones (ej. nuevas métricas en v0.5.0), deben
+portarse manualmente al fork de la PWA, igual que con `engine.js`.
+
+### Hash routing vs History API
+
+Se eligió hash routing (`#/vault`, `#/unlock`, etc.) sobre History API
+(`/vault`, `/unlock`) aunque `web/_redirects` ya tiene la regla SPA
+`/* /index.html 200`.
+
+**Razón:** iOS Safari en modo standalone (PWA instalada) tiene
+comportamiento no estándar con `history.pushState` cuando la sesión
+expira o el usuario navega directamente a una ruta profunda. Con hash
+routing, el servidor siempre sirve `index.html` para cualquier URL y
+el router en JS se encarga de todo — sin dependencia del comportamiento
+del navegador para manejar deep links.
+
+### CSS unificado (main.css) sin @import
+
+Sin bundler (ni Vite, ni webpack, ni esbuild), la alternativa a un
+único `main.css` sería múltiples archivos CSS con `@import` o
+múltiples `<link>` en el HTML.
+
+`@import` en CSS es render-blocking: el browser descarga el archivo
+importado de forma secuencial antes de procesar el resto. Con 7+ vistas
+esto crearía una cascada de bloqueos en la primera carga.
+
+Múltiples `<link>` resolverían el bloqueo pero requerirían actualizar
+el HTML cada vez que se añade una vista.
+
+Un único `main.css` con secciones claramente delimitadas por
+comentarios es el tradeoff óptimo para este stack sin build step.
+
+### Pointer Events API para swipe (no Touch Events)
+
+`swipe-card.js` usa exclusivamente Pointer Events API (W3C standard)
+en lugar de Touch Events (API legacy).
+
+| Criterio | Pointer Events | Touch Events |
+|----------|---------------|--------------|
+| Dispositivos cubiertos | Touch + mouse + stylus | Solo touch |
+| `setPointerCapture()` | ✅ Nativo | ❌ No disponible |
+| Compatibilidad | iOS 13+, Chrome Android | Todos |
+| Mantenimiento | Una sola API | Dos APIs paralelas |
+
+`setPointerCapture(e.pointerId)` es la razón técnica principal: garantiza
+que `pointermove` y `pointerup` lleguen al elemento aunque el dedo
+salga de sus límites durante el gesto. Sin esto, el swipe se interrumpe
+si el usuario arrastra demasiado rápido y el dedo sale momentáneamente.
+
+### Clase CSS sin-nav para vistas de pantalla completa
+
+Las vistas setup, unlock y credential-form son de pantalla completa —
+no deben mostrar el bottom-nav ni el margen del sidebar.
+
+`nav-bottom.js` añade/quita `.sin-nav` en `#app` al cambiar de ruta.
+En `main.css`:
+
+```css
+/* Mobile: quitar padding-bottom del espacio reservado para la nav */
+#app.sin-nav { padding-bottom: 0; }
+
+/* Desktop: quitar el margin-left del sidebar */
+@media (min-width: 768px) {
+  #app.sin-nav { margin-left: 0; padding-bottom: 0; }
+}
+```
+
+Sin esta clase, las vistas unlock/setup en desktop mostrarían un margen
+izquierdo de 220px y las vistas centradas (`.vista--centrada`) no
+quedarían correctamente centradas en la pantalla.
+
+### solicitarPersistencia() desde el submit handler (F4.5)
+
+La Storage API requiere un "user gesture" (interacción activa del usuario)
+para llamar a `navigator.storage.persist()` en algunos browsers, en
+particular Safari iOS.
+
+`setup.js` llama `solicitarPersistencia()` dentro del handler del
+evento `submit` del formulario — que es un gesto del usuario (clic en
+"Crear vault"). Esto satisface el gesture requirement.
+
+Si se llamara desde `app.js` al cargar (sin gesto), Safari rechazaría
+la solicitud silenciosamente y `persist()` devolvería `false` aunque
+el usuario pudiera haberla concedido.
+
+### Banner no modal para eviction iOS (F4.5)
+
+Cuando el browser rechaza la persistencia, se muestra un banner
+no bloqueante en la parte inferior de la vista vault — no un modal.
+
+**Razón:** el riesgo de eviction de iOS Safari ocurre después de 7 días
+sin abrir la PWA. No es un riesgo inmediato. Un modal interrumpiría el
+flujo del usuario en su primera visita al vault, generando fricción
+innecesaria en el momento de mayor valor percibido de la app.
+
+El banner es descartable (botón X) y no reaparece tras cerrarlo
+(`bannerPersistenciaVisto: true` en idbStorage). La red de seguridad
+real es el sync BYOC (Google Drive / OneDrive), que actúa como backup
+automático del vault cifrado.
+
+---
+
+## 18. Referencias
 
 ### Estándares y especificaciones
 

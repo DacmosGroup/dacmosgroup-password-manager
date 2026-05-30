@@ -230,7 +230,7 @@ al de la extensión Chrome cuando el service worker se reinicia.
 
 ---
 
-### F4.4 — UI responsive y mobile-first
+### F4.4 — UI responsive y mobile-first ✅ COMPLETADO
 
 La UI de la extensión Chrome fue diseñada para popup (380px) y pestañas
 completas desktop. La PWA debe funcionar en pantallas de 360px a 1440px.
@@ -262,7 +262,7 @@ completas desktop. La PWA debe funcionar en pantallas de 360px a 1440px.
 
 ---
 
-### F4.5 — Persistencia robusta: manejo de eviction iOS Safari
+### F4.5 — Persistencia robusta: manejo de eviction iOS Safari ✅ COMPLETADO
 
 **El riesgo más importante de la PWA en iOS.**
 
@@ -432,8 +432,8 @@ el número de iteraciones.
 - [x] F4.1 — Setup PWA: infraestructura completa desplegada en Cloudflare Pages ✅
 - [x] F4.2 — IndexedDB: adaptador + fork engine.js para PWA ✅
 - [x] F4.3 — OAuth PKCE: sync Google Drive + OneDrive funcionando en mobile ✅
-- [ ] F4.4 — UI responsive: navegación completa en 360px y 1440px sin errores
-- [ ] F4.5 — Persistencia: `navigator.storage.persist()` + UX educativa en iOS
+- [x] F4.4 — UI responsive: navegación completa en 360px y 1440px sin errores ✅
+- [x] F4.5 — Persistencia: `navigator.storage.persist()` + UX educativa en iOS ✅
 - [ ] F4.6 — Distribución: APK TWA en GitHub Releases + IzzyOnDroid submisión
 - [x] F4.7 — Versionado del blob: campo `__version` en todos los blobs nuevos ✅
 - [ ] Compatibilidad cruzada PWA ↔ Chrome Extension verificada (round-trip)
