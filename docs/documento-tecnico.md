@@ -26,7 +26,8 @@
 13. [Formato Canónico Versionado del Blob](#13-formato-canónico-versionado-del-blob)
 14. [Decisiones de Implementación — F4.7](#14-decisiones-de-implementación--f47)
 15. [Arquitectura Sync Per-Item](#15-arquitectura-sync-per-item)
-16. [Referencias](#16-referencias)
+16. [Decisiones de Implementación — F4.3](#16-decisiones-de-implementación--f43)
+17. [Referencias](#17-referencias)
 
 ---
 
@@ -1106,7 +1107,162 @@ El modelo per-item no cambia la garantía Zero-Knowledge:
 
 ---
 
-## 16. Referencias
+## 16. Decisiones de Implementación — F4.3
+
+Esta sección captura las decisiones de diseño tomadas durante la
+implementación de F4.3 (OAuth PKCE sin chrome.identity para la PWA).
+Está orientada a futuros contribuidores y auditores que modifiquen
+los módulos de autenticación o los adaptadores de sync de la PWA.
+
+### Google Drive — GIS Token Client (no Authorization Code PKCE)
+
+La extensión Chrome usa `chrome.identity.getAuthToken()` para obtener
+un `access_token` de Google. La PWA usa **Google Identity Services JS
+(GIS) Token Client** — la API oficial de Google para SPAs y PWAs.
+
+| Característica | Extensión Chrome | PWA |
+|---|---|---|
+| Mecanismo | `chrome.identity.getAuthToken` | GIS Token Client |
+| Flujo OAuth | Implícito gestionado por Chrome | Token Model (GIS interno) |
+| PKCE | No aplica (Chrome Extension) | No aplica (GIS lo abstrae) |
+| Refresh | Chrome renueva automáticamente | `prompt: ''` → GIS silencioso |
+
+> **Por qué GIS y no Authorization Code + PKCE manual para Google:**
+> GIS Token Client es el flujo oficial de Google para obtener `access_token`
+> en apps de página única. Authorization Code + PKCE es correcto para
+> backends; GIS lo gestiona internamente con seguridad equivalente y
+> una API más simple. El scope `drive.appdata` funciona con GIS.
+
+### Ciclo de vida del access_token de Google
+
+```
+_accessToken = null  ← al cargar el módulo
+        │
+        ▼ conectar() / obtenerToken() con prompt='consent' o ''
+[GIS callback] → _accessToken = response.access_token
+                  _expiraEn = Date.now() + (expires_in - 60) * 1000
+        │
+        ├── obtenerToken() → token vigente → retorna _accessToken (sin red)
+        │
+        ├── obtenerToken() → token expirado → GIS silent (prompt='')
+        │     Si sesión Google activa → nuevo token sin popup
+        │     Si no hay sesión → popup de login
+        │
+        ├── 401 del servidor → invalidarToken() → obtenerToken()
+        │     (fuerza nuevo token aunque _expiraEn no haya llegado)
+        │
+        └── desconectar() → _accessToken = null → revoke best-effort en Google
+
+NUNCA: localStorage / sessionStorage / IndexedDB
+```
+
+### Microsoft OneDrive — MSAL.js v3 con PKCE S256
+
+| Característica | Extensión Chrome | PWA |
+|---|---|---|
+| Mecanismo | `chrome.identity.launchWebAuthFlow` + PKCE manual | MSAL.js v3 PublicClientApplication |
+| PKCE | Implementado manualmente (Web Crypto SHA-256) | Implementado por MSAL internamente |
+| Refresh token | Almacenado en `chrome.storage.local` | Almacenado en `sessionStorage` (MSAL) |
+| Silent renewal | `_refrescarToken()` propio | `acquireTokenSilent()` (MSAL) |
+| Re-auth forzada | `launchWebAuthFlow` interactivo | `acquireTokenPopup()` |
+
+#### Lógica de obtención de token (MSAL)
+
+```javascript
+// 1. Intento silencioso — usa refresh_token en sessionStorage
+const resultado = await msalInstance.acquireTokenSilent({ account, scopes })
+
+// 2. Si falla (refresh_token expirado o revocado):
+//    InteractionRequiredAuthError → popup de Microsoft
+const resultado = await msalInstance.acquireTokenPopup({ account, scopes })
+```
+
+### Decisión: sessionStorage para MSAL (no localStorage)
+
+`cacheLocation: 'sessionStorage'` garantiza que los tokens de Microsoft
+se borran al cerrar la pestaña. Alternativa rechazada: `'localStorage'`
+persistiría los tokens indefinidamente entre sesiones — inconsistente con
+el principio de sesión volátil (equivalente a `chrome.storage.session`).
+
+### Decisión: bundle ESM local de MSAL (no CDN)
+
+`@azure/msal-browser@3.30.0` no incluye un bundle ESM autocontenido.
+El archivo `dist/index.mjs` re-exporta desde 336 archivos subdivididos en
+subdirectorios — no puede servirse directamente en la PWA sin bundler.
+
+**Solución:** esbuild genera un único archivo ESM autocontenido en 71ms:
+
+```
+npx esbuild dist/index.mjs --bundle --format=esm --platform=browser \
+  --minify --outfile=msal-browser.esm.min.js
+```
+
+**Resultado:** `web/libs/msal-browser.esm.min.js` — 311KB, sin dependencias externas.
+
+**Ventajas sobre CDN:**
+- Funciona offline (Service Worker lo cachea como asset estático)
+- Sin dominio adicional en `script-src` de la CSP
+- Versión fija y controlada (registrada en `web/libs/versions.json`)
+- Sin dependencia de disponibilidad de CDN en runtime
+
+**Versión fija:** `web/libs/versions.json` registra la versión exacta bundleada.
+Al actualizar MSAL, hay que re-ejecutar el bundle y actualizar `versions.json`.
+
+### Decisión: import directo del módulo auth en los adaptadores de sync
+
+Los adaptadores PWA (`google-drive-adapter.js`, `onedrive-adapter.js`) obtienen
+el token via **import directo** de los módulos auth:
+
+```javascript
+import { obtenerToken } from '../auth/google-auth.js'    // GoogleDriveAdapter
+import { obtenerToken as obtenerTokenMicrosoft } from '../auth/microsoft-auth.js'  // OneDriveAdapter
+```
+
+**Alternativa rechazada: pasar el token como parámetro** (`guardar(vaultCifrado, token)`).
+Esto hubiera roto la interfaz `StorageAdapter` — `guardar()` tiene firma fija y el
+`sync-manager.js` de la extensión Chrome la llama sin token. El import directo
+mantiene la firma pública idéntica al original sin tocar el código compartido.
+
+### Decisión: forks independientes (no modificar src/sync/)
+
+Los adaptadores de la PWA viven en `web/src/sync/` y **no modifican** los archivos
+en `src/sync/`. Razones:
+
+1. Los originales en `src/sync/` usan `chrome.*` APIs que no existen en PWA
+2. Un único archivo con branching (`if (chrome.identity)`) introduciría
+   complejidad y riesgo en el adaptador de la extensión Chrome
+3. Los forks son pequeños (~100 líneas) — el mantenimiento paralelo es manejable
+4. El patrón es consistente con `web/src/crypto/engine.js` (fork de F4.2)
+
+`web/src/sync/storage-adapter.js` es un fork literal (21 líneas) de la clase base
+abstracta. Es necesario porque la PWA se sirve desde `web/` y el browser retornaría
+404 para rutas que salgan de ese directorio (`../../src/sync/storage-adapter.js`).
+
+### CSP — cambios en F4.3
+
+| Directiva | Adición | Justificación |
+|---|---|---|
+| `script-src` | `https://accounts.google.com` | Tag `<script src=".../gsi/client">` en `index.html` |
+| `connect-src` | `https://oauth2.googleapis.com` | `google.accounts.oauth2.revoke()` hace POST aquí |
+| `connect-src` | `https://login.microsoftonline.com` | MSAL fetch al token endpoint de Microsoft |
+
+Sin cambios en `script-src` por MSAL: el bundle se sirve desde `/libs/` (origen propio).
+Sin `frame-src`: los popups OAuth son ventanas del browser, no iframes.
+
+### Riesgos identificados en F4.3
+
+| # | Riesgo | Severidad | Mitigación |
+|---|--------|-----------|------------|
+| R1 | GIS no cargado cuando se llama `obtenerToken()` | Medio | `_gisListo` Promise con rAF polling — bloquea hasta que `window.google` existe |
+| R2 | Popup bloqueado por el browser | Medio | `conectar()` y `conectar()` se llaman solo desde event handlers de usuario |
+| R3 | `CLIENT_ID` de Google como placeholder en código | Alto | `docs/f4.3-oauth-setup.md` documenta el paso de reemplazo; el placeholder es obvio |
+| R4 | Token de Google revocado externamente antes de `_expiraEn` | Bajo | 401 del servidor → `invalidarToken()` → `obtenerToken()` obtiene token fresco |
+| R5 | MSAL `clearCache()` no disponible en v3 futura | Bajo | Documentado; alternativa: `msalInstance.getTokenCache().clear()` |
+| R6 | bundle MSAL desactualizado | Bajo | `web/libs/versions.json` + proceso de actualización documentado |
+
+---
+
+## 17. Referencias
 
 ### Estándares y especificaciones
 

@@ -168,7 +168,7 @@ que lo persiste.
 
 ---
 
-### F4.3 — OAuth PKCE sin chrome.identity
+### F4.3 — OAuth PKCE sin chrome.identity ✅ COMPLETADO
 
 `chrome.identity` no existe en el contexto de una PWA. Se reemplaza por
 flujos OAuth estándar con PKCE (Proof Key for Code Exchange) S256, que
@@ -205,6 +205,28 @@ al de la extensión Chrome cuando el service worker se reinicia.
 - Conectar Google Drive → crear credencial en PWA → abrir extensión Chrome:
   la credencial aparece. Round-trip PWA ↔ Chrome verificado.
 - Mismo test con OneDrive.
+
+**Implementación — commit `bbddbdc` (branch `feature/v0.4.0`):**
+- `web/src/auth/google-auth.js` — GIS Token Client; `_accessToken` solo en scope
+  de módulo JS; `_gisListo` Promise resuelve via rAF polling cuando `window.google`
+  está disponible; `invalidarToken()` para forzar renovación tras 401
+- `web/src/auth/microsoft-auth.js` — MSAL.js v3.30.0 con PKCE S256 (implementado
+  internamente por MSAL); `cacheLocation: 'sessionStorage'`; `acquireTokenSilent`
+  con fallback a `acquireTokenPopup` en `InteractionRequiredAuthError`
+- `web/libs/msal-browser.esm.min.js` — MSAL bundleado con `esbuild --bundle
+  --format=esm --platform=browser` (311KB autocontenido, sin CDN, funciona offline)
+- `web/src/sync/google-drive-adapter.js` — fork: `chrome.identity` → `google-auth.js`;
+  `chrome.storage.local` → `idbStorage`; `_limpiarTokenCache()` eliminado
+- `web/src/sync/onedrive-adapter.js` — fork: `launchWebAuthFlow` → `microsoft-auth.js`;
+  `_generarPKCE()`, `_guardarTokens()`, `_refrescarToken()` eliminados (MSAL los maneja)
+- `web/src/sync/storage-adapter.js` — fork literal (la PWA no puede importar fuera de `web/`)
+- `web/blank.html` — página de redirect MSAL popup; llama `handleRedirectPromise()`
+- `web/_headers` — CSP: `https://accounts.google.com` → `script-src`;
+  `https://oauth2.googleapis.com` y `https://login.microsoftonline.com` → `connect-src`
+- `web/src/app.js` — `import inicializarMsal`; `await inicializarMsal()` en evento `load`
+- `web/libs/versions.json` — registro de versión fija: `msal-browser: 3.30.0`
+- `docs/f4.3-oauth-setup.md` — checklist de prerequisitos: Google Cloud Console (Client ID
+  tipo "Aplicación web") y Azure Portal (redirect URIs tipo "Single Page Application")
 
 ---
 
@@ -409,7 +431,7 @@ el número de iteraciones.
 
 - [x] F4.1 — Setup PWA: infraestructura completa desplegada en Cloudflare Pages ✅
 - [x] F4.2 — IndexedDB: adaptador + fork engine.js para PWA ✅
-- [ ] F4.3 — OAuth PKCE: sync Google Drive + OneDrive funcionando en mobile
+- [x] F4.3 — OAuth PKCE: sync Google Drive + OneDrive funcionando en mobile ✅
 - [ ] F4.4 — UI responsive: navegación completa en 360px y 1440px sin errores
 - [ ] F4.5 — Persistencia: `navigator.storage.persist()` + UX educativa en iOS
 - [ ] F4.6 — Distribución: APK TWA en GitHub Releases + IzzyOnDroid submisión
