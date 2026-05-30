@@ -36,8 +36,41 @@ const CACHE_ASSETS = 'dacmos-assets-v1'
 /* ── Precache de offline.html ──────────────────────────────────────────
    Al instalar el SW, offline.html queda guardado en caché para poder
    servirlo aunque no haya red. */
+/* ── Precache de assets estáticos (Condición 3: lista explícita) ──────
+   Se listan individualmente — sin globs — para control preciso de qué
+   se cachea y qué revisión fuerza la actualización del precache.
+   Incrementar 'revision' cuando el contenido del archivo cambia. */
 workbox.precaching.precacheAndRoute([
-  { url: '/offline.html', revision: '1' },
+  { url: '/offline.html',                              revision: '1' },
+
+  /* ── Estilos ── */
+  { url: '/src/ui/styles/main.css',                    revision: '1' },
+
+  /* ── Router y layout ── */
+  { url: '/src/ui/router.js',                          revision: '1' },
+  { url: '/src/ui/layout/nav-bottom.js',               revision: '1' },
+
+  /* ── Componentes ── */
+  { url: '/src/ui/components/swipe-card.js',           revision: '1' },
+
+  /* ── Vistas ── */
+  { url: '/src/ui/views/setup.js',                     revision: '1' },
+  { url: '/src/ui/views/unlock.js',                    revision: '1' },
+  { url: '/src/ui/views/vault.js',                     revision: '1' },
+  { url: '/src/ui/views/credential-form.js',           revision: '1' },
+  { url: '/src/ui/views/health.js',                    revision: '1' },
+  { url: '/src/ui/views/generator.js',                 revision: '1' },
+  { url: '/src/ui/views/settings.js',                  revision: '1' },
+
+  /* ── Onboarding ── */
+  { url: '/src/ui/onboarding/pwa-install.js',          revision: '1' },
+
+  /* ── Storage (F4.5) ── */
+  { url: '/src/storage/persistence-manager.js',        revision: '1' },
+  { url: '/src/storage/session.js',                    revision: '1' },
+
+  /* ── Health (fork) ── */
+  { url: '/src/health/password-health.js',             revision: '1' },
 ])
 
 /* ── Estrategia CacheFirst para assets estáticos ──────────────────────
