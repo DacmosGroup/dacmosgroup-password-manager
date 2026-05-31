@@ -20,7 +20,7 @@ on:
     branches:
       - main
     paths:
-      # Disparar cuando cambian archivos de la PWA o el propio workflow
+      # Disparar cuando cambian archivos de la PWA o el propio workflow (2026-05-31)
       - 'web/**'
       - '.github/workflows/**'
   workflow_dispatch:
