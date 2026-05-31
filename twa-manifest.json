@@ -21,8 +21,8 @@
     "path": "C:/DacmosGroup/03_PasswordManager/dacmosgroup-password-manager/dacmos-release.keystore",
     "alias": "dacmos-dpm"
   },
-  "appVersionCode": 1,
-  "appVersionName": "0.4.0",
+  "appVersionCode": 2,
+  "appVersionName": "0.4.1",
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://dpm.dacmosgroup.co/manifest.json",

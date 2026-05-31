@@ -193,7 +193,7 @@ export async function montar(contenedor) {
       </div>
 
       <p class="settings__version-pie">
-        Dacmos Password Manager · Zero-Knowledge · v0.4.0
+        Dacmos Password Manager · Zero-Knowledge · v0.4.1
       </p>
     </div>`
 
