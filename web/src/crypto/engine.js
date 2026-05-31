@@ -1,8 +1,14 @@
 // ============================================================
-// Dacmos Password Manager — Motor de Cifrado
+// Dacmos Password Manager — Motor de Cifrado (PWA)
+// Fork de src/crypto/engine.js para la Progressive Web App.
+// Única diferencia respecto al original: las llamadas a
+// chrome.storage.local se reemplazan por idbStorage (IndexedDB).
+// Lógica de cifrado y constantes de seguridad: idénticas.
 // Estándar: AES-256-GCM + PBKDF2-SHA256 (OWASP 2024)
 // Motor: Web Crypto API nativa — sin librerías de terceros
 // ============================================================
+
+import { idbStorage } from '../storage/indexeddb-adapter.js'
 
 // ── Constantes de seguridad ──
 // DECISIÓN DE SEGURIDAD: 600,000 iteraciones PBKDF2 según OWASP 2024.
@@ -274,15 +280,13 @@ async function configurarVault(passwordMaestra) {
   // Vault vacío cifrado inicialmente (blob v1 con AAD)
   const vaultVacio = await cifrarConVersion({ credenciales: [] }, clave);
 
-  // Guardar en chrome.storage.local
-  await new Promise((resolve) => {
-    chrome.storage.local.set({
-      vaultConfigurado:    true,
-      sal:                 bufferABase64(sal.buffer),
-      sal2:                bufferABase64(sal2.buffer),
-      tokenVerificacion,
-      vaultCifrado:        vaultVacio,
-    }, resolve);
+  // Guardar en IndexedDB (PWA)
+  await idbStorage.set({
+    vaultConfigurado:    true,
+    sal:                 bufferABase64(sal.buffer),
+    sal2:                bufferABase64(sal2.buffer),
+    tokenVerificacion,
+    vaultCifrado:        vaultVacio,
   });
 
   return clave; // Retorna la clave en memoria para la sesión activa
@@ -293,12 +297,7 @@ async function configurarVault(passwordMaestra) {
 // Propaga VAULT_VERSION_INCOMPATIBLE sin convertirla a null — el caller
 // debe mostrar: "Actualiza la aplicación para abrir este vault."
 async function desbloquearVault(passwordMaestra) {
-  const datos = await new Promise((resolve) => {
-    chrome.storage.local.get(
-      ['sal', 'sal2', 'tokenVerificacion'],
-      resolve
-    );
-  });
+  const datos = await idbStorage.get(['sal', 'sal2', 'tokenVerificacion']);
 
   if (!datos.sal) return null; // Vault no configurado
 
@@ -329,16 +328,12 @@ async function desbloquearVault(passwordMaestra) {
 // Cifra y guarda el vault completo en storage
 async function guardarVaultCifrado(credenciales, clave) {
   const vaultCifrado = await cifrarConVersion({ credenciales }, clave);
-  await new Promise((resolve) => {
-    chrome.storage.local.set({ vaultCifrado }, resolve);
-  });
+  await idbStorage.set({ vaultCifrado });
 }
 
 // Descifra y retorna las credenciales del vault
 async function cargarVaultDescifrado(clave) {
-  const datos = await new Promise((resolve) => {
-    chrome.storage.local.get(['vaultCifrado'], resolve);
-  });
+  const datos = await idbStorage.get(['vaultCifrado']);
 
   if (!datos.vaultCifrado) return [];
 
@@ -373,13 +368,11 @@ async function cambiarMasterPassword(passwordActual, passwordNueva) {
   const vaultNuevo = await cifrarConVersion({ credenciales }, claveNueva);
 
   // Paso 7: Guardar todo atómicamente
-  await new Promise((resolve) => {
-    chrome.storage.local.set({
-      sal:               bufferABase64(salNueva.buffer),
-      sal2:              bufferABase64(sal2Nueva.buffer),
-      tokenVerificacion: tokenNuevo,
-      vaultCifrado:      vaultNuevo,
-    }, resolve);
+  await idbStorage.set({
+    sal:               bufferABase64(salNueva.buffer),
+    sal2:              bufferABase64(sal2Nueva.buffer),
+    tokenVerificacion: tokenNuevo,
+    vaultCifrado:      vaultNuevo,
   });
 
   return claveNueva;
@@ -397,12 +390,7 @@ async function exportarVaultBackup(passwordMaestra) {
   if (!clave) throw new Error('PASSWORD_INCORRECTA');
 
   // Obtener todos los datos del vault
-  const datos = await new Promise((resolve) => {
-    chrome.storage.local.get(
-      ['sal', 'sal2', 'tokenVerificacion', 'vaultCifrado'],
-      resolve
-    );
-  });
+  const datos = await idbStorage.get(['sal', 'sal2', 'tokenVerificacion', 'vaultCifrado']);
 
   // Construir el objeto de backup
   const backup = {
@@ -457,9 +445,7 @@ async function importarVaultBackup(backup, passwordMaestra) {
   const vaultBackup = await descifrarConVersion(backup.vaultCifrado, claveNew);
 
   // Obtener credenciales actuales para fusionar
-  const datosActuales = await new Promise((resolve) => {
-    chrome.storage.local.get(['sal', 'vaultCifrado'], resolve);
-  });
+  const datosActuales = await idbStorage.get(['sal', 'vaultCifrado']);
 
   let credencialesFinales = vaultBackup.credenciales || [];
 

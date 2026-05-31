@@ -24,3 +24,5 @@ Thumbs.db
 test-credentials.*settings.local.json
 settings.local.json
 CLAUDE.md
+!.claude/CLAUDE.md
+.wrangler/

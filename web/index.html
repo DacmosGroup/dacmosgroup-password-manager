@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+
+  <!-- Viewport móvil con soporte a notch/Dynamic Island (viewport-fit=cover) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>Dacmos Password Manager</title>
+
+  <!-- ── PWA: manifest y tema ─────────────────────────────────────────── -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0066cc">
+
+  <!-- ── PWA: iOS / Safari ─────────────────────────────────────────────
+       El modo standalone en iOS 15.4+ lo gestiona el manifest.json
+       con display: standalone. apple-mobile-web-app-capable fue
+       deprecado en Safari 17 (iOS 17) — se elimina.
+       El efecto visual del status bar se preserva via viewport-fit=cover
+       y env(safe-area-inset-*) en la UI (F4.4). -->
+  <meta name="apple-mobile-web-app-title" content="Dacmos PM">
+  <!-- iOS necesita PNG para el icono de Home Screen.
+       Reemplazar icon-180.svg → icon-180.png antes de producción. -->
+  <link rel="apple-touch-icon" href="/assets/icons/icon-180.svg">
+
+  <!-- ── Favicon ───────────────────────────────────────────────────────── -->
+  <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+
+  <!-- ── Meta SEO básico ──────────────────────────────────────────────── -->
+  <meta name="description" content="Gestor de contraseñas Zero-Knowledge. Tu vault cifrado, en cualquier dispositivo. DacmosGroup.co">
+  <meta name="application-name" content="Dacmos Password Manager">
+
+  <!-- ── Estilos del splash de carga ──────────────────────────────────── -->
+  <style>
+    /* Variables de color — misma paleta que la extensión Chrome */
+    :root {
+      --color-bg:      #1a1a2e;
+      --color-primary: #0066cc;
+      --color-accent:  #00d4ff;
+      --color-text:    #e8e8e8;
+    }
+
+    /* Reset mínimo */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Pantalla completa con fondo de marca */
+    body {
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Contenedor del splash centrado */
+    .splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* Ícono de carga — animación suave de pulso */
+    .splash__icon {
+      width: 80px;
+      height: 80px;
+      animation: pulso 1.8s ease-in-out infinite;
+    }
+
+    /* Texto "Cargando..." */
+    .splash__texto {
+      font-size: 1rem;
+      color: var(--color-accent);
+      letter-spacing: 0.05em;
+    }
+
+    /* Marca DacmosGroup debajo */
+    .splash__marca {
+      font-size: 0.75rem;
+      color: var(--color-text);
+      opacity: 0.4;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* Animación de pulso para el ícono */
+    @keyframes pulso {
+      0%, 100% { opacity: 1;   transform: scale(1);    }
+      50%       { opacity: 0.6; transform: scale(0.95); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pantalla de splash — visible mientras app.js inicializa la PWA.
+       La UI real se monta aquí en F4.4. -->
+  <main id="app">
+    <div class="splash">
+      <!-- Ícono inline (SVG) para evitar petición de red en el splash -->
+      <svg class="splash__icon"
+           viewBox="0 0 80 80"
+           fill="none"
+           xmlns="http://www.w3.org/2000/svg"
+           aria-hidden="true">
+        <!-- Fondo circular -->
+        <circle cx="40" cy="40" r="40" fill="#16213e"/>
+        <!-- Cuerpo del candado -->
+        <rect x="22" y="38" width="36" height="26" rx="5" fill="#0066cc"/>
+        <!-- Ojo del candado -->
+        <circle cx="40" cy="51" r="4" fill="#1a1a2e"/>
+        <!-- Arco del candado -->
+        <path d="M28 38V30a12 12 0 0 1 24 0v8"
+              stroke="#00d4ff"
+              stroke-width="4"
+              stroke-linecap="round"
+              fill="none"/>
+      </svg>
+
+      <p class="splash__texto">Cargando...</p>
+      <p class="splash__marca">DacmosGroup.co</p>
+    </div>
+  </main>
+
+  <!-- F4.3: Google Identity Services JS — carga async antes de app.js.
+       google-auth.js espera a que window.google.accounts esté disponible
+       via la promesa interna _gisListo antes de cualquier operación OAuth. -->
+  <script src="https://accounts.google.com/gsi/client" async></script>
+
+  <!-- Registro del Service Worker y lógica de arranque de la PWA -->
+  <script src="/src/app.js" type="module"></script>
+
+</body>
+</html>

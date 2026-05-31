@@ -1,0 +1,33 @@
+<!--
+  icon-180.svg — Apple Touch Icon 180×180 (placeholder)
+  Usado por Safari iOS/iPadOS para el ícono en Home Screen.
+
+  ⚠️  LIMITACIÓN: Safari iOS NO soporta SVG para apple-touch-icon.
+      Este archivo sirve como referencia visual/placeholder únicamente.
+      PRODUCCIÓN: convertir a icon-180.png (PNG 180×180) y actualizar
+      el <link rel="apple-touch-icon"> en index.html.
+
+  Paleta: --color-bg #1a1a2e | --color-primary #0066cc | --color-accent #00d4ff
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 180 180"
+     width="180" height="180">
+
+  <!-- Fondo con esquinas redondeadas (iOS las aplica automáticamente,
+       pero se incluyen para consistencia en otras plataformas) -->
+  <rect width="180" height="180" rx="34" fill="#1a1a2e"/>
+
+  <!-- Cuerpo del candado -->
+  <rect x="50" y="90" width="80" height="58" rx="11" fill="#0066cc"/>
+
+  <!-- Ojo del candado -->
+  <circle cx="90" cy="119" r="9" fill="#1a1a2e"/>
+
+  <!-- Arco del candado -->
+  <path d="M64 90V71a26 26 0 0 1 52 0v19"
+        stroke="#00d4ff"
+        stroke-width="9"
+        stroke-linecap="round"
+        fill="none"/>
+
+</svg>

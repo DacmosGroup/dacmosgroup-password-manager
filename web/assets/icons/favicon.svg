@@ -1,0 +1,29 @@
+<!--
+  favicon.svg — Favicon vectorial de Dacmos Password Manager
+  Referenciado en index.html con: <link rel="icon" type="image/svg+xml">
+  Los navegadores modernos (Chrome 80+, Firefox 80+, Edge 80+, Safari 14+)
+  soportan SVG como favicon nativamente y escala a cualquier resolución.
+  Para IE11 y navegadores antiguos se puede añadir un favicon.ico como fallback.
+  Paleta: --color-bg #1a1a2e | --color-primary #0066cc | --color-accent #00d4ff
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 32 32"
+     width="32" height="32">
+
+  <!-- Fondo cuadrado con esquinas redondeadas -->
+  <rect width="32" height="32" rx="6" fill="#1a1a2e"/>
+
+  <!-- Cuerpo del candado — proporcionado para 32px -->
+  <rect x="8" y="15" width="16" height="12" rx="3" fill="#0066cc"/>
+
+  <!-- Ojo del candado -->
+  <circle cx="16" cy="21" r="2.5" fill="#1a1a2e"/>
+
+  <!-- Arco del candado -->
+  <path d="M11 15V11a5 5 0 0 1 10 0v4"
+        stroke="#00d4ff"
+        stroke-width="2"
+        stroke-linecap="round"
+        fill="none"/>
+
+</svg>

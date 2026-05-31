@@ -1,0 +1,62 @@
+# deploy-pwa.yml — Pipeline de despliegue de la PWA a Cloudflare Pages
+#
+# Disparo automático:
+#   - Push a main que incluya cambios dentro de web/**
+# Disparo manual:
+#   - workflow_dispatch desde GitHub Actions → Run workflow
+#
+# Secretos requeridos (configurar en GitHub → Settings → Secrets → Actions):
+#   CLOUDFLARE_API_TOKEN  → Cloudflare Dashboard → My Profile → API Tokens
+#                           Crear token con permiso: Cloudflare Pages — Edit
+#   CLOUDFLARE_ACCOUNT_ID → Cloudflare Dashboard → lado derecho → Account ID
+#
+# El directorio desplegado es web/ — solo la carpeta de la PWA,
+# no la extensión Chrome ni ningún otro archivo del repositorio.
+
+name: Deploy PWA → Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # Disparar solo cuando cambian archivos de la PWA
+      - 'web/**'
+  workflow_dispatch:
+    # Permite ejecutar el deploy manualmente desde la UI de GitHub Actions
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read      # Leer el código del repositorio
+      deployments: write  # Crear registros de despliegue en GitHub
+
+    steps:
+      # ── Paso 1: Obtener el código fuente ──────────────────────────────
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      # ── Paso 2: Desplegar web/ a Cloudflare Pages ─────────────────────
+      # La acción cloudflare/pages-action@v1:
+      #   - Sube el contenido de `directory` a Cloudflare Pages
+      #   - Registra el despliegue en GitHub (visible en Deployments)
+      #   - Comenta la URL de preview en PRs si el branch no es main
+      - name: Deploy a Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          # Token de API de Cloudflare (con permiso Cloudflare Pages: Edit)
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # ID de la cuenta de Cloudflare
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Nombre del proyecto en Cloudflare Pages
+          # Debe coincidir exactamente con el nombre creado en el dashboard
+          projectName: dacmos-pm-pwa
+          # Carpeta a desplegar — solo la PWA, sin la extensión Chrome
+          directory: web
+          # Token de GitHub para registrar el despliegue en la UI de GitHub
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          # Branch de producción — los deploys de main van a la URL principal
+          branch: main

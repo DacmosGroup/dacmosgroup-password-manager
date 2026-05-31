@@ -1,6 +1,6 @@
 # 🔐 Dacmos Password Manager
 
-**Gestor de contraseñas local-first para Chrome — construido en público por [DacmosGroup.co](https://dacmosgroup.co)**
+**Gestor de contraseñas Zero-Knowledge local-first — Chrome Extension + PWA Mobile · construido en público por [DacmosGroup.co](https://dacmosgroup.co)**
 
 > Este proyecto es simultáneamente una herramienta funcional y contenido educativo
 > sobre seguridad de la información aplicada.
@@ -17,7 +17,7 @@
 |---------------------|---------------------------------------------------------|
 | Cifrado             | AES-256-GCM (NIST FIPS 197)                             |
 | Derivación de clave | PBKDF2-SHA256, 600,000 iteraciones (OWASP 2024)         |
-| Almacenamiento      | chrome.storage.local (cifrado local)                    |
+| Almacenamiento      | chrome.storage.local / IndexedDB (cifrado local)        |
 | Modelo              | Zero-Knowledge — tus datos nunca salen del dispositivo  |
 | Cripto engine       | Web Crypto API nativa — sin librerías de terceros       |
 
@@ -69,10 +69,48 @@
 | F3.4 | Versión dinámica en Settings — leída desde manifest.json | ✅ |
 | F3.5 | Fix autocompletado en formularios Create/Confirm password | ✅ |
 
-### 📱 Fase 3 — App móvil (PENDIENTE)
-- React Native (iOS + Android)
-- Reutiliza motor de cifrado
-- Biometría con Face ID / Touch ID
+### 🔄 Fase 3 — PWA Mobile v0.4.0 (EN DESARROLLO)
+
+| Feature | Descripción | Estado |
+|---------|-------------|--------|
+| F4.1 | Progressive Web App — vault accesible desde cualquier browser mobile | ✅ |
+| F4.2 | IndexedDB — reemplazo de chrome.storage con formato compatible | ✅ |
+| F4.3 | OAuth PKCE — Google Drive + OneDrive sin chrome.identity | 🔄 |
+| F4.4 | UI responsive — mobile-first, touch-friendly | 🔄 |
+| F4.5 | Persistencia robusta — navigator.storage.persist() + manejo eviction iOS | 🔄 |
+| F4.6 | APK Android via TWA — distribución sin Play Store | 🔄 |
+| F4.7 | Formato versionado del blob — habilita migración no destructiva a Argon2id | ✅ |
+
+### ⏳ Fase 4 — App Nativa v0.5.0 (PENDIENTE)
+
+- Capacitor wrapping — misma PWA en shell nativo iOS + Android
+- Biometría Zero-Knowledge — Face ID / Fingerprint con Secure Enclave / Keystore
+- Sync per-item con Lamport ordering — elimina pérdida de datos en offline multi-device
+- Google Play Store + builds iOS via Codemagic
+
+### ⏳ Fase 5 — Autofill Nativo v0.6.0 (PENDIENTE)
+
+- iOS AutoFill Credential Provider Extension (Swift nativo)
+- Android Autofill Service + Credential Manager API (Kotlin nativo)
+- Apple App Store + listado público Chrome Web Store
+
+---
+
+## 🗺️ Roadmap
+
+```
+v0.1.1 ✅  MVP — Chrome Extension Zero-Knowledge
+v0.2.0 ✅  Paridad competitiva (F1.1-F1.6)
+v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
+v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
+v0.4.0 🔄  PWA — vault en mobile via navegador, APK Android via TWA
+v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
+v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
+v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
+v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
+```
+
+> Decisiones arquitecturales documentadas en `docs/decisions/`.
 
 ---
 
