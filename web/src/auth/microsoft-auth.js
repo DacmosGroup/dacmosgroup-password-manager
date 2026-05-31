@@ -65,7 +65,18 @@ export async function inicializar() {
 // cuando el popup se cierra.
 // Llamar solo desde la UI — requiere interacción del usuario.
 export async function conectar() {
-  await _msalInstance.loginPopup({ scopes: SCOPES })
+  try {
+    await _msalInstance.loginPopup({ scopes: SCOPES })
+  } catch (error) {
+    // BrowserAuthError popup_window_error: popup bloqueado por el navegador.
+    // Re-lanzar con código semántico propio — la UI muestra mensaje accionable
+    // en lugar de exponer el error interno de MSAL al usuario.
+    if (error instanceof msal.BrowserAuthError &&
+        error.errorCode === 'popup_window_error') {
+      throw new Error('MICROSOFT_POPUP_BLOQUEADO')
+    }
+    throw error
+  }
 }
 
 // Retorna un access_token válido para Microsoft Graph.
@@ -91,8 +102,19 @@ export async function obtenerToken() {
     // InteractionRequiredAuthError: refresh_token expirado o revocado
     // Se necesita interacción del usuario para obtener nuevos tokens.
     if (error instanceof msal.InteractionRequiredAuthError) {
-      const resultado = await _msalInstance.acquireTokenPopup(solicitud)
-      return resultado.accessToken
+      try {
+        const resultado = await _msalInstance.acquireTokenPopup(solicitud)
+        return resultado.accessToken
+      } catch (errorPopup) {
+        // BrowserAuthError popup_window_error: popup bloqueado por el navegador.
+        // Error semántico distinto de credenciales inválidas — la UI debe ofrecer
+        // reconexión explícita en lugar de mostrar un error genérico.
+        if (errorPopup instanceof msal.BrowserAuthError &&
+            errorPopup.errorCode === 'popup_window_error') {
+          throw new Error('MICROSOFT_POPUP_BLOQUEADO')
+        }
+        throw errorPopup
+      }
     }
     throw error
   }
