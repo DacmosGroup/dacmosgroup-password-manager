@@ -29,7 +29,9 @@
 16. [Decisiones de Implementación — F4.3](#16-decisiones-de-implementación--f43)
 17. [Decisiones de Implementación — F4.4 + F4.5](#17-decisiones-de-implementación--f44--f45)
 18. [Decisiones de Implementación — F4.6](#18-decisiones-de-implementación--f46)
-19. [Referencias](#19-referencias)
+19. [Decisiones de Implementación — BUG-1](#19-decisiones-de-implementación--bug-1)
+20. [Decisiones de Implementación — BUG-2](#20-decisiones-de-implementación--bug-2)
+21. [Referencias](#21-referencias)
 
 ---
 
@@ -736,10 +738,10 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 
 ### Deudas técnicas identificadas — auditoría v0.4.0
 
-| Deuda | Descripción | Impacto | Resolución esperada |
-|-------|-------------|---------|---------------------|
-| `ultimaModificacion()` sin invalidación de fileId | `GoogleDriveAdapter.ultimaModificacion()` no invalida el fileId cacheado en IDB cuando Drive retorna 404. La autocorrección ocurre en el siguiente `guardar()` o `cargar()`, que sí implementan la invalidación. | Bajo — error visible en el sync, sin pérdida de datos | v0.5.0 o próximo PR de Drive |
-| Precache revision fields manuales | Los campos `revision` del precache en `web/service-worker.js` deben incrementarse manualmente por archivo al hacer deploy. Sin Workbox Inject Manifest no hay automatización. | Operacional — usuarios pueden usar assets desactualizados hasta que la cache expire (30 días TTL) | v0.5.0 con build pipeline |
+| Deuda | Descripción | Impacto | Resolución |
+|-------|-------------|---------|------------|
+| `ultimaModificacion()` sin invalidación de fileId | `GoogleDriveAdapter.ultimaModificacion()` no invalida el fileId cacheado en IDB cuando Drive retorna 404. La autocorrección ocurre en el siguiente `guardar()` o `cargar()`, que sí implementan la invalidación. | Bajo — error visible en el sync, sin pérdida de datos | ✅ Resuelto en BUG-1 — commit `071391d` |
+| Precache revision fields manuales | Los campos `revision` del precache en `web/service-worker.js` deben incrementarse manualmente por archivo al hacer deploy. Sin Workbox Inject Manifest no hay automatización. | Operacional — usuarios pueden usar assets desactualizados hasta que la cache expire (30 días TTL) | ✅ Resuelto en BUG-2 — `SW_DEPLOY_ID` inyectado por CI |
 | Import desde setup (Caso 1 — vault vacío) | `importarVaultBackup()` maneja correctamente el Caso 1 (sin vault previo) pero no hay ruta UI que lo dispare — Settings requiere sesión activa. El código es correcto; falta la UX de "Restaurar backup" en la pantalla de setup inicial. | UX — el import solo funciona si el usuario ya tiene un vault configurado | v0.5.0 — pantalla de setup con opción de restauración |
 
 ---
@@ -1591,7 +1593,209 @@ Solo requiere verificación de identidad (documento + selfie). Sin costo.
 
 ---
 
-## 19. Referencias
+## 19. Decisiones de Implementación — BUG-1
+
+Esta sección captura las decisiones de diseño tomadas durante la
+remediación de BUG-1 (sync BYOC upload-only en la PWA).
+Orientada a futuros contribuidores y auditores que modifiquen
+los módulos de sincronización de la PWA.
+
+### Causa raíz: upload-only sin LWW en settings.js
+
+Los handlers `btn-sync-google` y `btn-sync-onedrive` en
+`web/src/ui/views/settings.js` llamaban únicamente a
+`adapter.guardar()` — sin llamar a `adapter.cargar()` ni comparar
+timestamps. Consecuencias:
+
+- El vault en el proveedor nunca se descargaba al dispositivo local.
+- Si el vault local estaba vacío (primer setup en dispositivo nuevo),
+  el handler subía el vault vacío al proveedor, sobrescribiendo los
+  datos de otros dispositivos sin advertencia — pérdida de datos
+  silenciosa y crítica.
+- `session.js._credenciales` nunca se actualizaba tras el "sync",
+  por lo que el vault seguía mostrando las credenciales del unlock
+  anterior (o ninguna si el vault era vacío).
+
+La Chrome Extension tenía `src/sync/sync-manager.js` con lógica LWW
+completa desde F2.1. La PWA nunca recibió su equivalente — el sync
+fue implementado ad-hoc e incompleto en `settings.js`.
+
+### Decisión: crear web/src/sync/sync-manager.js
+
+Se crea `web/src/sync/sync-manager.js` como equivalente PWA de
+`src/sync/sync-manager.js`, adaptado a la infraestructura de la PWA.
+
+| Aspecto | Chrome Extension | PWA |
+|---------|-----------------|-----|
+| Storage | `chrome.storage.local` | `idbStorage` (IndexedDB) |
+| Sesión | `chrome.storage.session` | `session.js` (módulo JS en RAM) |
+| Trigger de sync | Automático via `onChanged` listener | Solo manual desde UI |
+| Guardia anti-loop | `_syncTs` en storage | No necesaria — sin listener `onChanged` |
+
+### Contrato de seguridad: solo blob cifrado
+
+`sync-manager.js` opera exclusivamente sobre el blob cifrado
+(`vaultCifrado`). Llama a `cargarVaultDescifrado()` y pasa el
+resultado directamente a `establecerCredenciales()` sin inspeccionar
+ni almacenar las credenciales descifradas en variables del módulo.
+La clave AES permanece en `session.js` — nunca ingresa a
+`sync-manager.js`.
+
+### LWW con ultimaSincronizacion = 0 en primera sync (D2)
+
+Sin historial previo de sync (`ultimaSincronizacion` ausente en
+`syncConfig`), se usa `ultimaSync = 0`. Cualquier archivo en el
+proveedor tendrá `modRemoto > 0` → el proveedor siempre gana.
+Esto protege al usuario de sobrescribir datos en Drive con un
+vault vacío local en el primer uso en un dispositivo nuevo.
+
+### Atomicidad de la descarga y rollback (D3)
+
+El flujo de descarga en `_descargar()`:
+
+```
+1. adapter.cargar()             → blob cifrado desde el proveedor
+2. idbStorage.set(vaultCifrado) → blob escrito a IDB
+3. cargarVaultDescifrado(clave) → descifrar con clave de sesión activa
+4. establecerCredenciales(...)  → actualizar credenciales en RAM
+5. _actualizarUltimaSync()      → guardar timestamp de sync exitoso
+```
+
+Si el paso 3 falla (AES-GCM rechaza el descifrado), se ejecuta
+rollback del paso 2: el `vaultCifrado` anterior se restaura en IDB
+(o se elimina si no existía) y se lanza `SYNC_MASTER_PASSWORD_MISMATCH`.
+El estado local queda intacto.
+
+Si no hay sesión activa al descargar (vault bloqueado), los pasos 3 y 4
+se omiten. IDB recibe el blob actualizado y el próximo `desbloquearVault()`
+lo cargará con la clave que el usuario ingrese.
+
+### Manejo de SYNC_MASTER_PASSWORD_MISMATCH
+
+El error indica que el vault en el proveedor fue cifrado con una
+master password distinta a la de la sesión activa. `settings.js`
+lo traduce a:
+
+> "El vault en el proveedor fue creado con una contraseña diferente.
+> No es posible sincronizar."
+
+El usuario debe decidir qué vault retener. La app no fuerza ninguna
+sobreescritura — el estado local queda intacto (rollback garantizado).
+
+### Mensajes diferenciados por operación
+
+Los handlers de sync en `settings.js` usan `_mensajeSyncOk(resultado,
+proveedor)` donde `resultado ∈ { 'descargado', 'subido', 'sin_cambios' }`.
+El parámetro `proveedor` es `'Google Drive'` o `'OneDrive'` según el
+adaptador — no hay strings hardcodeados del nombre del proveedor en
+los handlers individuales.
+
+| resultado | Mensaje (Google Drive como ejemplo) |
+|-----------|-------------------------------------|
+| `'descargado'` | `"Vault descargado desde Google Drive. Credenciales actualizadas — ve al vault para verlas."` |
+| `'subido'` | `"Vault subido a Google Drive."` |
+| `'sin_cambios'` | `"Sin cambios — el vault ya estaba sincronizado."` |
+
+### Riesgos identificados y mitigaciones
+
+| # | Riesgo | Severidad | Mitigación |
+|---|--------|-----------|------------|
+| R1 | Vault vacío local sube al proveedor, destruyendo datos remotos | **Crítico** | D2: primera sync siempre descarga (`ultimaSync = 0`) |
+| R2 | Credenciales no visibles en vault tras sync exitoso | Alto | Post-descarga: `cargarVaultDescifrado()` + `establecerCredenciales()` actualiza la sesión activa inmediatamente |
+| R3 | Master password distinta entre dispositivos | Medio | Rollback atómico de IDB + error `SYNC_MASTER_PASSWORD_MISMATCH` con mensaje claro; sin pérdida de datos |
+| R4 | `ultimaSincronizacion` ausente en IDB de la PWA | Medio | `ultimaSync = 0` es el default correcto — el proveedor gana y el timestamp se guarda post-sync |
+| R5 | Bug de `ultimaModificacion()` sin invalidar fileId en 404 | Bajo | Corregido en el mismo commit (D4) — ver deuda técnica DT-1 en §10 |
+
+### Archivos modificados
+
+| Archivo | Tipo | Rol |
+|---------|------|-----|
+| `web/src/sync/sync-manager.js` | Nuevo | Orquestador LWW bidireccional para Google Drive y OneDrive |
+| `web/src/sync/google-drive-adapter.js` | Editado | D4: `ultimaModificacion()` invalida fileId cacheado en 404 |
+| `web/src/ui/views/settings.js` | Editado | Handlers reemplazados para usar `sincronizar(adapter)`; mensajes diferenciados; `SYNC_MASTER_PASSWORD_MISMATCH` traducido |
+
+---
+
+## 20. Decisiones de Implementación — BUG-2
+
+Esta sección captura las decisiones de diseño tomadas durante la
+remediación de BUG-2 (Service Worker sirve versión cacheada tras
+deploy). Orientada a futuros contribuidores que modifiquen el
+Service Worker o el pipeline de CI/CD.
+
+### Causa raíz: revision: '1' hardcodeada en precacheAndRoute
+
+`web/service-worker.js` registraba los assets en `precacheAndRoute`
+con `revision: '1'` fija en las 16 entradas:
+
+```javascript
+workbox.precaching.precacheAndRoute([
+  { url: '/', revision: '1' },
+  { url: '/src/app.js', revision: '1' },
+  // ... 14 entradas adicionales con la misma revision
+])
+```
+
+Workbox usa el campo `revision` como clave de caché. Al ser constante
+entre deploys, el SW actualizado reutilizaba las entradas del caché
+anterior y nunca refetcheaba los assets. El problema persistía incluso
+tras confirmar la actualización en el banner — el SW nuevo tomaba
+control pero seguía sirviendo los assets viejos desde caché.
+
+### Hallazgo clave: skipWaiting + banner ya funcionaban correctamente
+
+El mecanismo `skipWaiting()` en el SW y el banner de "Nueva versión
+disponible" en `app.js` ya estaban implementados correctamente en
+`main` via `fix/sw-update-flow`. El bug no era de activación del SW
+sino de invalidación de caché.
+
+Este hallazgo fue importante: cualquier diagnóstico que apuntara a
+"el SW no se activa" habría sido incorrecto. La causa raíz estaba
+un nivel más abajo — en los assets que el SW recién activado seguía
+sirviendo desde caché con revision obsoleta.
+
+### Decisión: SW_DEPLOY_ID inyectado por CI vía sed
+
+| Alternativa considerada | Razón de descarte |
+|------------------------|-------------------|
+| Workbox Inject Manifest | Requiere build pipeline (Node.js + bundler) — incompatible con el stack sin build step |
+| `revision` incremental manual | Error-prone: puede olvidarse en cada deploy; no escalable |
+| **`SW_DEPLOY_ID` inyectado por CI** | Automático en cada deploy, sin cambiar el stack — ✅ elegido |
+
+El archivo `web/service-worker.js` define en el repositorio:
+
+```javascript
+const SW_DEPLOY_ID = 'dev'
+```
+
+El workflow `.github/workflows/deploy-pwa.yml` reemplaza este valor
+antes de cada deploy a Cloudflare Pages:
+
+```bash
+DEPLOY_ID="${GITHUB_SHA:0:7}"
+sed -i "s/const SW_DEPLOY_ID = 'dev'/const SW_DEPLOY_ID = '${DEPLOY_ID}'/" web/service-worker.js
+```
+
+Todos los nombres de caché y los campos `revision` del precache
+incorporan `SW_DEPLOY_ID`. Cada deploy produce nombres de caché
+únicos → Workbox invalida los assets anteriores → los usuarios
+reciben la versión correcta al confirmar la actualización.
+
+El valor `'dev'` en el repositorio permite desarrollo y testing local
+sin depender del CI: el SW en `localhost` usa `'dev'` como
+identificador de caché estable entre recargas, sin colisiones entre
+deploys de producción.
+
+### Archivos modificados
+
+| Archivo | Tipo | Rol |
+|---------|------|-----|
+| `web/service-worker.js` | Editado | `SW_DEPLOY_ID = 'dev'` como placeholder; nombres de caché y campos `revision` parametrizados; listener `activate` limpia cachés de deploys anteriores |
+| `.github/workflows/deploy-pwa.yml` | Editado | Paso que inyecta los primeros 7 chars del commit SHA como `SW_DEPLOY_ID` antes de cada deploy |
+
+---
+
+## 21. Referencias
 
 ### Estándares y especificaciones
 

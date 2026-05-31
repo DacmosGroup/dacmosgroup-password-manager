@@ -528,11 +528,24 @@ v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
 
 ## Bugs conocidos y estado
 
-### BUG-1 — Google Drive sync produce vault vacío
+### BUG-1 — Vault vacío después de sync BYOC (Google Drive + OneDrive) ✅ RESUELTO
 
-**Síntoma:** Al conectar Google Drive en la PWA y hacer sync, el vault aparece vacío aunque el archivo exista en Drive.
+**Síntoma:** Al conectar Google Drive o OneDrive en la PWA y hacer sync, el vault
+aparece vacío aunque el archivo exista en el proveedor. Con vault local vacío,
+el sync podía sobrescribir datos en el proveedor sin advertencia.
 
-**Estado:** Sin diagnóstico completo — pendiente de investigación en v0.4.x.
+**Causa raíz:** Los handlers de sync en `settings.js` eran upload-only — nunca
+llamaban a `adapter.cargar()` ni comparaban timestamps LWW. No existía
+`sync-manager.js` en la PWA (la Chrome Extension sí lo tenía desde F2.1).
+
+**Solución:** Nuevo `web/src/sync/sync-manager.js` con lógica LWW bidireccional
+para Google Drive y OneDrive. Descarga cuando el proveedor tiene datos más
+recientes, sube cuando local es más reciente. Primera sync siempre descarga
+(`ultimaSync = 0`). Descarga atómica con rollback si el descifrado falla por
+master password distinta. También corrige deuda técnica DT-1 (`ultimaModificacion()`
+sin invalidación de fileId).
+
+**Commit:** `071391d` — `fix(sync): reemplaza upload-only por sync bidireccional LWW en PWA`
 
 ---
 
@@ -563,19 +576,13 @@ v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
 
 ## Bugs conocidos post-release
 
-### BUG-1 — Vault vacío después de sync Google Drive en PWA
+### BUG-1 — Vault vacío después de sync BYOC ✅ RESUELTO
 
-**Síntoma:** Al conectar Google Drive en la PWA y hacer sync, el vault aparece vacío aunque el archivo exista en Drive.
+Ver sección completa arriba con causa raíz, solución y commit.
 
-**Estado:** Sin diagnóstico completo — pendiente de investigación en v0.4.x.
+### BUG-2 — Service Worker sirve versión cacheada al primer load ✅ RESUELTO
 
-### BUG-2 — Service Worker sirve versión cacheada al primer load
-
-**Síntoma:** Después de un deploy nuevo, el primer load puede servir la versión anterior de la app desde el caché del SW en lugar de la nueva. Requiere forzar recarga (Ctrl+Shift+R / Cmd+Shift+R) o limpiar el caché.
-
-**Causa probable:** La estrategia cache-first del SW Workbox no invalida el caché automáticamente en el primer load post-deploy. El SW actualizado se activa solo en la segunda visita (por diseño del ciclo de vida de los Service Workers).
-
-**Estado:** Comportamiento conocido del ciclo de vida de SW — pendiente de implementar `skipWaiting()` + notificación de "nueva versión disponible" en v0.4.x.
+Ver sección completa arriba con causa raíz, solución y archivos modificados.
 
 ---
 
