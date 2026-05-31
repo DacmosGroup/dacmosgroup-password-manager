@@ -34,17 +34,34 @@ let _tokenClient = null  // instancia GIS Token Client (singleton)
 // GIS se carga con <script async> en index.html — puede no estar listo
 // cuando este módulo se importa. _gisListo resuelve cuando
 // window.google.accounts.oauth2 está disponible.
-const _gisListo = new Promise((resolve) => {
+//
+// Timeout de 10 segundos: si GIS no carga (CDN caído, ad-blocker,
+// firewall corporativo), rechaza con GOOGLE_GIS_TIMEOUT en lugar de
+// colgar indefinidamente. Los callers (obtenerToken, conectar, desconectar)
+// recibirán el rechazo y la UI podrá mostrar un mensaje accionable.
+const _gisListo = new Promise((resolve, reject) => {
   // Caso rápido: GIS ya cargó antes de que este módulo se importara
   if (typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
     resolve()
     return
   }
 
-  // Polling liviano con requestAnimationFrame — no bloquea el hilo principal
-  // y se detiene en cuanto GIS está disponible.
+  // cancelado: flag compartido entre el timer y el rAF loop.
+  // Cuando el timer se dispara, el loop de polling lee cancelado = true
+  // y se detiene sin llamar resolve().
+  let cancelado = false
+
+  const timer = setTimeout(() => {
+    cancelado = true
+    reject(new Error('GOOGLE_GIS_TIMEOUT'))
+  }, 10_000)
+
+  // Polling liviano con requestAnimationFrame — no bloquea el hilo principal.
+  // clearTimeout() cancela el timer si GIS carga antes del límite.
   const verificar = () => {
+    if (cancelado) return
     if (window.google?.accounts?.oauth2) {
+      clearTimeout(timer)
       resolve()
     } else {
       requestAnimationFrame(verificar)
