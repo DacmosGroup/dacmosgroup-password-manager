@@ -27,6 +27,7 @@ import { conectar as conectarGoogle, desconectar as desconectarGoogle } from '..
 import { conectar as conectarMicrosoft, desconectar as desconectarMicrosoft, estaConectado as estaConectadoMicrosoft } from '../../auth/microsoft-auth.js'
 import { GoogleDriveAdapter }  from '../../sync/google-drive-adapter.js'
 import { OneDriveAdapter }     from '../../sync/onedrive-adapter.js'
+import { sincronizar }         from '../../sync/sync-manager.js'
 import { navegar }             from '../router.js'
 
 /** Monta la vista de settings en el contenedor dado */
@@ -310,7 +311,11 @@ export async function montar(contenedor) {
     try {
       await conectarGoogle()
       await idbStorage.set({ syncConfig: { ...syncConf, proveedor: 'google' } })
-      await navegar('#/settings')  // recargar la vista
+      // Sincronizar al conectar — proveedor gana en primera sync (D2).
+      // Si el sync falla (ej. master password distinta), se ignora aquí
+      // y el usuario puede reintentar desde el botón "Sincronizar".
+      try { await sincronizar(new GoogleDriveAdapter()) } catch (_) { /* silencioso */ }
+      await navegar('#/settings')
     } catch (err) {
       msgEl.textContent = _mensajeErrorSync(err) ?? 'Error al conectar con Google Drive.'
       msgEl.classList.remove('oculto')
@@ -319,17 +324,21 @@ export async function montar(contenedor) {
 
   contenedor.querySelector('#btn-sync-google')?.addEventListener('click', async () => {
     const msgEl = contenedor.querySelector('#sync-msg')
+    const btn   = contenedor.querySelector('#btn-sync-google')
+    btn.disabled    = true
+    btn.textContent = 'Sincronizando...'
     try {
-      const adapter    = new GoogleDriveAdapter()
-      const datosLocal = await idbStorage.get(['vaultCifrado'])
-      if (datosLocal.vaultCifrado) await adapter.guardar(datosLocal.vaultCifrado)
+      const { resultado } = await sincronizar(new GoogleDriveAdapter())
       msgEl.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
-      msgEl.textContent   = 'Sincronizado con Google Drive.'
+      msgEl.textContent   = _mensajeSyncOk(resultado, 'Google Drive')
       msgEl.classList.remove('oculto')
     } catch (err) {
       msgEl.style.cssText = ''
       msgEl.textContent   = _mensajeErrorSync(err) ?? 'Error al sincronizar con Google Drive.'
       msgEl.classList.remove('oculto')
+    } finally {
+      btn.disabled    = false
+      btn.textContent = 'Sincronizar'
     }
   })
 
@@ -344,6 +353,8 @@ export async function montar(contenedor) {
     const msgEl = contenedor.querySelector('#sync-msg')
     try {
       await conectarMicrosoft()
+      // Sincronizar al conectar — proveedor gana en primera sync (D2).
+      try { await sincronizar(new OneDriveAdapter()) } catch (_) { /* silencioso */ }
       await navegar('#/settings')
     } catch (err) {
       msgEl.textContent = _mensajeErrorSync(err) ?? 'Error al conectar con OneDrive.'
@@ -353,17 +364,21 @@ export async function montar(contenedor) {
 
   contenedor.querySelector('#btn-sync-onedrive')?.addEventListener('click', async () => {
     const msgEl = contenedor.querySelector('#sync-msg')
+    const btn   = contenedor.querySelector('#btn-sync-onedrive')
+    btn.disabled    = true
+    btn.textContent = 'Sincronizando...'
     try {
-      const adapter    = new OneDriveAdapter()
-      const datosLocal = await idbStorage.get(['vaultCifrado'])
-      if (datosLocal.vaultCifrado) await adapter.guardar(datosLocal.vaultCifrado)
+      const { resultado } = await sincronizar(new OneDriveAdapter())
       msgEl.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
-      msgEl.textContent   = 'Sincronizado con OneDrive.'
+      msgEl.textContent   = _mensajeSyncOk(resultado, 'OneDrive')
       msgEl.classList.remove('oculto')
     } catch (err) {
       msgEl.style.cssText = ''
       msgEl.textContent   = _mensajeErrorSync(err) ?? 'Error al sincronizar con OneDrive.'
       msgEl.classList.remove('oculto')
+    } finally {
+      btn.disabled    = false
+      btn.textContent = 'Sincronizar'
     }
   })
 
@@ -400,14 +415,31 @@ function _formatearBytes(bytes) {
 }
 
 /**
- * Traduce errores de auth conocidos a mensajes legibles para el usuario.
+ * Retorna el mensaje de éxito diferenciado según la operación que ocurrió.
+ * Garantiza que el usuario sepa exactamente qué pasó — nunca un mensaje
+ * genérico que confirme una operación que no ocurrió.
+ *
+ * @param {'descargado'|'subido'|'sin_cambios'} resultado
+ * @param {string} proveedor — nombre del proveedor (ej. 'Google Drive')
+ */
+function _mensajeSyncOk(resultado, proveedor) {
+  if (resultado === 'descargado')
+    return `Vault descargado desde ${proveedor}. Credenciales actualizadas — ve al vault para verlas.`
+  if (resultado === 'subido')
+    return `Vault subido a ${proveedor}.`
+  return 'Sin cambios — el vault ya estaba sincronizado.'
+}
+
+/**
+ * Traduce errores conocidos a mensajes legibles para el usuario.
  * Retorna null si el error no es un código conocido — el caller usa su
  * mensaje por defecto (ej. 'Error al sincronizar con Google Drive.').
  *
  * Códigos manejados:
- *   GOOGLE_GIS_TIMEOUT               — GIS no cargó en 10s
- *   GOOGLE_AUTH_ERROR:popup_blocked* — popup de Google bloqueado
- *   MICROSOFT_POPUP_BLOQUEADO        — popup de Microsoft bloqueado
+ *   GOOGLE_GIS_TIMEOUT                — GIS no cargó en 10s
+ *   GOOGLE_AUTH_ERROR:popup_blocked*  — popup de Google bloqueado
+ *   MICROSOFT_POPUP_BLOQUEADO         — popup de Microsoft bloqueado
+ *   SYNC_MASTER_PASSWORD_MISMATCH     — vault del proveedor usa otra contraseña
  */
 function _mensajeErrorSync(err) {
   const msg = err?.message ?? ''
@@ -417,5 +449,7 @@ function _mensajeErrorSync(err) {
     return 'Popup bloqueado por el navegador. Desconecta y vuelve a conectar para autenticarte.'
   if (msg === 'MICROSOFT_POPUP_BLOQUEADO')
     return 'Popup bloqueado por el navegador. Desconecta y vuelve a conectar para autenticarte.'
+  if (msg === 'SYNC_MASTER_PASSWORD_MISMATCH')
+    return 'El vault en el proveedor fue creado con una contraseña diferente. No es posible sincronizar.'
   return null
 }

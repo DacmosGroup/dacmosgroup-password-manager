@@ -152,11 +152,18 @@ export class GoogleDriveAdapter extends StorageAdapter {
   }
 
   // Retorna el timestamp (ms) de la última modificación del archivo en Drive.
+  // D4: invalida el fileId cacheado si Drive retorna 404 — equivalente al
+  // manejo que ya tienen guardar() y cargar(). Sin esta invalidación, un
+  // fileId de un archivo borrado externamente quedaría cacheado indefinidamente.
   async ultimaModificacion() {
     const fileId = await this._buscarFileId()
     if (!fileId) return null
 
     const resp = await this._fetch(`${DRIVE_FILES_API}/${fileId}?fields=modifiedTime`)
+    if (resp.status === 404) {
+      await this._invalidarFileId()
+      return null
+    }
     if (!resp.ok) throw new Error(`DRIVE_${resp.status}`)
     const data = await resp.json()
     return data.modifiedTime ? new Date(data.modifiedTime).getTime() : null
