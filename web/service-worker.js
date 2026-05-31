@@ -18,20 +18,31 @@ importScripts(
   'https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js'
 )
 
+/* ── Identificador de deploy ───────────────────────────────────────────
+   En desarrollo local siempre es 'dev'.
+   El pipeline de CI (deploy-pwa.yml) reemplaza este valor con los
+   primeros 7 caracteres del commit SHA antes de desplegar a Cloudflare
+   Pages. Esto garantiza que cada deploy genera nombres de caché únicos,
+   forzando a Workbox a descartar entradas obsoletas y refetchar todos
+   los assets con sus versiones actualizadas. */
+const SW_DEPLOY_ID = 'dev'
+
 /* ── Configuración global de nombres de caché ──────────────────────────
    El prefijo 'dacmos-pm' separa estos cachés de cualquier otro origen
-   que pudiera compartir el mismo dominio en el futuro. */
+   que pudiera compartir el mismo dominio en el futuro.
+   El suffix incluye SW_DEPLOY_ID para que cada deploy invalide
+   automáticamente los cachés del deploy anterior. */
 workbox.core.setCacheNameDetails({
   prefix: 'dacmos-pm',
-  suffix: 'v1',
+  suffix: SW_DEPLOY_ID,
   precache: 'precache',
   runtime: 'runtime',
 })
 
 /* ── Nombre del caché de assets estáticos ──────────────────────────────
-   Usado tanto en la ruta de runtime (CacheFirst) como en el precache
-   de offline.html. */
-const CACHE_ASSETS = 'dacmos-assets-v1'
+   Incluye SW_DEPLOY_ID para que cada deploy cree un caché nuevo.
+   El listener 'activate' elimina los cachés del deploy anterior. */
+const CACHE_ASSETS = `dacmos-assets-${SW_DEPLOY_ID}`
 
 /* ── Precache de offline.html ──────────────────────────────────────────
    Al instalar el SW, offline.html queda guardado en caché para poder
@@ -39,39 +50,59 @@ const CACHE_ASSETS = 'dacmos-assets-v1'
 /* ── Precache de assets estáticos (Condición 3: lista explícita) ──────
    Se listan individualmente — sin globs — para control preciso de qué
    se cachea y qué revisión fuerza la actualización del precache.
-   Incrementar 'revision' cuando el contenido del archivo cambia. */
+   revision usa SW_DEPLOY_ID: Workbox detecta el cambio en cada deploy
+   y descarga versiones frescas de todos los archivos. */
 workbox.precaching.precacheAndRoute([
-  { url: '/offline.html',                              revision: '1' },
+  { url: '/offline.html',                              revision: SW_DEPLOY_ID },
 
   /* ── Estilos ── */
-  { url: '/src/ui/styles/main.css',                    revision: '1' },
+  { url: '/src/ui/styles/main.css',                    revision: SW_DEPLOY_ID },
 
   /* ── Router y layout ── */
-  { url: '/src/ui/router.js',                          revision: '1' },
-  { url: '/src/ui/layout/nav-bottom.js',               revision: '1' },
+  { url: '/src/ui/router.js',                          revision: SW_DEPLOY_ID },
+  { url: '/src/ui/layout/nav-bottom.js',               revision: SW_DEPLOY_ID },
 
   /* ── Componentes ── */
-  { url: '/src/ui/components/swipe-card.js',           revision: '1' },
+  { url: '/src/ui/components/swipe-card.js',           revision: SW_DEPLOY_ID },
 
   /* ── Vistas ── */
-  { url: '/src/ui/views/setup.js',                     revision: '1' },
-  { url: '/src/ui/views/unlock.js',                    revision: '1' },
-  { url: '/src/ui/views/vault.js',                     revision: '1' },
-  { url: '/src/ui/views/credential-form.js',           revision: '1' },
-  { url: '/src/ui/views/health.js',                    revision: '1' },
-  { url: '/src/ui/views/generator.js',                 revision: '1' },
-  { url: '/src/ui/views/settings.js',                  revision: '1' },
+  { url: '/src/ui/views/setup.js',                     revision: SW_DEPLOY_ID },
+  { url: '/src/ui/views/unlock.js',                    revision: SW_DEPLOY_ID },
+  { url: '/src/ui/views/vault.js',                     revision: SW_DEPLOY_ID },
+  { url: '/src/ui/views/credential-form.js',           revision: SW_DEPLOY_ID },
+  { url: '/src/ui/views/health.js',                    revision: SW_DEPLOY_ID },
+  { url: '/src/ui/views/generator.js',                 revision: SW_DEPLOY_ID },
+  { url: '/src/ui/views/settings.js',                  revision: SW_DEPLOY_ID },
 
   /* ── Onboarding ── */
-  { url: '/src/ui/onboarding/pwa-install.js',          revision: '1' },
+  { url: '/src/ui/onboarding/pwa-install.js',          revision: SW_DEPLOY_ID },
 
   /* ── Storage (F4.5) ── */
-  { url: '/src/storage/persistence-manager.js',        revision: '1' },
-  { url: '/src/storage/session.js',                    revision: '1' },
+  { url: '/src/storage/persistence-manager.js',        revision: SW_DEPLOY_ID },
+  { url: '/src/storage/session.js',                    revision: SW_DEPLOY_ID },
 
   /* ── Health (fork) ── */
-  { url: '/src/health/password-health.js',             revision: '1' },
+  { url: '/src/health/password-health.js',             revision: SW_DEPLOY_ID },
 ])
+
+/* ── Limpieza de cachés obsoletos en activación ────────────────────────
+   Cuando un nuevo SW se activa (después de skipWaiting), este listener
+   elimina todos los cachés 'dacmos-*' que pertenecen al deploy anterior.
+   evento.waitUntil() garantiza que la limpieza termina antes de que el
+   SW tome control de los clientes — sin ventanas de estado inconsistente. */
+self.addEventListener('activate', (evento) => {
+  evento.waitUntil(
+    caches.keys().then((nombres) =>
+      Promise.all(
+        nombres
+          .filter((nombre) =>
+            nombre.startsWith('dacmos-') && !nombre.includes(SW_DEPLOY_ID)
+          )
+          .map((nombre) => caches.delete(nombre))
+      )
+    )
+  )
+})
 
 /* ── Estrategia CacheFirst para assets estáticos ──────────────────────
    Primera visita: descarga y almacena en caché.
@@ -110,7 +141,7 @@ workbox.routing.registerRoute(
 workbox.routing.registerRoute(
   ({ request }) => request.destination === 'document',
   new workbox.strategies.NetworkFirst({
-    cacheName: 'dacmos-pages-v1',
+    cacheName: `dacmos-pages-${SW_DEPLOY_ID}`,
     networkTimeoutSeconds: 5,
     plugins: [
       new workbox.expiration.ExpirationPlugin({

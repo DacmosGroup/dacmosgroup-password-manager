@@ -40,7 +40,18 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v6
 
-      # ── Paso 2: Desplegar web/ a Cloudflare Pages ─────────────────────
+      # ── Paso 2: Inyectar SW_DEPLOY_ID con el commit SHA ──────────────
+      # Reemplaza el valor 'dev' de SW_DEPLOY_ID en service-worker.js con
+      # los primeros 7 caracteres del commit SHA actual. Esto garantiza que
+      # cada deploy genera nombres de caché únicos, forzando la invalidación
+      # de assets obsoletos en todos los navegadores de los usuarios.
+      - name: Inyectar SW_DEPLOY_ID con commit SHA
+        run: |
+          DEPLOY_ID="${GITHUB_SHA:0:7}"
+          sed -i "s/const SW_DEPLOY_ID = 'dev'/const SW_DEPLOY_ID = '${DEPLOY_ID}'/" web/service-worker.js
+          echo "SW_DEPLOY_ID inyectado: ${DEPLOY_ID}"
+
+      # ── Paso 3: Desplegar web/ a Cloudflare Pages ─────────────────────
       # cloudflare/wrangler-action@v4 (Node.js 24) reemplaza pages-action@v1
       # (pages-action quedó abandonado en Node.js 16 sin actualización).
       # El comando `pages deploy` es el equivalente directo de pages-action:

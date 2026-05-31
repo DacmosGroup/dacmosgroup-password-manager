@@ -526,6 +526,32 @@ v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
 
 ---
 
+## Bugs conocidos y estado
+
+### BUG-1 — Google Drive sync produce vault vacío
+
+**Síntoma:** Al conectar Google Drive en la PWA y hacer sync, el vault aparece vacío aunque el archivo exista en Drive.
+
+**Estado:** Sin diagnóstico completo — pendiente de investigación en v0.4.x.
+
+---
+
+### BUG-2 — Service Worker sirve versión cacheada al primer load ✅ RESUELTO
+
+**Síntoma:** Después de un deploy nuevo, el primer load puede servir la versión anterior de la app desde el caché del SW en lugar de la nueva. Requiere forzar recarga (Ctrl+Shift+R / Cmd+Shift+R) o limpiar el caché.
+
+**Causa raíz confirmada:** `revision: '1'` hardcodeada en los 16 entries de `precacheAndRoute`. Workbox usa la revision como clave de caché — al no cambiar entre deploys, el nuevo SW reutilizaba las entradas del caché anterior y nunca refetcheaba los assets actualizados. El problema persistía incluso después de que el usuario hacía click en "Actualizar ahora".
+
+**Nota sobre diagnóstico:** El mecanismo `skipWaiting()` + banner de "Nueva versión disponible" ya estaba implementado correctamente en `main` vía `fix/sw-update-flow`. El bug real era la invalidación de caché, no la activación del SW.
+
+**Solución implementada:**
+- `web/service-worker.js`: constante `SW_DEPLOY_ID = 'dev'` + todos los nombres de caché y `revision` la usan. Listener `activate` limpia cachés de deploys anteriores.
+- `.github/workflows/deploy-pwa.yml`: paso que inyecta los primeros 7 chars del commit SHA como `SW_DEPLOY_ID` antes de cada deploy a Cloudflare Pages.
+
+**Resultado:** Cada deploy genera nombres de caché únicos → Workbox refetchea todos los assets → usuarios reciben la versión correcta tras confirmar la actualización.
+
+---
+
 ## Deploy activo
 
 | Entorno | URL |
