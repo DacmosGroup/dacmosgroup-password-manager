@@ -78,6 +78,14 @@ export class GoogleDriveAdapter extends StorageAdapter {
     await idbStorage.set({ syncConfig: { ...actual, ...campos } })
   }
 
+  // Limpia el fileId cacheado en syncConfig sin eliminar el resto de la config.
+  // Llamar cuando Drive retorna 404 sobre un fileId conocido — indica que el
+  // archivo fue borrado externamente. El próximo sync buscará el fileId en
+  // Drive desde cero y, si sigue sin existir, guardar() lo creará nuevo.
+  async _invalidarFileId() {
+    await this._patchSyncConfig({ fileId: null })
+  }
+
   // Guarda el vault cifrado en Drive.
   // Si el archivo ya existe → PATCH (actualizar contenido).
   // Si no existe → multipart upload (metadata + contenido en un solo request).
@@ -95,6 +103,9 @@ export class GoogleDriveAdapter extends StorageAdapter {
           body:    cuerpo,
         }
       )
+      // 404 sobre un fileId cacheado indica borrado externo — limpiar caché
+      // para que el próximo sync busque/cree el archivo desde cero en Drive.
+      if (resp.status === 404) await this._invalidarFileId()
       if (!resp.ok) throw new Error(`DRIVE_${resp.status}`)
     } else {
       // Crear archivo nuevo en appDataFolder — multipart upload incluye
@@ -134,6 +145,8 @@ export class GoogleDriveAdapter extends StorageAdapter {
     if (!fileId) return null
 
     const resp = await this._fetch(`${DRIVE_FILES_API}/${fileId}?alt=media`)
+    // 404 sobre un fileId cacheado indica borrado externo — limpiar caché.
+    if (resp.status === 404) await this._invalidarFileId()
     if (!resp.ok) throw new Error(`DRIVE_${resp.status}`)
     return resp.json()
   }
