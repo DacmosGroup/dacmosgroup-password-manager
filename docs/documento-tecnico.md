@@ -735,6 +735,8 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 4. **Sin 2FA para el vault** — no existe un segundo factor para desbloquear el vault en sí (el vault gestiona 2FA/TOTP de terceros)
 5. **iOS Safari eviction** — datos locales pueden borrarse tras 7 días sin uso si el usuario no activa persistencia ni sync (mitigado en v0.4.0)
 6. **Autofill no disponible en PWA iOS** — limitación estructural de Apple; se resuelve con autofill nativo en v0.6.0
+7. **`sesionActiva` persistido puede no reflejar el estado real (extensión)** — `chrome.storage.local` puede conservar `sesionActiva: true` entre reinicios del browser, haciendo que la extensión aparezca desbloqueada sin haber verificado la master password en esa sesión. Sin impacto en seguridad — la clave AES en `chrome.storage.session` sí se limpia al reiniciar el browser. Comportamiento cosmético confuso para el usuario.
+8. **Zona de Peligro ausente en PWA** — no existe UI de reset para usuarios bloqueados permanentemente (contraseña maestra olvidada). El workaround es borrar manualmente IndexedDB desde DevTools del browser. Eleva la prioridad de DT-3.
 
 ### Deudas técnicas identificadas — auditoría v0.4.0
 
@@ -742,7 +744,24 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 |-------|-------------|---------|------------|
 | `ultimaModificacion()` sin invalidación de fileId | `GoogleDriveAdapter.ultimaModificacion()` no invalida el fileId cacheado en IDB cuando Drive retorna 404. La autocorrección ocurre en el siguiente `guardar()` o `cargar()`, que sí implementan la invalidación. | Bajo — error visible en el sync, sin pérdida de datos | ✅ Resuelto en BUG-1 — commit `071391d` |
 | Precache revision fields manuales | Los campos `revision` del precache en `web/service-worker.js` deben incrementarse manualmente por archivo al hacer deploy. Sin Workbox Inject Manifest no hay automatización. | Operacional — usuarios pueden usar assets desactualizados hasta que la cache expire (30 días TTL) | ✅ Resuelto en BUG-2 — `SW_DEPLOY_ID` inyectado por CI |
-| Import desde setup (Caso 1 — vault vacío) | `importarVaultBackup()` maneja correctamente el Caso 1 (sin vault previo) pero no hay ruta UI que lo dispare — Settings requiere sesión activa. El código es correcto; falta la UX de "Restaurar backup" en la pantalla de setup inicial. | UX — el import solo funciona si el usuario ya tiene un vault configurado | v0.5.0 — pantalla de setup con opción de restauración |
+| Import desde setup (Caso 1 — vault vacío) | `importarVaultBackup()` maneja correctamente el Caso 1 (sin vault previo) pero no hay ruta UI que lo dispare — Settings requiere sesión activa. El código es correcto; falta la UX de "Restaurar backup" en la pantalla de setup inicial. | UX — el import solo funciona si el usuario ya tiene un vault configurado. **Prioridad elevada:** la ausencia de Zona de Peligro en la PWA deja sin ruta de escape a usuarios con contraseña olvidada. | v0.5.0 — pantalla de setup con opción de restauración |
+
+### Bugs conocidos — pendientes de diagnóstico
+
+| Bug | Síntoma | Causa probable | Impacto | Estado |
+|-----|---------|----------------|---------|--------|
+| BUG-3 | Sync Chrome Extension ↔ PWA devuelve `SYNC_MASTER_PASSWORD_MISMATCH` aunque la master password sea idéntica | `sal` y `sal2` son únicas por instalación. La extensión y la PWA generan sales independientes al configurarse — PBKDF2 con la misma password pero sales distintas produce claves AES distintas. El vault cifrado con la clave de la extensión no puede descifrarse con la clave derivada en la PWA. | Alto — el objetivo principal de v0.4.0 (multi-dispositivo Extension↔PWA) no funciona en el escenario más común: usuario con extensión existente que configura la PWA desde cero | Pendiente diagnóstico |
+
+### Nota operativa de desarrollo
+
+> **Nunca realizar pruebas de desarrollo con la extensión productiva activa en el
+> mismo perfil de Chrome.** Las pruebas desde `localhost` comparten el mismo
+> `chrome.storage.local` con la extensión instalada desde Chrome Web Store. Un
+> ciclo de prueba puede sobrescribir el `vaultCifrado` real con datos de prueba —
+> pérdida irreversible sin backup previo.
+>
+> **Solución:** usar un perfil de Chrome dedicado para desarrollo, o deshabilitar
+> la extensión CWS durante las pruebas en `localhost`.
 
 ---
 

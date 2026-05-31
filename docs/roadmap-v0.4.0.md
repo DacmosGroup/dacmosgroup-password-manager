@@ -586,6 +586,33 @@ Ver sección completa arriba con causa raíz, solución y archivos modificados.
 
 ---
 
+### BUG-3 — Sync Chrome Extension ↔ PWA falla por sales incompatibles
+
+**Síntoma:** Al intentar sincronizar entre la extensión Chrome y la PWA usando
+Google Drive, el sync devuelve el error `SYNC_MASTER_PASSWORD_MISMATCH` aunque
+la master password sea idéntica en ambas instalaciones.
+
+**Causa probable:** Las sales (`sal` y `sal2`) son únicas por instalación y se
+generan aleatoriamente en `configurarVault()`. La extensión y la PWA generan sus
+propias sales al configurarse de forma independiente. PBKDF2 con la misma password
+pero sales distintas produce claves AES distintas — el vault cifrado con la clave
+de la extensión no puede descifrarse con la clave derivada en la PWA.
+
+**Escenario afectado:** Usuario con extensión Chrome existente (vault configurado
+y en Drive) que instala la PWA por primera vez y crea un nuevo vault desde cero.
+Al conectar Drive y sincronizar, la PWA descarga el vault de la extensión e
+intenta descifrarlo con su propia clave derivada — falla con
+`SYNC_MASTER_PASSWORD_MISMATCH`. La operación hace rollback sin pérdida de datos.
+
+**Impacto:** Alto — el objetivo principal de v0.4.0 (acceso multi-dispositivo
+Extension↔PWA) no funciona en el escenario más común. El usuario ve el mensaje
+"El vault en el proveedor fue creado con una contraseña diferente" aunque la
+contraseña sea la misma.
+
+**Estado:** Pendiente diagnóstico en próxima sesión.
+
+---
+
 > **DacmosGroup.co** — Tecnología compleja, explicada de forma simple.
 >
 > *Datos · Nube · Movilidad · Seguridad*
