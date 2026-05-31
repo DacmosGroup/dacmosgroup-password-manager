@@ -1242,6 +1242,51 @@ textarea.input {
   flex: 1;
 }
 
+/* ── 19. Banner de actualización del Service Worker ── */
+
+/* Contenedor fijo encima de la barra de navegación inferior.
+   En desktop (sidebar lateral) el offset de --nav-h no interfiere. */
+.sw-update-banner {
+  position: fixed;
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radio-card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  max-width: calc(100vw - 2rem);
+}
+
+.sw-update-banner__texto {
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.sw-update-banner__btn {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radio-btn);
+  padding: 0.4rem 0.875rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.sw-update-banner__btn:hover {
+  background: #0055aa;
+}
+
 /* ── Mobile (< 768px): ajustes adicionales ── */
 @media (max-width: 767px) {
   /* Contadores de health en 2 columnas en mobile */

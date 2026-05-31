@@ -27,6 +27,8 @@ if ('serviceWorker' in navigator) {
       .register('/service-worker.js')
       .then(registro => {
         console.log('SW registrado — scope:', registro.scope)
+        // Activar detección de actualizaciones disponibles
+        _configurarActualizacionSW(registro)
       })
       .catch(error => {
         // El error de registro no es crítico — la PWA funciona sin SW
@@ -84,3 +86,78 @@ async function _inicializarVista() {
 }
 
 console.log('Dacmos Password Manager — PWA lista (F4.4 + F4.5)')
+
+/**
+ * Configura la detección de actualizaciones del Service Worker.
+ *
+ * Dos casos cubiertos:
+ *  · Caso 1: la página carga con un SW ya en estado 'waiting' — ocurre
+ *    cuando el usuario tenía la tab cerrada durante un deploy.
+ *  · Caso 2: el nuevo SW se descarga durante la sesión activa — ocurre
+ *    cuando Cloudflare sirve el SW actualizado mientras la tab está abierta.
+ *
+ * En ambos casos se muestra el banner no bloqueante. El SW solo toma
+ * control cuando el usuario confirma — nunca de forma automática.
+ */
+function _configurarActualizacionSW(registro) {
+  // Caso 1: ya hay un SW en waiting al momento del registro
+  if (registro.waiting) {
+    _mostrarBannerActualizacion(registro.waiting)
+    return
+  }
+
+  // Caso 2: nueva versión descubierta durante la sesión
+  registro.addEventListener('updatefound', () => {
+    const swNuevo = registro.installing
+    if (!swNuevo) return
+
+    swNuevo.addEventListener('statechange', () => {
+      // 'installed' = el nuevo SW descargó e instaló — espera activación.
+      // La comprobación de controller confirma que hay un SW anterior activo
+      // (sin él, sería la primera instalación, no una actualización).
+      if (swNuevo.state === 'installed' && navigator.serviceWorker.controller) {
+        _mostrarBannerActualizacion(swNuevo)
+      }
+    })
+  })
+}
+
+/**
+ * Crea y muestra el banner de actualización disponible.
+ * No bloquea la UI — el usuario puede seguir usando la app.
+ * El banner se crea via createElement para no depender de la vista activa.
+ */
+function _mostrarBannerActualizacion(swEsperando) {
+  // Evitar duplicados si el evento se dispara más de una vez
+  if (document.querySelector('.sw-update-banner')) return
+
+  const banner = document.createElement('div')
+  banner.className = 'sw-update-banner'
+  banner.setAttribute('role', 'status')
+  banner.setAttribute('aria-live', 'polite')
+
+  const texto = document.createElement('span')
+  texto.className = 'sw-update-banner__texto'
+  texto.textContent = 'Nueva versión disponible.'
+
+  const btn = document.createElement('button')
+  btn.className = 'sw-update-banner__btn'
+  btn.type = 'button'
+  btn.textContent = 'Actualizar ahora'
+
+  btn.addEventListener('click', () => {
+    // Escuchar controllerchange ANTES de enviar el mensaje para no perder
+    // el evento si la transición de SW ocurre en el mismo microtask.
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload()
+    }, { once: true })
+
+    // Ordenar al SW waiting que salte la fase de espera.
+    // service-worker.js responde llamando self.skipWaiting().
+    swEsperando.postMessage({ tipo: 'SKIP_WAITING' })
+  })
+
+  banner.appendChild(texto)
+  banner.appendChild(btn)
+  document.body.appendChild(banner)
+}
