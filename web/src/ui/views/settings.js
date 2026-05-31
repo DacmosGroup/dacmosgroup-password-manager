@@ -51,13 +51,13 @@ export async function montar(contenedor) {
 
   contenedor.innerHTML = `
     <div class="vista">
-      <h1 style="margin-bottom:1.5rem;">⚙️ Configuración</h1>
+      <h1 class="settings__titulo">⚙️ Configuración</h1>
 
       <!-- ── 1. Contraseña Maestra ── -->
       <p class="seccion-titulo">CONTRASEÑA MAESTRA</p>
       <div class="settings__seccion tarjeta">
         <form id="form-cambiar-pass" novalidate>
-          <div class="credform__campos" style="margin-bottom:1rem;">
+          <div class="credform__campos">
             <div class="campo">
               <label for="s-pass-actual">Contraseña actual</label>
               <input type="password" id="s-pass-actual" class="input" autocomplete="current-password">
@@ -72,8 +72,7 @@ export async function montar(contenedor) {
             </div>
           </div>
           <div class="unlock__error oculto" id="pass-error" role="alert"></div>
-          <div class="unlock__error oculto" id="pass-exito"
-               style="background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);"
+          <div class="unlock__error alerta--exito oculto" id="pass-exito"
                role="status"></div>
           <button type="submit" class="btn btn--primario" id="btn-cambiar-pass">Cambiar contraseña</button>
         </form>
@@ -114,9 +113,9 @@ export async function montar(contenedor) {
             <div class="settings__fila-descripcion">Restaura un vault desde un archivo de backup</div>
           </div>
           <div class="settings__fila-accion">
-            <label class="btn btn--pequeño btn--secundario" style="cursor:pointer;">
+            <label class="btn btn--pequeño btn--secundario">
               Importar
-              <input type="file" id="input-importar" accept=".json" style="display:none;">
+              <input type="file" id="input-importar" accept=".json" class="archivo-entrada-oculta">
             </label>
           </div>
         </div>
@@ -134,7 +133,7 @@ export async function montar(contenedor) {
               ${estaConectadoGoogle ? '✅ Conectado' : 'Sin conexión'}
             </div>
           </div>
-          <div class="settings__fila-accion" style="display:flex;gap:0.5rem;">
+          <div class="settings__fila-accion settings__fila-accion--multiple">
             ${estaConectadoGoogle
               ? `<button class="btn btn--pequeño btn--secundario" id="btn-sync-google" type="button">Sincronizar</button>
                  <button class="btn btn--pequeño btn--peligro"   id="btn-desconectar-google" type="button">Desconectar</button>`
@@ -150,7 +149,7 @@ export async function montar(contenedor) {
               ${estaConectadoOneDrive ? '✅ Conectado' : 'Sin conexión'}
             </div>
           </div>
-          <div class="settings__fila-accion" style="display:flex;gap:0.5rem;">
+          <div class="settings__fila-accion settings__fila-accion--multiple">
             ${estaConectadoOneDrive
               ? `<button class="btn btn--pequeño btn--secundario" id="btn-sync-onedrive" type="button">Sincronizar</button>
                  <button class="btn btn--pequeño btn--peligro"   id="btn-desconectar-onedrive" type="button">Desconectar</button>`
@@ -193,7 +192,7 @@ export async function montar(contenedor) {
         </div>
       </div>
 
-      <p style="text-align:center;font-size:0.75rem;color:var(--color-muted);margin-top:1.5rem;">
+      <p class="settings__version-pie">
         Dacmos Password Manager · Zero-Knowledge · v0.4.0
       </p>
     </div>`

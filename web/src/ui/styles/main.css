@@ -1057,6 +1057,191 @@ textarea.input {
 
 /* ── 15. Media queries — breakpoint 768px ─────────────────── */
 
+/* ── 16. Splash de carga (movido desde <style> inline de index.html) ── */
+
+.splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.splash__icon {
+  width: 80px;
+  height: 80px;
+  animation: pulso 1.8s ease-in-out infinite;
+}
+
+.splash__texto {
+  font-size: 1rem;
+  color: var(--color-accent);
+  letter-spacing: 0.05em;
+}
+
+.splash__marca {
+  font-size: 0.75rem;
+  color: var(--color-text);
+  opacity: 0.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@keyframes pulso {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.6; transform: scale(0.95); }
+}
+
+/* ── 17. Página offline (movido desde <style> inline de offline.html) ── */
+
+/* Modificador de .tarjeta para la disposición centrada de la página offline */
+.tarjeta--offline {
+  max-width: 400px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.tarjeta__icono {
+  width: 64px;
+  height: 64px;
+  opacity: 0.7;
+}
+
+.tarjeta__titulo {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.tarjeta__descripcion {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.tarjeta__detalle {
+  font-size: 0.8rem;
+  background: rgba(0, 102, 204, 0.15);
+  border: 1px solid rgba(0, 102, 204, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: var(--color-accent);
+  line-height: 1.5;
+}
+
+.boton-reintentar {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+  max-width: 200px;
+}
+
+.boton-reintentar:hover {
+  background: #0052a3;
+}
+
+.marca {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  opacity: 0.5;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── 18. Clases extraídas de estilos inline de vistas JS ── */
+
+/* Nota de seguridad al pie de las vistas de autenticación (setup, unlock) */
+.auth__nota-pie {
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+/* Variante de éxito de .unlock__error — misma estructura, colores verdes.
+   Debe declararse después de .unlock__error para que la cascada funcione. */
+.alerta--exito {
+  background: rgba(46, 204, 113, 0.1);
+  border-color: rgba(46, 204, 113, 0.3);
+  color: var(--color-success);
+}
+
+/* Título principal de la vista health */
+.health__titulo {
+  margin-bottom: 1rem;
+}
+
+/* Nota de metodología al pie del reporte de salud */
+.health__nota-pie {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* Título principal de la vista generator */
+.generator__titulo {
+  margin-bottom: 1rem;
+}
+
+/* Fila de la etiqueta de entropía, alineada a la derecha */
+.generator__entropia-fila {
+  text-align: right;
+  margin-bottom: 0.5rem;
+}
+
+/* Título principal de la vista settings */
+.settings__titulo {
+  margin-bottom: 1.5rem;
+}
+
+/* Fila de acciones con múltiples botones (Sincronizar + Desconectar) */
+.settings__fila-accion--multiple {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Pie de la vista settings con versión de la app */
+.settings__version-pie {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-top: 1.5rem;
+}
+
+/* Separación inferior del bloque de campos dentro de settings */
+.settings__seccion .credform__campos {
+  margin-bottom: 1rem;
+}
+
+/* Input de archivo oculto — la label asociada actúa de botón */
+.archivo-entrada-oculta {
+  display: none;
+}
+
+/* Variante del botón de generar password cuando coexiste con el toggle
+   de visibilidad: desplazado a la derecha para no solaparse con el ojo */
+.credform__generar--con-toggle {
+  right: 2.75rem;
+}
+
+/* Los botones de acción del formulario comparten el ancho disponible */
+.credform__acciones .btn {
+  flex: 1;
+}
+
 /* ── Mobile (< 768px): ajustes adicionales ── */
 @media (max-width: 767px) {
   /* Contadores de health en 2 columnas en mobile */

@@ -155,10 +155,9 @@ export async function montar(contenedor) {
                       aria-label="Mostrar contraseña">👁️</button>
               <!-- Botón generar contraseña inline (⚡) -->
               <button type="button"
-                      class="credform__generar"
+                      class="credform__generar credform__generar--con-toggle"
                       id="btn-generar"
                       title="Generar contraseña segura"
-                      style="right:2.75rem;"
                       aria-label="Generar contraseña">⚡</button>
             </div>
           </div>
@@ -200,10 +199,10 @@ export async function montar(contenedor) {
         <div class="unlock__error oculto" id="credform-error" role="alert"></div>
 
         <div class="credform__acciones">
-          <button type="submit" class="btn btn--primario" id="btn-guardar" style="flex:1;">
+          <button type="submit" class="btn btn--primario" id="btn-guardar">
             ${esEdicion ? 'Guardar cambios' : 'Añadir credencial'}
           </button>
-          <button type="button" class="btn btn--secundario" id="btn-cancelar2" style="flex:1;">
+          <button type="button" class="btn btn--secundario" id="btn-cancelar2">
             Cancelar
           </button>
         </div>
