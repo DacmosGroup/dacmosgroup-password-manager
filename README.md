@@ -6,7 +6,7 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
-[![Versión](https://img.shields.io/badge/Versión-0.3.1-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![Versión](https://img.shields.io/badge/Versión-0.4.0-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -103,7 +103,7 @@ v0.1.1 ✅  MVP — Chrome Extension Zero-Knowledge
 v0.2.0 ✅  Paridad competitiva (F1.1-F1.6)
 v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
 v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
-v0.4.0 🔄  PWA — vault en mobile via navegador, APK Android via TWA
+v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
 v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
@@ -128,11 +128,9 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ---
 
-## 🌐 PWA — dpm.dacmosgroup.co
+## 🌐 PWA — En producción
 
-La PWA está disponible en todos los dispositivos (iOS, Android, Desktop) directamente desde el navegador:
-
-`https://dpm.dacmosgroup.co`
+**`https://dpm.dacmosgroup.co`** — disponible en iOS, Android y Desktop directamente desde el navegador, sin instalación.
 
 **Android:** también disponible como APK via GitHub Releases (distribución directa sin Play Store).
 
