@@ -313,7 +313,7 @@ export async function montar(contenedor) {
       await idbStorage.set({ syncConfig: { ...syncConf, proveedor: 'google' } })
       await navegar('#/settings')  // recargar la vista
     } catch (err) {
-      msgEl.textContent = 'Error al conectar con Google Drive.'
+      msgEl.textContent = _mensajeErrorSync(err) ?? 'Error al conectar con Google Drive.'
       msgEl.classList.remove('oculto')
     }
   })
@@ -327,9 +327,9 @@ export async function montar(contenedor) {
       msgEl.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
       msgEl.textContent   = 'Sincronizado con Google Drive.'
       msgEl.classList.remove('oculto')
-    } catch (_) {
+    } catch (err) {
       msgEl.style.cssText = ''
-      msgEl.textContent   = 'Error al sincronizar con Google Drive.'
+      msgEl.textContent   = _mensajeErrorSync(err) ?? 'Error al sincronizar con Google Drive.'
       msgEl.classList.remove('oculto')
     }
   })
@@ -347,7 +347,7 @@ export async function montar(contenedor) {
       await conectarMicrosoft()
       await navegar('#/settings')
     } catch (err) {
-      msgEl.textContent = 'Error al conectar con OneDrive.'
+      msgEl.textContent = _mensajeErrorSync(err) ?? 'Error al conectar con OneDrive.'
       msgEl.classList.remove('oculto')
     }
   })
@@ -361,9 +361,9 @@ export async function montar(contenedor) {
       msgEl.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
       msgEl.textContent   = 'Sincronizado con OneDrive.'
       msgEl.classList.remove('oculto')
-    } catch (_) {
+    } catch (err) {
       msgEl.style.cssText = ''
-      msgEl.textContent   = 'Error al sincronizar con OneDrive.'
+      msgEl.textContent   = _mensajeErrorSync(err) ?? 'Error al sincronizar con OneDrive.'
       msgEl.classList.remove('oculto')
     }
   })
@@ -398,4 +398,25 @@ function _formatearBytes(bytes) {
   if (mb >= 1) return `${mb.toFixed(2)} MB`
   const kb = bytes / 1024
   return `${Math.round(kb)} KB`
+}
+
+/**
+ * Traduce errores de auth conocidos a mensajes legibles para el usuario.
+ * Retorna null si el error no es un código conocido — el caller usa su
+ * mensaje por defecto (ej. 'Error al sincronizar con Google Drive.').
+ *
+ * Códigos manejados:
+ *   GOOGLE_GIS_TIMEOUT               — GIS no cargó en 10s
+ *   GOOGLE_AUTH_ERROR:popup_blocked* — popup de Google bloqueado
+ *   MICROSOFT_POPUP_BLOQUEADO        — popup de Microsoft bloqueado
+ */
+function _mensajeErrorSync(err) {
+  const msg = err?.message ?? ''
+  if (msg === 'GOOGLE_GIS_TIMEOUT')
+    return 'Google Auth no disponible. Comprueba tu conexión a internet.'
+  if (msg.includes('popup_blocked'))
+    return 'Popup bloqueado por el navegador. Desconecta y vuelve a conectar para autenticarte.'
+  if (msg === 'MICROSOFT_POPUP_BLOQUEADO')
+    return 'Popup bloqueado por el navegador. Desconecta y vuelve a conectar para autenticarte.'
+  return null
 }
