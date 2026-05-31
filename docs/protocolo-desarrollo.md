@@ -119,3 +119,50 @@ Commits de código y documentación van **siempre separados**.
 [ ] Commit de documentación separado
 [ ] Docs actualizados subidos al proyecto Claude
 ```
+
+---
+
+## Separación de responsabilidades en los briefs de implementación
+
+### Quién decide qué
+
+| Rol | Responsabilidad |
+|-----|----------------|
+| **Este chat (arquitecto revisor)** | **QUÉ** se construye, **POR QUÉ** se toma cada decisión, qué principios no pueden violarse |
+| **Claude Code (implementador)** | **CÓMO** implementarlo, con qué herramientas y en qué orden, cómo manejar errores y casos inesperados |
+
+### Regla práctica para los briefs
+
+Un brief bien escrito describe **objetivos y restricciones**, no procedimientos.
+
+**Señales de que el arquitecto se está pasando de su rol:**
+
+- El brief contiene comandos exactos para ejecutar
+- El brief especifica el contenido literal de archivos
+- El brief incluye secuencias paso a paso detalladas con orden fijo
+- El brief anticipa errores específicos y prescribe cómo resolverlos
+
+Cuando el brief llega a ese nivel de detalle, está tomando decisiones que
+le corresponden al implementador: decisiones que dependen del estado real
+del entorno, de las herramientas disponibles y de lo que ocurre durante
+la ejecución.
+
+**La consecuencia práctica:** un brief demasiado prescriptivo reduce la
+capacidad del implementador para adaptarse. Si el entorno no coincide
+exactamente con lo que el brief supone (versión de Node.js, herramienta
+no instalada, API que cambió), el implementador queda bloqueado porque
+el brief le dijo "haz exactamente esto" en lugar de "logra esto".
+
+### Lo que sí pertenece al brief
+
+- El objetivo final verificable ("el APK debe instalarse en Android sin Play Store")
+- Las restricciones no negociables ("el keystore no puede ir en el repo")
+- Las decisiones de diseño con su razonamiento ("package name: co.dacmosgroup.dpm porque es inmutable y dpm es la abreviatura canónica")
+- Los criterios de completitud ("APK firmado, TWA sin barra de URL visible")
+
+### Lo que no pertenece al brief
+
+- La secuencia exacta de comandos para generar el keystore
+- El contenido JSON de un archivo de configuración
+- Los flags específicos de una herramienta CLI
+- El orden en que se resuelven los errores de compilación

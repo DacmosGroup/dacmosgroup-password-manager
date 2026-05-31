@@ -13,6 +13,7 @@ Thumbs.db
 # Builds empaquetados
 *.zip
 *.crx
+*.apk
 
 # IDEs
 .vscode/
@@ -26,3 +27,13 @@ settings.local.json
 CLAUDE.md
 !.claude/CLAUDE.md
 .wrangler/
+
+# Keystore de firma Android (NUNCA en el repo)
+*.keystore
+*.jks
+
+# Artefactos de compilación Android (generados por Gradle — no en el repo)
+app/build/
+.gradle/
+build/
+local.properties

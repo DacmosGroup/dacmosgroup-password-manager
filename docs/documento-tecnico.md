@@ -27,7 +27,9 @@
 14. [Decisiones de Implementación — F4.7](#14-decisiones-de-implementación--f47)
 15. [Arquitectura Sync Per-Item](#15-arquitectura-sync-per-item)
 16. [Decisiones de Implementación — F4.3](#16-decisiones-de-implementación--f43)
-17. [Referencias](#17-referencias)
+17. [Decisiones de Implementación — F4.4 + F4.5](#17-decisiones-de-implementación--f44--f45)
+18. [Decisiones de Implementación — F4.6](#18-decisiones-de-implementación--f46)
+19. [Referencias](#19-referencias)
 
 ---
 
@@ -60,7 +62,7 @@ PWA Mobile (v0.4.0+):
 ├── Lenguaje:       JavaScript (ES Modules — mismo código)
 ├── Crypto:         Web Crypto API (crypto.subtle — idéntica)
 ├── Almacenamiento: IndexedDB (reemplazo de chrome.storage.local)
-└── Despliegue:     Cloudflare Pages (app.dacmosgroup.co)
+└── Despliegue:     Cloudflare Pages (dpm.dacmosgroup.co)
 
 App Nativa (v0.5.0+):
 ├── Plataforma:     Capacitor (iOS + Android)
@@ -1262,7 +1264,304 @@ Sin `frame-src`: los popups OAuth son ventanas del browser, no iframes.
 
 ---
 
-## 17. Referencias
+## 17. Decisiones de Implementación — F4.4 + F4.5
+
+Esta sección captura las decisiones de diseño tomadas durante la
+implementación de F4.4 (UI responsive mobile-first) y F4.5
+(persistencia robusta). Orientada a futuros contribuidores y a
+v0.5.0 (Capacitor) que reutilizará esta arquitectura de UI.
+
+### Módulo implícito: session.js
+
+La especificación en CLAUDE.md indica *"Session state lives in JS
+module memory only"* pero no detalla cómo compartirlo entre vistas.
+La solución adoptada es `web/src/storage/session.js`: un módulo ES
+con variables a nivel de módulo (`_claveSesion`, `_credenciales`)
+y funciones getter/setter exportadas.
+
+Este patrón funciona porque los ES Modules son singletons — el
+browser carga cada módulo una sola vez y todas las importaciones
+comparten la misma instancia. Cualquier vista que importe `session.js`
+accede al mismo estado en memoria.
+
+**Consecuencia operativa:** la sesión se pierde al recargar la página.
+El usuario debe volver a ingresar la contraseña maestra. Este
+comportamiento es idéntico al de la extensión Chrome cuando el
+service worker se reinicia y es correcto por diseño (Zero-Knowledge:
+la clave AES no persiste).
+
+### Fork web/src/health/password-health.js
+
+Mismo patrón que `web/src/sync/storage-adapter.js` (F4.3): Cloudflare
+Pages sirve desde `web/` como raíz del servidor. Una ruta como
+`../../src/health/password-health.js` desde `web/src/ui/views/health.js`
+saldría del directorio servido y devolvería 404 en producción.
+
+El fork es literal — sin cambios de lógica. Solo cambia el lugar
+en el sistema de archivos. Cuando `src/health/password-health.js`
+reciba actualizaciones (ej. nuevas métricas en v0.5.0), deben
+portarse manualmente al fork de la PWA, igual que con `engine.js`.
+
+### Hash routing vs History API
+
+Se eligió hash routing (`#/vault`, `#/unlock`, etc.) sobre History API
+(`/vault`, `/unlock`) aunque `web/_redirects` ya tiene la regla SPA
+`/* /index.html 200`.
+
+**Razón:** iOS Safari en modo standalone (PWA instalada) tiene
+comportamiento no estándar con `history.pushState` cuando la sesión
+expira o el usuario navega directamente a una ruta profunda. Con hash
+routing, el servidor siempre sirve `index.html` para cualquier URL y
+el router en JS se encarga de todo — sin dependencia del comportamiento
+del navegador para manejar deep links.
+
+### CSS unificado (main.css) sin @import
+
+Sin bundler (ni Vite, ni webpack, ni esbuild), la alternativa a un
+único `main.css` sería múltiples archivos CSS con `@import` o
+múltiples `<link>` en el HTML.
+
+`@import` en CSS es render-blocking: el browser descarga el archivo
+importado de forma secuencial antes de procesar el resto. Con 7+ vistas
+esto crearía una cascada de bloqueos en la primera carga.
+
+Múltiples `<link>` resolverían el bloqueo pero requerirían actualizar
+el HTML cada vez que se añade una vista.
+
+Un único `main.css` con secciones claramente delimitadas por
+comentarios es el tradeoff óptimo para este stack sin build step.
+
+### Pointer Events API para swipe (no Touch Events)
+
+`swipe-card.js` usa exclusivamente Pointer Events API (W3C standard)
+en lugar de Touch Events (API legacy).
+
+| Criterio | Pointer Events | Touch Events |
+|----------|---------------|--------------|
+| Dispositivos cubiertos | Touch + mouse + stylus | Solo touch |
+| `setPointerCapture()` | ✅ Nativo | ❌ No disponible |
+| Compatibilidad | iOS 13+, Chrome Android | Todos |
+| Mantenimiento | Una sola API | Dos APIs paralelas |
+
+`setPointerCapture(e.pointerId)` es la razón técnica principal: garantiza
+que `pointermove` y `pointerup` lleguen al elemento aunque el dedo
+salga de sus límites durante el gesto. Sin esto, el swipe se interrumpe
+si el usuario arrastra demasiado rápido y el dedo sale momentáneamente.
+
+### Clase CSS sin-nav para vistas de pantalla completa
+
+Las vistas setup, unlock y credential-form son de pantalla completa —
+no deben mostrar el bottom-nav ni el margen del sidebar.
+
+`nav-bottom.js` añade/quita `.sin-nav` en `#app` al cambiar de ruta.
+En `main.css`:
+
+```css
+/* Mobile: quitar padding-bottom del espacio reservado para la nav */
+#app.sin-nav { padding-bottom: 0; }
+
+/* Desktop: quitar el margin-left del sidebar */
+@media (min-width: 768px) {
+  #app.sin-nav { margin-left: 0; padding-bottom: 0; }
+}
+```
+
+Sin esta clase, las vistas unlock/setup en desktop mostrarían un margen
+izquierdo de 220px y las vistas centradas (`.vista--centrada`) no
+quedarían correctamente centradas en la pantalla.
+
+### solicitarPersistencia() desde el submit handler (F4.5)
+
+La Storage API requiere un "user gesture" (interacción activa del usuario)
+para llamar a `navigator.storage.persist()` en algunos browsers, en
+particular Safari iOS.
+
+`setup.js` llama `solicitarPersistencia()` dentro del handler del
+evento `submit` del formulario — que es un gesto del usuario (clic en
+"Crear vault"). Esto satisface el gesture requirement.
+
+Si se llamara desde `app.js` al cargar (sin gesto), Safari rechazaría
+la solicitud silenciosamente y `persist()` devolvería `false` aunque
+el usuario pudiera haberla concedido.
+
+### Banner no modal para eviction iOS (F4.5)
+
+Cuando el browser rechaza la persistencia, se muestra un banner
+no bloqueante en la parte inferior de la vista vault — no un modal.
+
+**Razón:** el riesgo de eviction de iOS Safari ocurre después de 7 días
+sin abrir la PWA. No es un riesgo inmediato. Un modal interrumpiría el
+flujo del usuario en su primera visita al vault, generando fricción
+innecesaria en el momento de mayor valor percibido de la app.
+
+El banner es descartable (botón X) y no reaparece tras cerrarlo
+(`bannerPersistenciaVisto: true` en idbStorage). La red de seguridad
+real es el sync BYOC (Google Drive / OneDrive), que actúa como backup
+automático del vault cifrado.
+
+---
+
+## 18. Decisiones de Implementación — F4.6
+
+Esta sección captura las decisiones de diseño tomadas durante la
+implementación de F4.6 (distribución: dominio de producción + APK
+Android via TWA). Orientada a futuros contribuidores y auditores.
+
+### URL de producción definitiva: dpm.dacmosgroup.co
+
+El dominio de producción es `dpm.dacmosgroup.co`, no `app.dacmosgroup.co`.
+
+**Razón:** convención de subdominio multi-producto de DacmosGroup basada
+en abreviaturas del producto. Escala limpiamente:
+
+```
+dpm.dacmosgroup.co   ← Dacmos Password Manager
+pg.dacmosgroup.co    ← Dacmos PolicyGen (futuro)
+```
+
+Un subdominio tipo `app.` implicaría que todos los productos de la marca
+comparten el mismo punto de entrada, lo que genera ambigüedad a medida que
+el portafolio crece. La abreviatura del producto como subdominio establece
+la identidad individual desde el primer día.
+
+### Package name Android: co.dacmosgroup.dpm
+
+Convención `reverse-domain + abreviatura`:
+
+```
+co.dacmosgroup.dpm   (Dacmos Password Manager)
+```
+
+El package name es inmutable una vez publicado el APK. Si se publica bajo
+`co.dacmosgroup.pm` y luego se quiere cambiar a `co.dacmosgroup.dpm`, la
+identidad de la app se pierde y los usuarios existentes no reciben
+actualizaciones. `dpm` es la abreviatura canónica del producto desde los
+primeros commits.
+
+### Keystore de firma: dacmos-release.keystore
+
+| Campo | Valor |
+|-------|-------|
+| Alias | `dacmos-dpm` |
+| Algoritmo | RSA 2048 |
+| Firma | SHA256withRSA |
+| Validez | 9.125 días (~25 años, vence 24 mayo 2051) |
+| SHA-256 | `B0:A1:FC:98:88:FB:8B:EE:F1:34:49:F8:FE:49:92:7C:E6:D2:4D:2E:FD:D0:0C:17:75:A0:E7:33:8F:8E:DE:0D` |
+
+El archivo `.keystore` está excluido por `.gitignore` (`*.keystore`).
+La documentación operativa (fingerprints, backup, comandos) vive en
+`docs/f4.6-keystore.md` que SÍ está en el repo para sobrevivir re-clones.
+
+### Digital Asset Links: web/.well-known/assetlinks.json
+
+El archivo `assetlinks.json` crea la relación de confianza entre el dominio
+`dpm.dacmosgroup.co` y el APK `co.dacmosgroup.dpm`. Sin este archivo en
+producción, el APK funciona pero no es una TWA legítima — el navegador
+muestra la barra de URL del Chrome, eliminando la experiencia de app nativa.
+
+**Regla crítica:** el `sha256_cert_fingerprints` en `assetlinks.json` debe
+coincidir exactamente con el fingerprint del keystore usado para firmar el
+APK. Cualquier discrepancia hace que la TWA caiga silenciosamente a Custom
+Tabs (con barra de URL visible).
+
+**Regla de Content-Type:** el archivo debe servirse con `Content-Type: application/json`.
+Configurado en `web/_headers`. Sin esta cabecera, algunos dispositivos Android
+rechazan el archivo aunque el contenido sea válido JSON.
+
+**Regla de _redirects:** la regla SPA `/* /index.html 200` captura
+`/.well-known/assetlinks.json` si no existe una regla más específica antes.
+Añadida `/.well-known/* /.well-known/:splat 200` antes de la catch-all.
+
+### Íconos PNG como requisito de bubblewrap
+
+`bubblewrap` requiere íconos PNG para generar el launcher icon del APK.
+Los SVG con `"sizes": "any"` son válidos para la PWA en el browser, pero
+el proceso de generación del APK necesita rasterizar el ícono para las
+densidades de pantalla Android (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi).
+
+Los PNG añadidos al manifest son placeholders de color sólido (`#0066cc`
+brand color) generados con Node.js nativo (zlib, fs — sin dependencias).
+**Deben reemplazarse con el arte final de DacmosGroup antes del release.**
+
+### Herramienta de distribución: bubblewrap + twa-manifest.json
+
+El archivo `twa-manifest.json` en la raíz del repo reemplaza la necesidad
+de ejecutar `bubblewrap init` cada vez (que requiere la URL de producción
+activa). Con `twa-manifest.json` presente, solo se necesita:
+
+```bash
+bubblewrap build --skipPwaValidation
+```
+
+### Incompatibilidad bubblewrap CLI + Node.js 26
+
+Durante la implementación de F4.6 se confirmó que `bubblewrap CLI v1.24.1`
+es incompatible con Node.js v26 cuando sus prompts interactivos reciben
+entrada por pipe. El error:
+
+```
+Error [ERR_USE_AFTER_CLOSE]: readline was closed
+```
+
+ocurre porque `inquirer` (dependencia de bubblewrap) intenta pausar una
+interfaz readline ya cerrada al agotarse stdin. Es un problema de la versión
+de inquirer empaquetada en bubblewrap, no de Node.js.
+
+**Workaround aplicado en F4.6:**
+1. `bubblewrap init` generó el proyecto Android (`app/`, `build.gradle`, etc.)
+   — esta fase sí completó antes del crash
+2. El APK se compiló directamente con `./gradlew assembleRelease` pasando
+   los parámetros de firma como flags de Gradle:
+   ```
+   -Pandroid.injected.signing.store.file=<ruta>
+   -Pandroid.injected.signing.store.password=<pass>
+   -Pandroid.injected.signing.key.alias=<alias>
+   -Pandroid.injected.signing.key.password=<pass>
+   ```
+   Esto evita la dependencia de los prompts interactivos de bubblewrap
+   para la firma.
+
+**Implicación para v0.5.0 (Capacitor):** si Node.js sigue en v26 al
+construir el APK de Capacitor, verificar si la herramienta de build de
+Capacitor (Ionic Appflow o Codemagic) tiene la misma incompatibilidad.
+En entorno local, la solución directa es `./gradlew` con flags de firma.
+
+### Canales de distribución v0.4.0
+
+| Canal | Estado |
+|-------|--------|
+| `dpm.dacmosgroup.co` (PWA — todos los dispositivos) | ✅ Dominio activo |
+| GitHub Releases (`dacmos-pm-v0.4.0.apk`) | ✅ APK firmado |
+| IzzyOnDroid | 🔄 Pendiente submisión (2–7 días revisión) |
+| F-Droid main repo | ⏳ v0.4.x (requiere build reproducible) |
+| Google Play Store | ⏳ v0.5.0 ($25 Play Console) |
+| Apple App Store | ⏳ v0.6.0 ($99/año Developer Program) |
+
+### Prerequisitos resueltos al cierre de F4.6
+
+Los siguientes items estaban pendientes en la propuesta arquitectural
+y quedaron resueltos durante la misma sesión de implementación:
+
+| Prerequisito | Estado al cerrar F4.6 |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` en GitHub Secrets | ✅ Configurado desde F4.1, verificado en F4.6 |
+| `CLOUDFLARE_ACCOUNT_ID` en GitHub Secrets | ✅ Configurado desde F4.1, verificado en F4.6 |
+| URI OAuth Google Cloud Console (`dpm.dacmosgroup.co`) | ✅ Actualizada en sesión de F4.6 |
+| URI OAuth Azure Portal (`dpm.dacmosgroup.co/blank.html`) | ✅ Actualizada en sesión de F4.6 |
+
+### Android Developer Console gratuita — deadline septiembre 2026
+
+Google exige registro en la Android Developer Console (gratuita, distinta
+de Play Console) para distribución directa de APKs en LATAM a partir de
+septiembre 2026. No afecta GitHub Releases ni IzzyOnDroid hoy, pero es un
+prerequisito para distribución directa en el mercado latinoamericano.
+
+Registro: `play.google.com/console/about/` → "Crear cuenta gratuita".
+Solo requiere verificación de identidad (documento + selfie). Sin costo.
+
+---
+
+## 19. Referencias
 
 ### Estándares y especificaciones
 

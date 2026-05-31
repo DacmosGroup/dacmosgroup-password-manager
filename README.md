@@ -75,10 +75,10 @@
 |---------|-------------|--------|
 | F4.1 | Progressive Web App — vault accesible desde cualquier browser mobile | ✅ |
 | F4.2 | IndexedDB — reemplazo de chrome.storage con formato compatible | ✅ |
-| F4.3 | OAuth PKCE — Google Drive + OneDrive sin chrome.identity | 🔄 |
-| F4.4 | UI responsive — mobile-first, touch-friendly | 🔄 |
-| F4.5 | Persistencia robusta — navigator.storage.persist() + manejo eviction iOS | 🔄 |
-| F4.6 | APK Android via TWA — distribución sin Play Store | 🔄 |
+| F4.3 | OAuth PKCE — Google Drive + OneDrive sin chrome.identity | ✅ |
+| F4.4 | UI responsive — mobile-first, touch-friendly | ✅ |
+| F4.5 | Persistencia robusta — navigator.storage.persist() + manejo eviction iOS | ✅ |
+| F4.6 | APK Android via TWA — distribución sin Play Store | ✅ |
 | F4.7 | Formato versionado del blob — habilita migración no destructiva a Argon2id | ✅ |
 
 ### ⏳ Fase 4 — App Nativa v0.5.0 (PENDIENTE)
@@ -125,6 +125,16 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 # 4. Clic en "Cargar extensión sin empaquetar"
 # 5. Seleccionar la carpeta raíz del proyecto
 ```
+
+---
+
+## 🌐 PWA — dpm.dacmosgroup.co
+
+La PWA está disponible en todos los dispositivos (iOS, Android, Desktop) directamente desde el navegador:
+
+`https://dpm.dacmosgroup.co`
+
+**Android:** también disponible como APK via GitHub Releases (distribución directa sin Play Store).
 
 ---
 

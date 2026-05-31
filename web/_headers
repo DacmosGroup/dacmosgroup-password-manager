@@ -11,6 +11,9 @@
 # carga Workbox via importScripts() desde ese CDN. Sin esta directiva,
 # el navegador bloquea el script y el SW no se registra.
 
+/.well-known/assetlinks.json
+  Content-Type: application/json
+
 /*
   # ── Content Security Policy ─────────────────────────────────────────
   # Equivalente a la CSP de la Chrome Extension MV3: script-src 'self'

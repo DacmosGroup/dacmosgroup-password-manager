@@ -132,7 +132,7 @@ un ADR nuevo antes de implementarse.
 **Pendiente para producción (fuera de scope F4.1):**
 - Convertir `icon-180.svg` → `icon-180.png` para `apple-touch-icon` en iOS Safari
 - Configurar secrets `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` en GitHub
-- URL de producción personalizada: `app.dacmosgroup.co`
+- URL de producción personalizada: `dpm.dacmosgroup.co`
 
 ---
 
@@ -230,7 +230,7 @@ al de la extensión Chrome cuando el service worker se reinicia.
 
 ---
 
-### F4.4 — UI responsive y mobile-first
+### F4.4 — UI responsive y mobile-first ✅ COMPLETADO
 
 La UI de la extensión Chrome fue diseñada para popup (380px) y pestañas
 completas desktop. La PWA debe funcionar en pantallas de 360px a 1440px.
@@ -262,7 +262,7 @@ completas desktop. La PWA debe funcionar en pantallas de 360px a 1440px.
 
 ---
 
-### F4.5 — Persistencia robusta: manejo de eviction iOS Safari
+### F4.5 — Persistencia robusta: manejo de eviction iOS Safari ✅ COMPLETADO
 
 **El riesgo más importante de la PWA en iOS.**
 
@@ -301,13 +301,13 @@ del vault local — un escenario inaceptable para un gestor de contraseñas.
 
 ---
 
-### F4.6 — Distribución: web + APK Android via TWA
+### F4.6 — Distribución: web + APK Android via TWA ✅ COMPLETADO
 
 **Canales de distribución para v0.4.0:**
 
 | Canal | Plataforma | Inversión | Estado |
 |-------|------------|-----------|--------|
-| URL directa (app.dacmosgroup.co) | iOS + Android + Desktop | $10–15/año (dominio) | ✅ Principal |
+| URL directa (dpm.dacmosgroup.co) | iOS + Android + Desktop | $10–15/año (dominio) | ✅ Principal |
 | APK via GitHub Releases | Android | $0 | ✅ v0.4.0 |
 | IzzyOnDroid | Android | $0 | ✅ v0.4.0 |
 | F-Droid | Android | $0 (review ~1 mes) | 🔄 v0.4.x |
@@ -324,7 +324,7 @@ Se firma con un Android keystore generado localmente en Windows.
 ```bash
 # Herramientas (gratuitas, se instalan en Windows)
 npm install -g @bubblewrap/cli
-bubblewrap init --manifest https://app.dacmosgroup.co/manifest.json
+bubblewrap init --manifest https://dpm.dacmosgroup.co/manifest.json
 bubblewrap build   # genera dacmos-pm.apk
 ```
 
@@ -345,6 +345,18 @@ en el mercado primario.
 - APK instalable en Android sin Play Store (sideloading)
 - TWA muestra la PWA a pantalla completa, sin barra de URL
 - Formulario de submisión a IzzyOnDroid completado
+
+**Implementación — branch `feature/v0.4.0`:**
+- `.gitignore`: `*.keystore` y `*.jks` añadidos antes de generar el keystore
+- `web/manifest.json`: campo `id: "/"` añadido; íconos PNG 192×192 y 512×512 añadidos
+- `web/.well-known/assetlinks.json`: Digital Asset Links creado con fingerprint real
+- `web/_headers`: regla `Content-Type: application/json` para `assetlinks.json`
+- `web/_redirects`: regla `/.well-known/*` antes de la catch-all SPA
+- `twa-manifest.json`: configuración bubblewrap con `package_name: co.dacmosgroup.dpm`
+- `docs/f4.6-keystore.md`: documentación operativa del keystore (SÍ en repo)
+- `dacmos-release.keystore`: archivo binario excluido por `.gitignore` (NO en repo)
+- Dominio: `app.dacmosgroup.co` → `dpm.dacmosgroup.co` en todo el repo
+- SHA-256 del keystore: `B0:A1:FC:98:88:FB:8B:EE:F1:34:49:F8:FE:49:92:7C:E6:D2:4D:2E:FD:D0:0C:17:75:A0:E7:33:8F:8E:DE:0D`
 
 ---
 
@@ -432,15 +444,15 @@ el número de iteraciones.
 - [x] F4.1 — Setup PWA: infraestructura completa desplegada en Cloudflare Pages ✅
 - [x] F4.2 — IndexedDB: adaptador + fork engine.js para PWA ✅
 - [x] F4.3 — OAuth PKCE: sync Google Drive + OneDrive funcionando en mobile ✅
-- [ ] F4.4 — UI responsive: navegación completa en 360px y 1440px sin errores
-- [ ] F4.5 — Persistencia: `navigator.storage.persist()` + UX educativa en iOS
-- [ ] F4.6 — Distribución: APK TWA en GitHub Releases + IzzyOnDroid submisión
+- [x] F4.4 — UI responsive: navegación completa en 360px y 1440px sin errores ✅
+- [x] F4.5 — Persistencia: `navigator.storage.persist()` + UX educativa en iOS ✅
+- [x] F4.6 — Distribución: dominio dpm.dacmosgroup.co + assetlinks + APK TWA firmado ✅
 - [x] F4.7 — Versionado del blob: campo `__version` en todos los blobs nuevos ✅
 - [ ] Compatibilidad cruzada PWA ↔ Chrome Extension verificada (round-trip)
 - [ ] Android Developer Console gratuito registrado (antes de sep 2026)
 - [ ] Versión bumpeada a 0.4.0 en manifest de la extensión Y en PWA manifest
 - [ ] PR mergeado a main con descripción completa
-- [ ] Desplegado en app.dacmosgroup.co o dacmosgroup.co/app
+- [ ] Desplegado en dpm.dacmosgroup.co o dacmosgroup.co/app
 
 ---
 
@@ -448,7 +460,7 @@ el número de iteraciones.
 
 | Decisión | Opciones | Criterio para resolver |
 |----------|----------|----------------------|
-| ¿Dominio para la PWA? | `app.dacmosgroup.co` vs `dacmosgroup.co/app` | `app.dacmosgroup.co` (subdominio limpio) si el DNS lo permite |
+| ¿Dominio para la PWA? | `dpm.dacmosgroup.co` vs `dacmosgroup.co/app` | `dpm.dacmosgroup.co` (subdominio limpio) si el DNS lo permite |
 | ¿Cloudflare Pages vs GitHub Pages? | Cloudflare (mejor CDN, más control) vs GitHub (más simple) | Cloudflare Pages si se quiere Workers en el futuro; GitHub si simplicidad es prioridad |
 | ¿Qué pasa con la extensión Chrome durante v0.4.0? | Ambas coexisten / solo PWA | Coexisten — la extensión sigue en CWS, la PWA es adicional |
 | ¿La Chrome Extension actualiza su engine.js para leer `__version`? | Sí (recomendado) vs No (solo PWA) | Sí — garantiza compatibilidad bidireccional desde el primer día |
@@ -519,7 +531,7 @@ v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
 | Entorno | URL |
 |---------|-----|
 | **Preview / Staging** | https://dacmos-pm-pwa.pages.dev |
-| **Producción (pendiente)** | https://app.dacmosgroup.co |
+| **Producción** | https://dpm.dacmosgroup.co ✅ |
 
 ---
 
