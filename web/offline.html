@@ -6,112 +6,11 @@
   <title>Sin conexión — Dacmos Password Manager</title>
   <meta name="theme-color" content="#0066cc">
   <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
-
-  <style>
-    /* Misma paleta de colores que la extensión Chrome */
-    :root {
-      --color-bg:      #1a1a2e;
-      --color-surface: #16213e;
-      --color-primary: #0066cc;
-      --color-accent:  #00d4ff;
-      --color-text:    #e8e8e8;
-      --color-muted:   #8892a4;
-      --color-border:  #2a3a5c;
-    }
-
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--color-bg);
-      color: var(--color-text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100dvh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-    }
-
-    /* Tarjeta centrada con mensaje de estado */
-    .tarjeta {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: 12px;
-      padding: 2.5rem 2rem;
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.25rem;
-    }
-
-    /* Ícono de sin señal */
-    .tarjeta__icono {
-      width: 64px;
-      height: 64px;
-      opacity: 0.7;
-    }
-
-    .tarjeta__titulo {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--color-text);
-    }
-
-    .tarjeta__descripcion {
-      font-size: 0.9rem;
-      color: var(--color-muted);
-      line-height: 1.6;
-    }
-
-    /* Resaltar el dato clave: el vault cifrado está seguro */
-    .tarjeta__detalle {
-      font-size: 0.8rem;
-      background: rgba(0, 102, 204, 0.15);
-      border: 1px solid rgba(0, 102, 204, 0.3);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      color: var(--color-accent);
-      line-height: 1.5;
-    }
-
-    /* Botón para reintentar la carga */
-    .boton-reintentar {
-      background: var(--color-primary);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 0.75rem 1.5rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s;
-      width: 100%;
-      max-width: 200px;
-    }
-
-    .boton-reintentar:hover {
-      background: #0052a3;
-    }
-
-    .marca {
-      font-size: 0.7rem;
-      color: var(--color-muted);
-      opacity: 0.5;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-  </style>
+  <link rel="stylesheet" href="/src/ui/styles/main.css">
 </head>
 <body>
 
-  <div class="tarjeta">
+  <div class="tarjeta tarjeta--offline">
     <!-- Ícono inline de nube sin conexión -->
     <svg class="tarjeta__icono"
          viewBox="0 0 64 64"

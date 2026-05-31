@@ -27,7 +27,7 @@ export async function montar(contenedor) {
   // Estado de carga mientras se procesa el análisis
   contenedor.innerHTML = `
     <div class="vista">
-      <h1 style="margin-bottom:1rem;">🛡️ Salud del Vault</h1>
+      <h1 class="health__titulo">🛡️ Salud del Vault</h1>
       <div class="cargando">Analizando contraseñas...</div>
     </div>`
 
@@ -36,7 +36,7 @@ export async function montar(contenedor) {
   if (credenciales.length === 0) {
     contenedor.innerHTML = `
       <div class="vista">
-        <h1 style="margin-bottom:1rem;">🛡️ Salud del Vault</h1>
+        <h1 class="health__titulo">🛡️ Salud del Vault</h1>
         <div class="lista-vacia">
           <div class="lista-vacia__icono">🛡️</div>
           <p class="lista-vacia__texto">
@@ -53,7 +53,7 @@ export async function montar(contenedor) {
 
     contenedor.innerHTML = `
       <div class="vista">
-        <h1 style="margin-bottom:1rem;">🛡️ Salud del Vault</h1>
+        <h1 class="health__titulo">🛡️ Salud del Vault</h1>
 
         <!-- Contadores principales -->
         <div class="health__contadores">
@@ -82,7 +82,7 @@ export async function montar(contenedor) {
           ${reporte.items.map(item => _renderItem(item)).join('')}
         </div>
 
-        <p style="font-size:0.75rem; color:var(--color-muted); margin-top:1rem; text-align:center;">
+        <p class="health__nota-pie">
           Análisis local · Sin llamadas de red · Zero-Knowledge
         </p>
       </div>`
@@ -91,7 +91,7 @@ export async function montar(contenedor) {
     console.error('Error al analizar vault:', error)
     contenedor.innerHTML = `
       <div class="vista">
-        <h1 style="margin-bottom:1rem;">🛡️ Salud del Vault</h1>
+        <h1 class="health__titulo">🛡️ Salud del Vault</h1>
         <p class="error-texto">Error al analizar las contraseñas. Intenta de nuevo.</p>
       </div>`
   }
