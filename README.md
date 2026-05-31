@@ -6,7 +6,7 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
-[![Versión](https://img.shields.io/badge/Versión-0.4.0-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![Versión](https://img.shields.io/badge/Versión-0.4.1-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -69,7 +69,7 @@
 | F3.4 | Versión dinámica en Settings — leída desde manifest.json | ✅ |
 | F3.5 | Fix autocompletado en formularios Create/Confirm password | ✅ |
 
-### 🔄 Fase 3 — PWA Mobile v0.4.0 (EN DESARROLLO)
+### ✅ Fase 3 — PWA Mobile v0.4.0 + Remediación v0.4.1 (COMPLETADA)
 
 | Feature | Descripción | Estado |
 |---------|-------------|--------|
@@ -80,6 +80,7 @@
 | F4.5 | Persistencia robusta — navigator.storage.persist() + manejo eviction iOS | ✅ |
 | F4.6 | APK Android via TWA — distribución sin Play Store | ✅ |
 | F4.7 | Formato versionado del blob — habilita migración no destructiva a Argon2id | ✅ |
+| v0.4.1 | Remediación auditoría: importarVaultBackup (A-1), timeout GIS (M-1), errores OAuth (M-2), CSP sin unsafe-inline (M-3), fileId cache Drive (B-2), SW update flow (B-1) | ✅ |
 
 ### ⏳ Fase 4 — App Nativa v0.5.0 (PENDIENTE)
 
@@ -144,7 +145,7 @@ Disponible en modo no listado — instalación via enlace directo:
 
 ---
 
-## 🔑 Funciones Principales v0.3.1
+## 🔑 Funciones Principales v0.4.1
 
 - **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
 - **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
@@ -159,6 +160,9 @@ Disponible en modo no listado — instalación via enlace directo:
 - **BYOC** — tú eliges el proveedor cloud; DacmosGroup no almacena nada
 - **Navegación consistente** — botón ← Inicio en todas las vistas
 - **UX mejorada** — legibilidad de cards, versión dinámica, fix formularios registro
+- **PWA Mobile** — vault accesible desde cualquier browser mobile en `dpm.dacmosgroup.co`
+- **APK Android** — distribución directa via GitHub Releases (TWA, sin Play Store)
+- **SW update flow** — banner "Nueva versión disponible" sin forzar cierre de tabs
 
 ---
 
