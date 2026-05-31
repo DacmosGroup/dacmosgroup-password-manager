@@ -37,26 +37,23 @@ jobs:
     steps:
       # ── Paso 1: Obtener el código fuente ──────────────────────────────
       - name: Checkout del repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # ── Paso 2: Desplegar web/ a Cloudflare Pages ─────────────────────
-      # La acción cloudflare/pages-action@v1:
-      #   - Sube el contenido de `directory` a Cloudflare Pages
+      # cloudflare/wrangler-action@v4 (Node.js 24) reemplaza pages-action@v1
+      # (pages-action quedó abandonado en Node.js 16 sin actualización).
+      # El comando `pages deploy` es el equivalente directo de pages-action:
+      #   - Sube el contenido de web/ a Cloudflare Pages
       #   - Registra el despliegue en GitHub (visible en Deployments)
-      #   - Comenta la URL de preview en PRs si el branch no es main
+      #   - Publica preview URLs en PRs si el branch no es main
       - name: Deploy a Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v4
         with:
           # Token de API de Cloudflare (con permiso Cloudflare Pages: Edit)
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           # ID de la cuenta de Cloudflare
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Nombre del proyecto en Cloudflare Pages
-          # Debe coincidir exactamente con el nombre creado en el dashboard
-          projectName: dacmos-pm-pwa
-          # Carpeta a desplegar — solo la PWA, sin la extensión Chrome
-          directory: web
+          # Comando wrangler: despliega web/ al proyecto dacmos-pm-pwa en main
+          command: pages deploy web --project-name=dacmos-pm-pwa --branch=main
           # Token de GitHub para registrar el despliegue en la UI de GitHub
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          # Branch de producción — los deploys de main van a la URL principal
-          branch: main
