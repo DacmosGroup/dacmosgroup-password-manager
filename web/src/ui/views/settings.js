@@ -266,21 +266,42 @@ export async function montar(contenedor) {
     if (!archivo) return
 
     const password = prompt('Ingresa la contraseña maestra del backup:')
-    if (!password) return
+    if (!password) { e.target.value = ''; return }
+
+    // Bloquear el input mientras dura el import (evita doble submit)
+    e.target.disabled = true
 
     try {
       const texto  = await archivo.text()
       const backup = JSON.parse(texto)
-      const total  = await importarVaultBackup(backup, password)
+
+      // Mostrar indicador de progreso antes de la primera derivación PBKDF2
+      backupMsg.style.cssText = ''
+      backupMsg.textContent   = 'Importando... (1/3)'
+      backupMsg.classList.remove('oculto')
+
+      const total = await importarVaultBackup(backup, password, {
+        onProgreso: (paso, totalPasos) => {
+          backupMsg.textContent = `Importando... (${paso}/${totalPasos})`
+        },
+      })
+
       backupMsg.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
       backupMsg.textContent   = `Backup importado: ${total} credenciales.`
-      backupMsg.classList.remove('oculto')
     } catch (err) {
       backupMsg.style.cssText = ''
-      backupMsg.textContent   = err.message === 'PASSWORD_INCORRECTA'
-        ? 'Contraseña incorrecta para este backup.'
-        : 'Error al importar el backup.'
+      backupMsg.textContent   =
+        err.message === 'PASSWORD_INCORRECTA'
+          ? 'Contraseña incorrecta para este backup.'
+          : err.message === 'IMPORT_PASSWORD_MISMATCH'
+            ? 'La contraseña del backup no coincide con la contraseña actual del vault.'
+            : err.message === 'BACKUP_INVALIDO'
+              ? 'El archivo seleccionado no es un backup válido de Dacmos PM.'
+              : 'Error al importar el backup.'
       backupMsg.classList.remove('oculto')
+    } finally {
+      e.target.value    = ''     // permite re-seleccionar el mismo archivo
+      e.target.disabled = false
     }
   })
 
