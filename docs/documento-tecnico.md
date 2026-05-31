@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Versión 0.4.0 · Mayo 2026**
+**Versión 0.4.1 · Mayo 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -70,6 +70,16 @@ App Nativa (v0.5.0+):
 ├── Almacenamiento: iOS Keychain / Android Keystore
 └── Distribución:   Google Play Store + App Store
 ```
+
+### Versiones actuales por plataforma
+
+| Plataforma | Versión | Notas |
+|------------|---------|-------|
+| **PWA** (`dpm.dacmosgroup.co`) | **v0.4.1** | Versión activa — incluye remediaciones de auditoría |
+| **Chrome Extension** (Chrome Web Store) | **v0.3.1** | Ciclo de release independiente — los PRs de remediación v0.4.x afectaron principalmente la PWA; el bump de la extensión se realizará en el próximo release dedicado |
+| **APK Android** (GitHub Releases + IzzyOnDroid) | **v0.4.1** | Generado via TWA — sigue la versión de la PWA |
+
+> **Nota:** La Chrome Extension y la PWA comparten el motor de cifrado (`engine.js`) pero tienen cadencias de release separadas. Un vault creado con la extensión v0.3.1 es plenamente compatible con la PWA v0.4.1 (backward compat garantizada — ver Sección 13).
 
 ### Decisiones técnicas F4.1
 
@@ -161,9 +171,13 @@ En criptografía, un sistema Zero-Knowledge garantiza que el proveedor del servi
          │
          └──► [Descifrar vault] ──► [Credenciales en memoria durante sesión]
                                               │
-                                              ▼
-                                    [chrome.storage.session / sessionStorage]
-                                    (volátil — se borra al cerrar browser)
+                          ┌───────────────────┴────────────────────────┐
+                          ▼                                             ▼
+               [Chrome Extension]                               [PWA Mobile]
+         [chrome.storage.session]                     [Variables de módulo JS]
+         Persiste en ciclos sleep/wake del SW;         session.js — RAM pura;
+         se borra al cerrar el browser.                se borra al cerrar la tab.
+         (No confundir con sessionStorage Web API)     Sin escritura en ningún storage.
 ```
 
 ---
@@ -350,7 +364,7 @@ const clave = await derivarClave(password, sal);
 
 // sal2: para verificar la contraseña sin descifrar todo el vault
 const claveVerif = await derivarClave(password, sal2);
-const token = await descifrar(tokenVerificacion, claveVerif);
+const token = await descifrarConVersion(tokenVerificacion, claveVerif); // dispatch por versión desde v0.4.0
 // Si falla → contraseña incorrecta, sin exponer el vault
 ```
 
@@ -460,7 +474,9 @@ async function bloquearVault() {
   chrome.alarms.clear('autoLock');
 
   // 2. Limpiar credenciales de sesión
-  await chrome.storage.session.clear(); // o sessionStorage.clear() en PWA
+  await chrome.storage.session.clear(); // Extensión Chrome
+  // En PWA: limpiarSesion() de session.js — borra variables de módulo en RAM.
+  // No hay sessionStorage.clear() — la PWA no escribe credenciales en sessionStorage.
 
   // 3. Marcar sesión como inactiva
   chrome.storage.local.set({ sesionActiva: false });
@@ -704,7 +720,10 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 | Prompt injection | Bajo | No hay procesamiento de texto no confiable |
 | Timing attack en verificación | Bajo | Verificación por descifrado (AES-GCM falla uniformemente) |
 | Exposición en portapapeles | Medio | Limpieza automática configurable (default: 30 segundos) |
-| Session hijacking | Bajo | chrome.storage.session / sessionStorage solo accesible por la extensión / origen |
+| Session hijacking (Extensión) | Bajo | chrome.storage.session accesible solo por la extensión — aislamiento MV3 |
+| Tokens OAuth en sessionStorage (PWA) | Bajo | MSAL almacena tokens de Microsoft en sessionStorage — aislado por origen, no cifrado por el API; el cifrado es del perfil del browser en disco. Tokens de Google viven en memoria pura (nunca en storage). |
+| XSS en PWA | Medio | La PWA no tiene el aislamiento MV3 de múltiples contextos. Un XSS exitoso en `dpm.dacmosgroup.co` podría acceder a las variables de `session.js`. Mitigaciones: CSP sin `unsafe-inline`/`unsafe-eval` (implementada desde v0.4.1), `escapeHtml()` en todos los datos de usuario, sin `eval()`. |
+| Service Worker comprometido (PWA) | Medio | Un SW interceptor puede servir assets modificados a todos los clientes de ese origen. Mitigaciones: HTTPS obligatorio en Cloudflare Pages, SW servido desde el mismo origen (`'self'`), `worker-src` restringida en CSP, Workbox fijado a versión exacta (`7.0.0`). |
 
 ### Limitaciones conocidas
 
@@ -715,6 +734,14 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 5. **iOS Safari eviction** — datos locales pueden borrarse tras 7 días sin uso si el usuario no activa persistencia ni sync (mitigado en v0.4.0)
 6. **Autofill no disponible en PWA iOS** — limitación estructural de Apple; se resuelve con autofill nativo en v0.6.0
 
+### Deudas técnicas identificadas — auditoría v0.4.0
+
+| Deuda | Descripción | Impacto | Resolución esperada |
+|-------|-------------|---------|---------------------|
+| `ultimaModificacion()` sin invalidación de fileId | `GoogleDriveAdapter.ultimaModificacion()` no invalida el fileId cacheado en IDB cuando Drive retorna 404. La autocorrección ocurre en el siguiente `guardar()` o `cargar()`, que sí implementan la invalidación. | Bajo — error visible en el sync, sin pérdida de datos | v0.5.0 o próximo PR de Drive |
+| Precache revision fields manuales | Los campos `revision` del precache en `web/service-worker.js` deben incrementarse manualmente por archivo al hacer deploy. Sin Workbox Inject Manifest no hay automatización. | Operacional — usuarios pueden usar assets desactualizados hasta que la cache expire (30 días TTL) | v0.5.0 con build pipeline |
+| Import desde setup (Caso 1 — vault vacío) | `importarVaultBackup()` maneja correctamente el Caso 1 (sin vault previo) pero no hay ruta UI que lo dispare — Settings requiere sesión activa. El código es correcto; falta la UX de "Restaurar backup" en la pantalla de setup inicial. | UX — el import solo funciona si el usuario ya tiene un vault configurado | v0.5.0 — pantalla de setup con opción de restauración |
+
 ---
 
 ## 11. Roadmap Técnico
@@ -724,7 +751,8 @@ v0.1.1 ✅  MVP — Chrome Extension Zero-Knowledge
 v0.2.0 ✅  Paridad competitiva (F1.1-F1.6)
 v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
 v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
-v0.4.0 🔄  PWA — vault en mobile via navegador, APK Android via TWA
+v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
+v0.4.1 ✅  Remediación auditoría de seguridad — 5 hallazgos corregidos (A-1, M-1..4, B-1..2)
 v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
 v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
@@ -798,7 +826,7 @@ Estrategia **LWW por timestamp** sobre un único blob de vault. Guardia anti-loo
 | El proveedor nunca ve la clave | La clave AES permanece en memoria RAM local — nunca se sube |
 | El vault viaja cifrado | Blob `{ __version, kdf, iv, datos }` — AES-256-GCM opaco |
 | OAuth scope mínimo | `drive.appdata` (Google) / `Files.ReadWrite.AppFolder` (Microsoft) |
-| Token OAuth protegido | Almacenado en `chrome.storage.local` / `sessionStorage` con cifrado del browser |
+| Token OAuth protegido | Extensión: `chrome.storage.local` (cifrado de perfil Chrome). PWA: tokens de Google en memoria de módulo JS (nunca en storage); tokens de Microsoft en `sessionStorage` via MSAL — aislado por origen, **no cifrado a nivel de API** (el cifrado es del perfil del browser en disco, no de la Web Storage API). Ambos se borran al cerrar browser/pestaña. |
 | Sin servidor de DacmosGroup | Todo en la cuenta del usuario — zero infraestructura propia |
 
 ---
@@ -871,9 +899,11 @@ async function descifrarVault(blob, clave) {
 Para `__version` ≥ 1, los campos de metadatos `{ __version, kdf, kdfIterations }` se incluyen como **AAD en AES-GCM**. Esto significa que cualquier modificación de los metadatos invalida el auth tag y hace el blob indescifrable — previniendo ataques de downgrade donde un atacante podría manipular el número de iteraciones para facilitar el brute force.
 
 ```javascript
-// Serializar el header como AAD
+// Serializar el header como AAD — template literal canónico (orden de campos fijo)
+// NO usar JSON.stringify({...}): el orden de keys depende del motor JS y rompe vaults
+// existentes si se refactoriza el objeto. Ver Sección 14 para la decisión completa.
 const aad = new TextEncoder().encode(
-  JSON.stringify({ __version: blob.__version, kdf: blob.kdf, kdfIterations: blob.kdfIterations })
+  `{"__version":${blob.__version},"kdf":${JSON.stringify(blob.kdf)},"kdfIterations":${blob.kdfIterations}}`
 );
 
 const datosCifrados = await crypto.subtle.encrypt(
@@ -1255,8 +1285,8 @@ Sin `frame-src`: los popups OAuth son ventanas del browser, no iframes.
 
 | # | Riesgo | Severidad | Mitigación |
 |---|--------|-----------|------------|
-| R1 | GIS no cargado cuando se llama `obtenerToken()` | Medio | `_gisListo` Promise con rAF polling — bloquea hasta que `window.google` existe |
-| R2 | Popup bloqueado por el browser | Medio | `conectar()` y `conectar()` se llaman solo desde event handlers de usuario |
+| R1 | GIS no cargado cuando se llama `obtenerToken()` | Medio | `_gisListo` Promise con rAF polling **y timeout de 10 segundos** — rechaza con `GOOGLE_GIS_TIMEOUT` si GIS no carga; evita cuelgue indefinido (fix v0.4.1) |
+| R2 | Popup bloqueado por el browser | Medio | `conectar()` y `obtenerToken()` se llaman solo desde event handlers de usuario; errores `popup_blocked_by_browser` y `MICROSOFT_POPUP_BLOQUEADO` muestran mensaje accionable (fix v0.4.1) |
 | R3 | `CLIENT_ID` de Google como placeholder en código | Alto | `docs/f4.3-oauth-setup.md` documenta el paso de reemplazo; el placeholder es obvio |
 | R4 | Token de Google revocado externamente antes de `_expiraEn` | Bajo | 401 del servidor → `invalidarToken()` → `obtenerToken()` obtiene token fresco |
 | R5 | MSAL `clearCache()` no disponible en v3 futura | Bajo | Documentado; alternativa: `msalInstance.getTokenCache().clear()` |

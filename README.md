@@ -6,7 +6,7 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
-[![Versión](https://img.shields.io/badge/Versión-0.3.1-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![Versión](https://img.shields.io/badge/Versión-0.4.1-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -69,7 +69,7 @@
 | F3.4 | Versión dinámica en Settings — leída desde manifest.json | ✅ |
 | F3.5 | Fix autocompletado en formularios Create/Confirm password | ✅ |
 
-### 🔄 Fase 3 — PWA Mobile v0.4.0 (EN DESARROLLO)
+### ✅ Fase 3 — PWA Mobile v0.4.0 + Remediación v0.4.1 (COMPLETADA)
 
 | Feature | Descripción | Estado |
 |---------|-------------|--------|
@@ -80,6 +80,7 @@
 | F4.5 | Persistencia robusta — navigator.storage.persist() + manejo eviction iOS | ✅ |
 | F4.6 | APK Android via TWA — distribución sin Play Store | ✅ |
 | F4.7 | Formato versionado del blob — habilita migración no destructiva a Argon2id | ✅ |
+| v0.4.1 | Remediación auditoría: importarVaultBackup (A-1), timeout GIS (M-1), errores OAuth (M-2), CSP sin unsafe-inline (M-3), fileId cache Drive (B-2), SW update flow (B-1) | ✅ |
 
 ### ⏳ Fase 4 — App Nativa v0.5.0 (PENDIENTE)
 
@@ -103,7 +104,7 @@ v0.1.1 ✅  MVP — Chrome Extension Zero-Knowledge
 v0.2.0 ✅  Paridad competitiva (F1.1-F1.6)
 v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
 v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
-v0.4.0 🔄  PWA — vault en mobile via navegador, APK Android via TWA
+v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
 v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
@@ -128,11 +129,9 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ---
 
-## 🌐 PWA — dpm.dacmosgroup.co
+## 🌐 PWA — En producción
 
-La PWA está disponible en todos los dispositivos (iOS, Android, Desktop) directamente desde el navegador:
-
-`https://dpm.dacmosgroup.co`
+**`https://dpm.dacmosgroup.co`** — disponible en iOS, Android y Desktop directamente desde el navegador, sin instalación.
 
 **Android:** también disponible como APK via GitHub Releases (distribución directa sin Play Store).
 
@@ -146,7 +145,7 @@ Disponible en modo no listado — instalación via enlace directo:
 
 ---
 
-## 🔑 Funciones Principales v0.3.1
+## 🔑 Funciones Principales v0.4.1
 
 - **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
 - **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
@@ -161,6 +160,9 @@ Disponible en modo no listado — instalación via enlace directo:
 - **BYOC** — tú eliges el proveedor cloud; DacmosGroup no almacena nada
 - **Navegación consistente** — botón ← Inicio en todas las vistas
 - **UX mejorada** — legibilidad de cards, versión dinámica, fix formularios registro
+- **PWA Mobile** — vault accesible desde cualquier browser mobile en `dpm.dacmosgroup.co`
+- **APK Android** — distribución directa via GitHub Releases (TWA, sin Play Store)
+- **SW update flow** — banner "Nueva versión disponible" sin forzar cierre de tabs
 
 ---
 

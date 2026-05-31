@@ -51,13 +51,13 @@ export async function montar(contenedor) {
 
   contenedor.innerHTML = `
     <div class="vista">
-      <h1 style="margin-bottom:1.5rem;">⚙️ Configuración</h1>
+      <h1 class="settings__titulo">⚙️ Configuración</h1>
 
       <!-- ── 1. Contraseña Maestra ── -->
       <p class="seccion-titulo">CONTRASEÑA MAESTRA</p>
       <div class="settings__seccion tarjeta">
         <form id="form-cambiar-pass" novalidate>
-          <div class="credform__campos" style="margin-bottom:1rem;">
+          <div class="credform__campos">
             <div class="campo">
               <label for="s-pass-actual">Contraseña actual</label>
               <input type="password" id="s-pass-actual" class="input" autocomplete="current-password">
@@ -72,8 +72,7 @@ export async function montar(contenedor) {
             </div>
           </div>
           <div class="unlock__error oculto" id="pass-error" role="alert"></div>
-          <div class="unlock__error oculto" id="pass-exito"
-               style="background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);"
+          <div class="unlock__error alerta--exito oculto" id="pass-exito"
                role="status"></div>
           <button type="submit" class="btn btn--primario" id="btn-cambiar-pass">Cambiar contraseña</button>
         </form>
@@ -114,9 +113,9 @@ export async function montar(contenedor) {
             <div class="settings__fila-descripcion">Restaura un vault desde un archivo de backup</div>
           </div>
           <div class="settings__fila-accion">
-            <label class="btn btn--pequeño btn--secundario" style="cursor:pointer;">
+            <label class="btn btn--pequeño btn--secundario">
               Importar
-              <input type="file" id="input-importar" accept=".json" style="display:none;">
+              <input type="file" id="input-importar" accept=".json" class="archivo-entrada-oculta">
             </label>
           </div>
         </div>
@@ -134,7 +133,7 @@ export async function montar(contenedor) {
               ${estaConectadoGoogle ? '✅ Conectado' : 'Sin conexión'}
             </div>
           </div>
-          <div class="settings__fila-accion" style="display:flex;gap:0.5rem;">
+          <div class="settings__fila-accion settings__fila-accion--multiple">
             ${estaConectadoGoogle
               ? `<button class="btn btn--pequeño btn--secundario" id="btn-sync-google" type="button">Sincronizar</button>
                  <button class="btn btn--pequeño btn--peligro"   id="btn-desconectar-google" type="button">Desconectar</button>`
@@ -150,7 +149,7 @@ export async function montar(contenedor) {
               ${estaConectadoOneDrive ? '✅ Conectado' : 'Sin conexión'}
             </div>
           </div>
-          <div class="settings__fila-accion" style="display:flex;gap:0.5rem;">
+          <div class="settings__fila-accion settings__fila-accion--multiple">
             ${estaConectadoOneDrive
               ? `<button class="btn btn--pequeño btn--secundario" id="btn-sync-onedrive" type="button">Sincronizar</button>
                  <button class="btn btn--pequeño btn--peligro"   id="btn-desconectar-onedrive" type="button">Desconectar</button>`
@@ -193,8 +192,8 @@ export async function montar(contenedor) {
         </div>
       </div>
 
-      <p style="text-align:center;font-size:0.75rem;color:var(--color-muted);margin-top:1.5rem;">
-        Dacmos Password Manager · Zero-Knowledge · v0.4.0
+      <p class="settings__version-pie">
+        Dacmos Password Manager · Zero-Knowledge · v0.4.1
       </p>
     </div>`
 
@@ -266,21 +265,42 @@ export async function montar(contenedor) {
     if (!archivo) return
 
     const password = prompt('Ingresa la contraseña maestra del backup:')
-    if (!password) return
+    if (!password) { e.target.value = ''; return }
+
+    // Bloquear el input mientras dura el import (evita doble submit)
+    e.target.disabled = true
 
     try {
       const texto  = await archivo.text()
       const backup = JSON.parse(texto)
-      const total  = await importarVaultBackup(backup, password)
+
+      // Mostrar indicador de progreso antes de la primera derivación PBKDF2
+      backupMsg.style.cssText = ''
+      backupMsg.textContent   = 'Importando... (1/3)'
+      backupMsg.classList.remove('oculto')
+
+      const total = await importarVaultBackup(backup, password, {
+        onProgreso: (paso, totalPasos) => {
+          backupMsg.textContent = `Importando... (${paso}/${totalPasos})`
+        },
+      })
+
       backupMsg.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
       backupMsg.textContent   = `Backup importado: ${total} credenciales.`
-      backupMsg.classList.remove('oculto')
     } catch (err) {
       backupMsg.style.cssText = ''
-      backupMsg.textContent   = err.message === 'PASSWORD_INCORRECTA'
-        ? 'Contraseña incorrecta para este backup.'
-        : 'Error al importar el backup.'
+      backupMsg.textContent   =
+        err.message === 'PASSWORD_INCORRECTA'
+          ? 'Contraseña incorrecta para este backup.'
+          : err.message === 'IMPORT_PASSWORD_MISMATCH'
+            ? 'La contraseña del backup no coincide con la contraseña actual del vault.'
+            : err.message === 'BACKUP_INVALIDO'
+              ? 'El archivo seleccionado no es un backup válido de Dacmos PM.'
+              : 'Error al importar el backup.'
       backupMsg.classList.remove('oculto')
+    } finally {
+      e.target.value    = ''     // permite re-seleccionar el mismo archivo
+      e.target.disabled = false
     }
   })
 
@@ -292,7 +312,7 @@ export async function montar(contenedor) {
       await idbStorage.set({ syncConfig: { ...syncConf, proveedor: 'google' } })
       await navegar('#/settings')  // recargar la vista
     } catch (err) {
-      msgEl.textContent = 'Error al conectar con Google Drive.'
+      msgEl.textContent = _mensajeErrorSync(err) ?? 'Error al conectar con Google Drive.'
       msgEl.classList.remove('oculto')
     }
   })
@@ -306,9 +326,9 @@ export async function montar(contenedor) {
       msgEl.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
       msgEl.textContent   = 'Sincronizado con Google Drive.'
       msgEl.classList.remove('oculto')
-    } catch (_) {
+    } catch (err) {
       msgEl.style.cssText = ''
-      msgEl.textContent   = 'Error al sincronizar con Google Drive.'
+      msgEl.textContent   = _mensajeErrorSync(err) ?? 'Error al sincronizar con Google Drive.'
       msgEl.classList.remove('oculto')
     }
   })
@@ -326,7 +346,7 @@ export async function montar(contenedor) {
       await conectarMicrosoft()
       await navegar('#/settings')
     } catch (err) {
-      msgEl.textContent = 'Error al conectar con OneDrive.'
+      msgEl.textContent = _mensajeErrorSync(err) ?? 'Error al conectar con OneDrive.'
       msgEl.classList.remove('oculto')
     }
   })
@@ -340,9 +360,9 @@ export async function montar(contenedor) {
       msgEl.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
       msgEl.textContent   = 'Sincronizado con OneDrive.'
       msgEl.classList.remove('oculto')
-    } catch (_) {
+    } catch (err) {
       msgEl.style.cssText = ''
-      msgEl.textContent   = 'Error al sincronizar con OneDrive.'
+      msgEl.textContent   = _mensajeErrorSync(err) ?? 'Error al sincronizar con OneDrive.'
       msgEl.classList.remove('oculto')
     }
   })
@@ -377,4 +397,25 @@ function _formatearBytes(bytes) {
   if (mb >= 1) return `${mb.toFixed(2)} MB`
   const kb = bytes / 1024
   return `${Math.round(kb)} KB`
+}
+
+/**
+ * Traduce errores de auth conocidos a mensajes legibles para el usuario.
+ * Retorna null si el error no es un código conocido — el caller usa su
+ * mensaje por defecto (ej. 'Error al sincronizar con Google Drive.').
+ *
+ * Códigos manejados:
+ *   GOOGLE_GIS_TIMEOUT               — GIS no cargó en 10s
+ *   GOOGLE_AUTH_ERROR:popup_blocked* — popup de Google bloqueado
+ *   MICROSOFT_POPUP_BLOQUEADO        — popup de Microsoft bloqueado
+ */
+function _mensajeErrorSync(err) {
+  const msg = err?.message ?? ''
+  if (msg === 'GOOGLE_GIS_TIMEOUT')
+    return 'Google Auth no disponible. Comprueba tu conexión a internet.'
+  if (msg.includes('popup_blocked'))
+    return 'Popup bloqueado por el navegador. Desconecta y vuelve a conectar para autenticarte.'
+  if (msg === 'MICROSOFT_POPUP_BLOQUEADO')
+    return 'Popup bloqueado por el navegador. Desconecta y vuelve a conectar para autenticarte.'
+  return null
 }

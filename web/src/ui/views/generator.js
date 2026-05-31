@@ -90,7 +90,7 @@ export async function montar(contenedor) {
 
   contenedor.innerHTML = `
     <div class="vista">
-      <h1 style="margin-bottom:1rem;">⚡ Generador de Contraseñas</h1>
+      <h1 class="generator__titulo">⚡ Generador de Contraseñas</h1>
 
       <!-- Output -->
       <div class="generator__output">
@@ -101,8 +101,8 @@ export async function montar(contenedor) {
           📋
         </button>
       </div>
-      <div style="text-align:right; margin-bottom:0.5rem;">
-        <span id="gen-entropia" style="font-size:0.75rem; color:var(--color-muted);"></span>
+      <div class="generator__entropia-fila">
+        <span id="gen-entropia" class="generator__entropia"></span>
       </div>
 
       <!-- Controles -->
@@ -169,7 +169,7 @@ export async function montar(contenedor) {
       </button>
 
       <!-- Historial de sesión -->
-      <div class="generator__historial" id="historial-contenedor" style="${_historial.length ? '' : 'display:none'}">
+      <div class="generator__historial ${_historial.length ? '' : 'oculto'}" id="historial-contenedor">
         <div class="generator__historial-titulo">Historial de sesión</div>
         <div id="historial-lista">
           ${_renderHistorial()}
@@ -224,8 +224,8 @@ export async function montar(contenedor) {
     if (_historial.length > 5) _historial.pop()
 
     // Actualizar historial en pantalla
-    histLista.innerHTML    = _renderHistorial()
-    histCont.style.display = ''
+    histLista.innerHTML = _renderHistorial()
+    histCont.classList.remove('oculto')
   }
 
   btnGenerar.addEventListener('click', generarYMostrar)

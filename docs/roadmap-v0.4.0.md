@@ -451,8 +451,8 @@ el número de iteraciones.
 - [ ] Compatibilidad cruzada PWA ↔ Chrome Extension verificada (round-trip)
 - [ ] Android Developer Console gratuito registrado (antes de sep 2026)
 - [ ] Versión bumpeada a 0.4.0 en manifest de la extensión Y en PWA manifest
-- [ ] PR mergeado a main con descripción completa
-- [ ] Desplegado en dpm.dacmosgroup.co o dacmosgroup.co/app
+- [x] PR mergeado a main con descripción completa ✅
+- [x] Desplegado en dpm.dacmosgroup.co ✅
 
 ---
 
@@ -517,7 +517,7 @@ v0.1.1 ✅  MVP — Chrome Extension Zero-Knowledge
 v0.2.0 ✅  Paridad competitiva (F1.1-F1.6)
 v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
 v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
-v0.4.0 🔄  PWA — vault en mobile via navegador, APK Android via TWA
+v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
 v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
@@ -558,6 +558,24 @@ v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
 |---------|-----|
 | **Preview / Staging** | https://dacmos-pm-pwa.pages.dev |
 | **Producción** | https://dpm.dacmosgroup.co ✅ |
+
+---
+
+## Bugs conocidos post-release
+
+### BUG-1 — Vault vacío después de sync Google Drive en PWA
+
+**Síntoma:** Al conectar Google Drive en la PWA y hacer sync, el vault aparece vacío aunque el archivo exista en Drive.
+
+**Estado:** Sin diagnóstico completo — pendiente de investigación en v0.4.x.
+
+### BUG-2 — Service Worker sirve versión cacheada al primer load
+
+**Síntoma:** Después de un deploy nuevo, el primer load puede servir la versión anterior de la app desde el caché del SW en lugar de la nueva. Requiere forzar recarga (Ctrl+Shift+R / Cmd+Shift+R) o limpiar el caché.
+
+**Causa probable:** La estrategia cache-first del SW Workbox no invalida el caché automáticamente en el primer load post-deploy. El SW actualizado se activa solo en la segunda visita (por diseño del ciclo de vida de los Service Workers).
+
+**Estado:** Comportamiento conocido del ciclo de vida de SW — pendiente de implementar `skipWaiting()` + notificación de "nueva versión disponible" en v0.4.x.
 
 ---
 

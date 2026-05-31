@@ -42,7 +42,7 @@ export async function montar(contenedor) {
           </button>
         </form>
 
-        <p style="text-align:center; margin-top:1.25rem; font-size:0.75rem; color:var(--color-muted);">
+        <p class="auth__nota-pie">
           Zero-Knowledge · AES-256-GCM · Local-first
         </p>
       </div>

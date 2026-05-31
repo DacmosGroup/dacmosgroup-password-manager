@@ -163,3 +163,17 @@ workbox.routing.setCatchHandler(async ({ event }) => {
   /* Para otros tipos de recursos fallidos, devolver error estándar */
   return Response.error()
 })
+
+/* ── Activación controlada por el usuario ─────────────────────────────
+   La página envía { tipo: 'SKIP_WAITING' } cuando el usuario pulsa
+   "Actualizar ahora" en el banner de actualización. Esto permite que
+   el nuevo SW tome control sin interrumpir sesiones activas del vault —
+   la decisión es siempre del usuario, nunca automática.
+
+   IMPORTANTE: self.skipWaiting() NO se llama en ningún otro evento
+   (install, activate, etc.) — solo en respuesta a este mensaje explícito. */
+self.addEventListener('message', (evento) => {
+  if (evento.data?.tipo === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
