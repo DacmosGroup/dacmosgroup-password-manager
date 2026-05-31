@@ -412,7 +412,20 @@ async function exportarVaultBackup(passwordMaestra) {
 // DECISIÓN DE SEGURIDAD: Verificamos la contraseña maestra contra
 // el backup ANTES de importar. Propaga VAULT_VERSION_INCOMPATIBLE sin
 // convertirla a PASSWORD_INCORRECTA — son errores semánticamente distintos.
-async function importarVaultBackup(backup, passwordMaestra) {
+//
+// opcionesImport.onProgreso(pasoActual, totalPasos): callback opcional invocado
+// antes de cada derivación PBKDF2. Permite a la UI mostrar progreso durante
+// las ~1-3 segundos de freeze por derivación. totalPasos = 3 siempre.
+//
+// Tres casos explícitos — sin éxito falso ni descarte silencioso:
+// · Caso 1 — Sin vault local: instala la estructura del backup (sal, sal2,
+//   tokenVerificacion) en IDB y cifra con claveNew. Post-import: vault
+//   configurado pero sin sesión activa — la UI debe rutar a #/unlock.
+// · Caso 2 — Vault local + misma password: fusiona credenciales y guarda
+//   con la clave derivada del vault local (claveParaGuardar).
+// · Caso 3 — Vault local + password distinta: lanza IMPORT_PASSWORD_MISMATCH.
+//   Sin escritura parcial — las credenciales nunca se descartan en silencio.
+async function importarVaultBackup(backup, passwordMaestra, opcionesImport = {}) {
   // Validar estructura del backup
   if (!backup.sal || !backup.sal2 || !backup.tokenVerificacion || !backup.vaultCifrado) {
     throw new Error('BACKUP_INVALIDO');
@@ -422,9 +435,17 @@ async function importarVaultBackup(backup, passwordMaestra) {
     throw new Error('BACKUP_INVALIDO');
   }
 
+  // Notificador de progreso — no-op si el caller no pasa onProgreso
+  const _progreso = (paso) => {
+    if (typeof opcionesImport.onProgreso === 'function') {
+      opcionesImport.onProgreso(paso, 3);
+    }
+  };
+
   // Call site 1: verificar contraseña contra el token del backup
   try {
-    const sal2       = new Uint8Array(base64ABuffer(backup.sal2));
+    const sal2 = new Uint8Array(base64ABuffer(backup.sal2));
+    _progreso(1);
     const claveVerif = await derivarClave(passwordMaestra, sal2);
     const token      = await descifrarConVersion(backup.tokenVerificacion, claveVerif);
 
@@ -438,40 +459,65 @@ async function importarVaultBackup(backup, passwordMaestra) {
     throw new Error('PASSWORD_INCORRECTA');
   }
 
-  // Call site 2: descifrar vault del backup
+  // Call site 2: descifrar vault del backup.
   // VAULT_VERSION_INCOMPATIBLE se propaga naturalmente al caller.
-  const sal         = new Uint8Array(base64ABuffer(backup.sal));
+  const sal = new Uint8Array(base64ABuffer(backup.sal));
+  _progreso(2);
   const claveNew    = await derivarClave(passwordMaestra, sal);
   const vaultBackup = await descifrarConVersion(backup.vaultCifrado, claveNew);
 
-  // Obtener credenciales actuales para fusionar
+  // Obtener datos del vault local para determinar el caso de importación
   const datosActuales = await idbStorage.get(['sal', 'vaultCifrado']);
 
   let credencialesFinales = vaultBackup.credenciales || [];
+  // claveParaGuardar: se asigna solo si vault local existe Y la password coincide.
+  // Permanece null si no hay vault local o si la password no coincide (Casos 1 y 3).
+  let claveParaGuardar = null;
 
-  // Call site 3: descifrar vault actual para fusionar (si existe)
+  // Call site 3: fusionar con vault local si existe y la password coincide
   if (datosActuales.vaultCifrado && datosActuales.sal) {
     try {
-      const salActual    = new Uint8Array(base64ABuffer(datosActuales.sal));
-      const claveActual  = await derivarClave(passwordMaestra, salActual);
-      const vaultActual  = await descifrarConVersion(datosActuales.vaultCifrado, claveActual);
-      const credActuales = vaultActual.credenciales || [];
+      const salActual = new Uint8Array(base64ABuffer(datosActuales.sal));
+      _progreso(3);
+      claveParaGuardar      = await derivarClave(passwordMaestra, salActual);
+      const vaultActual     = await descifrarConVersion(datosActuales.vaultCifrado, claveParaGuardar);
+      const credActuales    = vaultActual.credenciales || [];
 
       // Fusionar — evitar duplicados por ID
-      const idsBackup = new Set(credencialesFinales.map(c => c.id));
-      const nuevas    = credActuales.filter(c => !idsBackup.has(c.id));
-      credencialesFinales = [...credencialesFinales, ...nuevas];
+      const idsBackup       = new Set(credencialesFinales.map(c => c.id));
+      const nuevas          = credActuales.filter(c => !idsBackup.has(c.id));
+      credencialesFinales   = [...credencialesFinales, ...nuevas];
     } catch (error) {
       // VAULT_VERSION_INCOMPATIBLE en el vault local es error irrecuperable — propagar.
       if (error.message?.startsWith('VAULT_VERSION_INCOMPATIBLE')) throw error;
-      // Cualquier otro error: vault local no descifrable — usar solo el backup.
+      // derivarClave o descifrar fallaron: la password del backup no coincide
+      // con la del vault local. claveParaGuardar queda null → activa Caso 3.
+      claveParaGuardar = null;
     }
   }
 
-  // Guardar vault importado con las credenciales fusionadas
-  const claveActualParaGuardar = await desbloquearVault(passwordMaestra);
-  if (claveActualParaGuardar) {
-    await guardarVaultCifrado(credencialesFinales, claveActualParaGuardar);
+  // ── Persistir credenciales según el caso detectado ──
+
+  if (!datosActuales.sal) {
+    // Caso 1: sin vault local — instalar estructura del backup en IDB.
+    // backup.sal/sal2/tokenVerificacion quedan como las sales y el token del vault
+    // local. claveNew (derivada de backup.sal) cifra las credenciales importadas.
+    await idbStorage.set({
+      vaultConfigurado:  true,
+      sal:               backup.sal,
+      sal2:              backup.sal2,
+      tokenVerificacion: backup.tokenVerificacion,
+    });
+    await guardarVaultCifrado(credencialesFinales, claveNew);
+
+  } else if (claveParaGuardar) {
+    // Caso 2: vault local + misma password — guardar fusión con la clave local.
+    await guardarVaultCifrado(credencialesFinales, claveParaGuardar);
+
+  } else {
+    // Caso 3: vault local existe pero la password del backup no coincide con la
+    // contraseña actual del vault. Error explícito — sin escritura parcial.
+    throw new Error('IMPORT_PASSWORD_MISMATCH');
   }
 
   return credencialesFinales.length;
