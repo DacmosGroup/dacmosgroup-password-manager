@@ -1493,6 +1493,39 @@ activa). Con `twa-manifest.json` presente, solo se necesita:
 bubblewrap build --skipPwaValidation
 ```
 
+### Incompatibilidad bubblewrap CLI + Node.js 26
+
+Durante la implementación de F4.6 se confirmó que `bubblewrap CLI v1.24.1`
+es incompatible con Node.js v26 cuando sus prompts interactivos reciben
+entrada por pipe. El error:
+
+```
+Error [ERR_USE_AFTER_CLOSE]: readline was closed
+```
+
+ocurre porque `inquirer` (dependencia de bubblewrap) intenta pausar una
+interfaz readline ya cerrada al agotarse stdin. Es un problema de la versión
+de inquirer empaquetada en bubblewrap, no de Node.js.
+
+**Workaround aplicado en F4.6:**
+1. `bubblewrap init` generó el proyecto Android (`app/`, `build.gradle`, etc.)
+   — esta fase sí completó antes del crash
+2. El APK se compiló directamente con `./gradlew assembleRelease` pasando
+   los parámetros de firma como flags de Gradle:
+   ```
+   -Pandroid.injected.signing.store.file=<ruta>
+   -Pandroid.injected.signing.store.password=<pass>
+   -Pandroid.injected.signing.key.alias=<alias>
+   -Pandroid.injected.signing.key.password=<pass>
+   ```
+   Esto evita la dependencia de los prompts interactivos de bubblewrap
+   para la firma.
+
+**Implicación para v0.5.0 (Capacitor):** si Node.js sigue en v26 al
+construir el APK de Capacitor, verificar si la herramienta de build de
+Capacitor (Ionic Appflow o Codemagic) tiene la misma incompatibilidad.
+En entorno local, la solución directa es `./gradlew` con flags de firma.
+
 ### Canales de distribución v0.4.0
 
 | Canal | Estado |
@@ -1503,6 +1536,18 @@ bubblewrap build --skipPwaValidation
 | F-Droid main repo | ⏳ v0.4.x (requiere build reproducible) |
 | Google Play Store | ⏳ v0.5.0 ($25 Play Console) |
 | Apple App Store | ⏳ v0.6.0 ($99/año Developer Program) |
+
+### Prerequisitos resueltos al cierre de F4.6
+
+Los siguientes items estaban pendientes en la propuesta arquitectural
+y quedaron resueltos durante la misma sesión de implementación:
+
+| Prerequisito | Estado al cerrar F4.6 |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` en GitHub Secrets | ✅ Configurado desde F4.1, verificado en F4.6 |
+| `CLOUDFLARE_ACCOUNT_ID` en GitHub Secrets | ✅ Configurado desde F4.1, verificado en F4.6 |
+| URI OAuth Google Cloud Console (`dpm.dacmosgroup.co`) | ✅ Actualizada en sesión de F4.6 |
+| URI OAuth Azure Portal (`dpm.dacmosgroup.co/blank.html`) | ✅ Actualizada en sesión de F4.6 |
 
 ### Android Developer Console gratuita — deadline septiembre 2026
 
