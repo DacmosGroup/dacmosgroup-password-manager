@@ -20,8 +20,9 @@ on:
     branches:
       - main
     paths:
-      # Disparar solo cuando cambian archivos de la PWA
+      # Disparar cuando cambian archivos de la PWA o el propio workflow
       - 'web/**'
+      - '.github/workflows/**'
   workflow_dispatch:
     # Permite ejecutar el deploy manualmente desde la UI de GitHub Actions
 
