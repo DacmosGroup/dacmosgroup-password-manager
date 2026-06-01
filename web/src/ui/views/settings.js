@@ -289,6 +289,7 @@ export async function montar(contenedor) {
       backupMsg.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
       backupMsg.textContent   = `Backup importado: ${total} credenciales.`
     } catch (err) {
+      console.error('[IMPORT]', err)
       backupMsg.style.cssText = ''
       backupMsg.textContent   =
         err.message === 'PASSWORD_INCORRECTA'
