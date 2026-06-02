@@ -1399,6 +1399,11 @@ que `pointermove` y `pointerup` lleguen al elemento aunque el dedo
 salga de sus límites durante el gesto. Sin esto, el swipe se interrumpe
 si el usuario arrastra demasiado rápido y el dedo sale momentáneamente.
 
+`touch-action: pan-y` en `.card__contenido` es condición necesaria para que
+`setPointerCapture` funcione sin `pointercancel` en Chrome Android. Sin esta
+propiedad, el browser reclama el puntero al detectar movimiento mínimo y
+silencia tanto el swipe como el tap.
+
 ### Clase CSS sin-nav para vistas de pantalla completa
 
 Las vistas setup, unlock y credential-form son de pantalla completa —
