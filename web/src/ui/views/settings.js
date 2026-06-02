@@ -30,6 +30,78 @@ import { OneDriveAdapter }     from '../../sync/onedrive-adapter.js'
 import { sincronizar }         from '../../sync/sync-manager.js'
 import { navegar }             from '../router.js'
 
+// ── Modal seguro de contraseña (reemplaza prompt() nativo) ──
+
+// Inyecta los estilos del modal una sola vez en el <head>.
+// Usa variables CSS del design system para integrarse con el tema de la PWA.
+function _inyectarEstilosModal() {
+  if (document.getElementById('dpm-pass-modal-styles')) return
+  const style = document.createElement('style')
+  style.id = 'dpm-pass-modal-styles'
+  style.textContent = `
+    .dpm-pass-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999}
+    .dpm-pass-modal{background:var(--color-surface,#1a1a2e);border:1px solid var(--color-border,rgba(255,255,255,.12));border-radius:12px;padding:24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+    .dpm-pass-modal__titulo{color:var(--color-text,#e0e0e0);font-size:.875rem;margin:0;line-height:1.4}
+    .dpm-pass-modal__campo{position:relative}
+    .dpm-pass-modal__input{width:100%;padding:10px 40px 10px 12px;box-sizing:border-box;background:var(--color-input-bg,rgba(255,255,255,.06));border:1px solid var(--color-border,rgba(255,255,255,.12));border-radius:8px;color:var(--color-text,#e0e0e0);font-size:.9rem}
+    .dpm-pass-modal__toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--color-text-secondary,#888);font-size:.85rem;padding:4px;line-height:1}
+    .dpm-pass-modal__acciones{display:flex;gap:8px;justify-content:flex-end}
+  `
+  document.head.appendChild(style)
+}
+
+/**
+ * Solicita la contraseña maestra mediante un modal seguro con type="password".
+ * Retorna la contraseña ingresada, o null si el usuario canceló.
+ * Reemplaza prompt() nativo que mostraba la contraseña en texto plano (H-10).
+ *
+ * @param {string} titulo — texto descriptivo que aparece sobre el input
+ * @returns {Promise<string|null>}
+ */
+function _pedirContrasena(titulo) {
+  _inyectarEstilosModal()
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div')
+    overlay.className = 'dpm-pass-overlay'
+    overlay.innerHTML = `
+      <div class="dpm-pass-modal" role="dialog" aria-modal="true">
+        <p class="dpm-pass-modal__titulo">${titulo}</p>
+        <div class="dpm-pass-modal__campo">
+          <input type="password" class="dpm-pass-modal__input" id="dpm-pass-input"
+                 placeholder="Contraseña maestra" autocomplete="current-password">
+          <button type="button" class="dpm-pass-modal__toggle" id="dpm-pass-toggle"
+                  aria-label="Mostrar u ocultar contraseña">👁</button>
+        </div>
+        <div class="dpm-pass-modal__acciones">
+          <button type="button" class="btn btn--pequeño btn--secundario" id="dpm-pass-cancelar">Cancelar</button>
+          <button type="button" class="btn btn--pequeño btn--primario"   id="dpm-pass-ok">Continuar</button>
+        </div>
+      </div>`
+    document.body.appendChild(overlay)
+
+    const input    = overlay.querySelector('#dpm-pass-input')
+    const btnOk    = overlay.querySelector('#dpm-pass-ok')
+    const btnCan   = overlay.querySelector('#dpm-pass-cancelar')
+    const btnToggle = overlay.querySelector('#dpm-pass-toggle')
+
+    // Foco automático en el campo de contraseña
+    requestAnimationFrame(() => input.focus())
+
+    const confirmar = () => { overlay.remove(); resolve(input.value || null) }
+    const cancelar  = () => { overlay.remove(); resolve(null) }
+
+    btnToggle.addEventListener('click', () => {
+      input.type = input.type === 'password' ? 'text' : 'password'
+    })
+    btnOk.addEventListener('click',  confirmar)
+    btnCan.addEventListener('click', cancelar)
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  confirmar()
+      if (e.key === 'Escape') cancelar()
+    })
+  })
+}
+
 /** Monta la vista de settings en el contenedor dado */
 export async function montar(contenedor) {
   if (!sesionActiva()) {
@@ -47,7 +119,7 @@ export async function montar(contenedor) {
   const syncConf      = syncConfig.syncConfig ?? {}
   const proveedorSync = syncConf.proveedor ?? null
 
-  const estaConectadoGoogle    = proveedorSync === 'google'
+  const estaConectadoGoogle    = proveedorSync === 'google-drive'
   const estaConectadoOneDrive  = estaConectadoMicrosoft()
 
   contenedor.innerHTML = `
@@ -194,7 +266,7 @@ export async function montar(contenedor) {
       </div>
 
       <p class="settings__version-pie">
-        Dacmos Password Manager · Zero-Knowledge · v0.4.1
+        Dacmos Password Manager · Zero-Knowledge · v0.4.2
       </p>
     </div>`
 
@@ -240,7 +312,7 @@ export async function montar(contenedor) {
 
   // ── Exportar backup ──
   contenedor.querySelector('#btn-exportar')?.addEventListener('click', async () => {
-    const password = prompt('Ingresa tu contraseña maestra para exportar el backup:')
+    const password = await _pedirContrasena('Ingresa tu contraseña maestra para exportar el backup:')
     if (!password) return
     const backupMsg = contenedor.querySelector('#backup-msg')
     try {
@@ -265,7 +337,7 @@ export async function montar(contenedor) {
     const backupMsg = contenedor.querySelector('#backup-msg')
     if (!archivo) return
 
-    const password = prompt('Ingresa la contraseña maestra del backup:')
+    const password = await _pedirContrasena('Ingresa la contraseña maestra del backup:')
     if (!password) { e.target.value = ''; return }
 
     // Bloquear el input mientras dura el import (evita doble submit)
@@ -311,7 +383,7 @@ export async function montar(contenedor) {
     const msgEl = contenedor.querySelector('#sync-msg')
     try {
       await conectarGoogle()
-      await idbStorage.set({ syncConfig: { ...syncConf, proveedor: 'google' } })
+      await idbStorage.set({ syncConfig: { ...syncConf, proveedor: 'google-drive' } })
       // Sincronizar al conectar — proveedor gana en primera sync (D2).
       // Si el sync falla (ej. master password distinta), se ignora aquí
       // y el usuario puede reintentar desde el botón "Sincronizar".
