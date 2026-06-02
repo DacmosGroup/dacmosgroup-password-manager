@@ -120,11 +120,15 @@ export function activarSwipe(card, manejadores) {
     })
   }
 
-  // Tap en el contenido mientras está swiped → resetear (no navegar)
+  // Tap en el contenido:
+  //   · Card swiped → resetear los botones, no navegar
+  //   · Card sin swipe → tap directo → navegar a edición
   contenido.addEventListener('click', (e) => {
     if (swiped) {
       e.stopPropagation()
       resetear()
+    } else {
+      manejadores.onEditar?.(id)
     }
   })
 }
