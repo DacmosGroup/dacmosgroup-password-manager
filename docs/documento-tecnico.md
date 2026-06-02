@@ -1822,6 +1822,68 @@ deploys de producción.
 | `web/service-worker.js` | Editado | `SW_DEPLOY_ID = 'dev'` como placeholder; nombres de caché y campos `revision` parametrizados; listener `activate` limpia cachés de deploys anteriores |
 | `.github/workflows/deploy-pwa.yml` | Editado | Paso que inyecta los primeros 7 chars del commit SHA como `SW_DEPLOY_ID` antes de cada deploy |
 
+### Comportamiento en entorno de desarrollo (localhost)
+
+**Fecha:** 2 junio 2026
+**Sesión:** Arquitecto revisor — desbloqueo de verificación funcional v0.4.2
+
+#### Síntoma
+
+Durante la verificación funcional de v0.4.2 (`fix/auditoria-remediaciones`),
+los cambios del commit `787c80b` (tap card / `swipe-card.js`) no se reflejaban
+en `localhost` ni tras Clear Site Data + Unregister SW. Bloqueaba los criterios
+de aceptación C1/C2/C3, que se verifican interactuando con las cards en la UI
+de la PWA.
+
+#### Causa raíz
+
+Es la causa raíz de BUG-2 reapareciendo en el dev-path que el fix de
+producción no cubre. El fix de BUG-2 reemplaza `SW_DEPLOY_ID` vía CI (`sed`)
+únicamente en cada deploy a Cloudflare. En `localhost` no hay CI, así que
+`SW_DEPLOY_ID` queda en su placeholder `'dev'` — constante por diseño. Como
+Workbox usa el `revision` derivado de `SW_DEPLOY_ID` como clave de
+invalidación, un asset editado con `revision` sin cambiar es tratado como
+"sin cambios" → Workbox sirve la copia cacheada y nunca refetchea.
+
+Culpables concurrentes en el fallo de "Clear Site Data + Unregister SW":
+1. `Unregister` no surte efecto hasta cerrar todos los clientes (tabs) del origin.
+2. Repoblación inmediata del precache desde servidor estático local / HTTP disk cache que devuelve 304.
+3. Ruta runtime `CacheFirst` sin revalidación (cache por URL, TTL 30 días).
+
+#### Decisión: Opción A — bypass del SW gated por hostname
+
+| Opción | Estado | Razón |
+|--------|--------|-------|
+| **A — bypass gated por hostname (`ENTORNO_DEV`)** | ✅ Aprobada | Dev siempre fresco, prod intacto, sin toggles manuales |
+| B — `SW_DEPLOY_ID = 'dev-' + Date.now()` en localhost | Descartada | Re-precachea todo en cada reload y aún exige "Update on reload" para tomar el nuevo id |
+| C — solo proceso (DevTools "Bypass for network" + "Update on reload") | Desbloqueo inmediato | Útil para cerrar C1–C7 en sesión, pero no enforced |
+| Workbox Inject Manifest | Descartada (ya en BUG-2) | Requiere build step — incompatible con stack sin bundler |
+
+**Resolución:** C como desbloqueo inmediato + A como fix durable en el mismo PR de v0.4.2.
+
+#### Contrato de implementación
+
+`web/service-worker.js`:
+
+```javascript
+const ENTORNO_DEV = ['localhost', '127.0.0.1', '[::1]']
+    .includes(self.location.hostname);
+```
+
+- `precacheAndRoute([...])` y la ruta runtime `CacheFirst` de assets se registran
+  solo si `!ENTORNO_DEV`. En dev el fetch de assets pasa a red.
+- La ruta `NetworkFirst` de HTML no cambia (va a red primero, no produce stale).
+- El listener `activate`, en `ENTORNO_DEV`, limpia todas las Cache Storage del origin.
+- `skipWaiting()` + `clientsClaim()` sin cambios.
+
+#### Riesgos mitigados
+
+| # | Riesgo | Mitigación |
+|---|--------|------------|
+| R1 | La rama dev llega a producción | Gate runtime por hostname real; Cloudflare jamás sirve `localhost`. Guard + comentario explícito; revisión en PR |
+| R2 | Superficie de amenaza del SW | El bypass reduce caché, no añade capacidad → no ensancha la superficie en prod |
+| R3 | `offline.html` no funciona en localhost dev | Aceptable; offline es preocupación de prod. Documentado |
+
 ---
 
 ## 21. Auditoría Profunda — Hallazgos v0.4.1 / v0.4.2
@@ -2012,7 +2074,39 @@ La extensión load-unpacked (desarrollo) y la extensión CWS comparten el mismo 
 
 ---
 
-## 23. Referencias
+## 23. Versionado por superficie
+
+A partir de v0.4.2, cada superficie versiona de forma independiente.
+El mismo número de versión hoy no implica ciclos de release acoplados
+en el futuro: la extensión Chrome sigue el ciclo de Chrome Web Store
+(revisión manual, días de latencia) y la PWA sigue el ciclo de
+Cloudflare Pages (deploy inmediato en cada push a main).
+
+### Fuentes de verdad por superficie
+
+| Superficie | Archivo | Ciclo de release |
+|------------|---------|-----------------|
+| Chrome Extension | `manifest.json` → campo `"version"` | Chrome Web Store (review manual) |
+| PWA | `web/manifest.json` → campo `"version"` | Cloudflare Pages (deploy en push a main) |
+| Vault format | `__version` en blob cifrado (`web/src/crypto/engine.js`) | Contrato compartido — cambiar requiere migración en ambas superficies |
+
+### Compatibilidad inicial
+
+| Extension | PWA | Vault `__version` | Compatible |
+|-----------|-----|-------------------|-----------|
+| v0.4.2+   | v0.4.2+ | 1 | ✅ |
+| v0.3.1 (CWS) | cualquiera | 1 | ❌ AAD incompatible — Extension muestra "Actualiza la extensión" |
+| cualquiera | cualquiera | 0 (legacy, sin campo) | ✅ backward compat vía path sin AAD |
+
+**Regla de evolución:** un incremento en `__version` del blob (ej. v1→v2)
+requiere que AMBAS superficies soporten el nuevo formato antes de que
+cualquier cliente produzca blobs con ese `__version`. El campo
+`VAULT_VERSION_INCOMPATIBLE` en `engine.js` es el mecanismo de
+detección de incompatibilidad en runtime.
+
+---
+
+## 24. Referencias
 
 ### Estándares y especificaciones
 

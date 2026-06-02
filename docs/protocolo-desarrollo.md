@@ -244,6 +244,75 @@ Commits de código y documentación van **siempre separados**.
 
 ---
 
+## Verificación funcional — cobertura obligatoria
+
+### Regla: todos los estados del componente en todos los contextos
+
+Los criterios de aceptación de cada brief deben cubrir **todos los estados
+del componente** y **todos los contextos de interacción** antes de que Code
+proponga arquitectura.
+
+**Contextos obligatorios para cualquier fix de UI/interacción:**
+
+| Contexto | Herramienta | Cuándo aplica |
+|----------|-------------|---------------|
+| Desktop mouse | Playwright Chromium estándar (sin touch) | Siempre |
+| Mobile touch Android | Playwright Pixel 5 (`hasTouch: true`) | Siempre |
+| Safari iOS real | Dispositivo físico o BrowserStack | v0.5.0+ |
+
+Un criterio de aceptación que no especifique ambos contextos (desktop mouse +
+mobile touch) está **incompleto** y no puede aprobarse.
+
+**Ejemplo — fix de interacción en card:**
+
+❌ Incompleto:
+> "Tap sobre card navega a credential-form"
+
+✅ Completo:
+> - Desktop mouse: click en card neutral → navega
+> - Desktop mouse: swipe con mouse → revela botones
+> - Desktop mouse: click en Editar (card swiped) → navega
+> - Desktop mouse: click en Eliminar (card swiped) → confirma/elimina
+> - Mobile touch: tap en card neutral → navega
+> - Mobile touch: swipe → revela botones
+> - Mobile touch: tap en Editar → navega
+> - Mobile touch: tap en Eliminar → confirma/elimina
+
+### Regla: gap en propuesta de Code → corregir el brief, no parchear
+
+Si el arquitecto detecta un gap en la propuesta de Code que debió estar
+cubierto por los criterios originales del brief, **el error es del brief**.
+
+Acción correcta:
+1. Objetar la propuesta señalando el escenario no cubierto
+2. Devolver a Code para que reevalúe con el escenario completo
+3. Code trae propuesta actualizada
+
+Acción incorrecta:
+- El arquitecto refina/completa la propuesta de Code
+- El arquitecto propone la solución al gap
+
+### Regla: diferencia Android vs iOS en pruebas
+
+- `Playwright Pixel 5` con `hasTouch: true` cubre **Chrome Android** con alta
+  fidelidad (motor Blink, Pointer Events completo).
+- **No** emula Safari iOS real (WebKit). Playwright webkit en Windows no es
+  Safari iOS real.
+- Safari iOS real se incorpora como criterio obligatorio en v0.5.0 cuando haya
+  inversión en Apple Developer.
+
+### Origen de estas reglas
+
+Aprendizaje directo de la sesión de verificación funcional v0.4.2 (2 junio
+2026): el fix `touch-action: pan-y` (commit `c868330`) fue verificado solo en
+Playwright iPhone 14 touch. El path desktop mouse falló porque
+`setPointerCapture` redirige `click` al elemento capturante en Chromium —
+comportamiento no reproducido por `touchscreen.tap()` de Playwright. El gap
+no se detectó porque los criterios del brief no especificaban desktop mouse
+explícitamente.
+
+---
+
 ## Cierre de sesión — checklist
 
 ```
