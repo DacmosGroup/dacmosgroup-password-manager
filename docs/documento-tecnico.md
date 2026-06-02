@@ -1404,6 +1404,11 @@ si el usuario arrastra demasiado rápido y el dedo sale momentáneamente.
 propiedad, el browser reclama el puntero al detectar movimiento mínimo y
 silencia tanto el swipe como el tap.
 
+El guard `e.target.closest('.card__acciones')` en el handler `pointerdown` es
+condición necesaria para que los botones Editar/Eliminar reciban sus propios
+eventos `click`. Sin él, `setPointerCapture` redirige el `click` a `card`
+(el elemento capturante) y los handlers de los botones nunca se ejecutan.
+
 ### Clase CSS sin-nav para vistas de pantalla completa
 
 Las vistas setup, unlock y credential-form son de pantalla completa —
