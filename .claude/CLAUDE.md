@@ -86,3 +86,18 @@ de docs/documento-tecnico.md, y elimina el temporal en el mismo
 commit de documentación.
 
 Nunca commitear el archivo temporal — debe eliminarse antes del commit.
+
+---
+
+## Protocolo de desarrollo — aislamiento de sync
+
+**Nunca ejecutar operaciones de sync desde la extensión load-unpacked
+(desarrollo) contra el Drive o OneDrive de producción.**
+
+La extensión load-unpacked y la extensión CWS comparten el mismo
+`appDataFolder` en Google Drive del perfil Chrome activo. Una operación
+de sync desde la extensión de desarrollo puede sobrescribir el vault
+real de producción — fue la causa del incidente de la sesión 31 mayo 2026.
+
+**Regla:** Usar un perfil Chrome separado o cuenta de prueba para
+sesiones de desarrollo que involucren sync con Drive u OneDrive.

@@ -574,42 +574,33 @@ sin invalidación de fileId).
 
 ---
 
-## Bugs conocidos post-release
-
-### BUG-1 — Vault vacío después de sync BYOC ✅ RESUELTO
-
-Ver sección completa arriba con causa raíz, solución y commit.
-
-### BUG-2 — Service Worker sirve versión cacheada al primer load ✅ RESUELTO
-
-Ver sección completa arriba con causa raíz, solución y archivos modificados.
-
----
-
-### BUG-3 — Sync Chrome Extension ↔ PWA falla por sales incompatibles
+### BUG-3 — Sync Chrome Extension ↔ PWA falla por sales incompatibles ✅ RESUELTO
 
 **Síntoma:** Al intentar sincronizar entre la extensión Chrome y la PWA usando
-Google Drive, el sync devuelve el error `SYNC_MASTER_PASSWORD_MISMATCH` aunque
+Google Drive u OneDrive, el sync devuelve `SYNC_MASTER_PASSWORD_MISMATCH` aunque
 la master password sea idéntica en ambas instalaciones.
 
-**Causa probable:** Las sales (`sal` y `sal2`) son únicas por instalación y se
-generan aleatoriamente en `configurarVault()`. La extensión y la PWA generan sus
-propias sales al configurarse de forma independiente. PBKDF2 con la misma password
-pero sales distintas produce claves AES distintas — el vault cifrado con la clave
-de la extensión no puede descifrarse con la clave derivada en la PWA.
+**Causa raíz confirmada (auditoría #2, 31 mayo 2026):**
+Dos causas independientes, ambas corregidas en v0.4.2:
 
-**Escenario afectado:** Usuario con extensión Chrome existente (vault configurado
-y en Drive) que instala la PWA por primera vez y crea un nuevo vault desde cero.
-Al conectar Drive y sincronizar, la PWA descarga el vault de la extensión e
-intenta descifrarlo con su propia clave derivada — falla con
-`SYNC_MASTER_PASSWORD_MISMATCH`. La operación hace rollback sin pérdida de datos.
+1. **AAD en AES-GCM (H-0/H-2):** El engine v0.3.1 publicado en CWS no implementa
+   `descifrarConVersion()`. Un blob `__version: 1` producido por la PWA falla en
+   la extensión porque el engine v0.3.1 no computa el AAD — el auth tag de GCM
+   es inválido.
 
-**Impacto:** Alto — el objetivo principal de v0.4.0 (acceso multi-dispositivo
-Extension↔PWA) no funciona en el escenario más común. El usuario ve el mensaje
-"El vault en el proveedor fue creado con una contraseña diferente" aunque la
-contraseña sea la misma.
+2. **Sales incompatibles entre dispositivos (H-3/H-4):** Los sync managers de la
+   extensión subían únicamente `vaultCifrado` a Drive/OneDrive — sin las sales
+   (`sal`, `sal2`, `tokenVerificacion`). Al descargar en otro dispositivo, el
+   engine intentaba descifrar con sus propias sales locales → `SYNC_MASTER_PASSWORD_MISMATCH`.
 
-**Estado:** Pendiente diagnóstico en próxima sesión.
+**Solución:** Blob enriquecido — cada upload incluye `sal + sal2 + tokenVerificacion`
+junto al vault cifrado. Al descargar, el destinatario actualiza sus sales locales
+con las del blob. La clave AES se deriva correctamente con la contraseña maestra
+y las sales del vault remoto.
+
+**Commit:** `fix/auditoria-remediaciones` → v0.4.2
+
+**Estado:** ✅ Resuelto — extensión Chrome (Google Drive + OneDrive) + PWA (scope ampliado).
 
 ---
 
