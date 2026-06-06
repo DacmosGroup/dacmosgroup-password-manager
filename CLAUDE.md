@@ -138,3 +138,30 @@ Then open `http://localhost:8080`. Service Worker requires HTTPS in production (
 ### F4.2 completion criterion
 
 Round-trip: unlock → create credential → close tab → reopen → unlock → credential persists. Must pass on Chrome Android and Safari iOS.
+
+---
+
+## Versioning Strategy
+
+This project uses **per-platform independent versioning** — each platform tracks its own release cadence and feature milestones:
+
+| Platform | Manifest | Current | Release channel |
+|----------|----------|---------|-----------------|
+| Chrome Extension | `manifest.json` | `0.3.1` | Chrome Web Store (manual review) |
+| PWA | `web/manifest.json` | `0.4.2` | Cloudflare Pages (auto-deploy on push) |
+
+**Design decision:** The `v0.4.x` family in the PWA maps directly to the `F4.x` feature set (IndexedDB, OAuth PKCE, persistence, mobile UX). The Extension has not yet shipped F4.x-class features so it remains in the `v0.3.x` family.
+
+**Going forward:** Both platforms share the same major.minor family once the Extension ships its next release. The next Extension CWS release should use `v0.4.0` (not `v0.3.2`) to signal alignment with the PWA generation. Do NOT bump version numbers just for alignment — only bump when the platform ships new features.
+
+**Google OAuth Client ID in manifest.json:** The `client_id` field is a public OAuth2 client identifier — not a secret. Its presence in the public repository is intentional. Protection comes from: (a) authorized redirect URIs in Google Cloud Console, (b) Chrome Web Store signing for the Extension distribution.
+
+## Fork Sync Protocol
+
+`web/src/crypto/engine.js` and `web/src/health/password-health.js` are manual forks of their Extension counterparts. When modifying either source file:
+
+1. Port the same change to the corresponding fork in `web/src/`.
+2. Run `bash scripts/verify-crypto-sync.sh` and confirm exit 0.
+3. Include both files in the same commit.
+
+Never commit changes to `src/crypto/engine.js` without verifying the PWA fork remains in sync. A drift here produces incompatible vaults between platforms.

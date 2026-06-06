@@ -6,7 +6,8 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
-[![Versión](https://img.shields.io/badge/Versión-0.4.1-green)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![Extension](https://img.shields.io/badge/Extension-v0.3.1-blue)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![PWA](https://img.shields.io/badge/PWA-v0.4.2-green)](https://dpm.dacmosgroup.co)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---

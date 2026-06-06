@@ -326,3 +326,30 @@ explícitamente.
 [ ] Commit de documentación separado
 [ ] Docs actualizados subidos al proyecto Claude
 ```
+
+---
+
+## Reglas de versionado por plataforma
+
+El proyecto usa versionado **independiente por superficie** — Extension y PWA tienen su propio número de versión en sus respectivos `manifest.json`.
+
+| Plataforma | Archivo | Cuándo bumpar |
+|------------|---------|---------------|
+| Chrome Extension | `manifest.json` | Solo cuando se publica un nuevo paquete a CWS |
+| PWA | `web/manifest.json` | En cada deploy que contenga features o fixes para el usuario |
+
+**Regla de familia:** Ambas plataformas deben pertenecer a la misma familia `major.minor` cuando sea posible. El próximo release de la Extension debe usar `0.4.0` (no `0.3.2`) para alinearse con la familia `0.4.x` de la PWA.
+
+**No bumpar por alineación pura** — solo bumpar cuando hay cambios que justifican la actualización.
+
+---
+
+## Protocolo de sync de forks
+
+Antes de cualquier commit que toque `src/crypto/engine.js` o `src/health/password-health.js`:
+
+1. Portar el mismo cambio al fork en `web/src/`.
+2. Ejecutar `bash scripts/verify-crypto-sync.sh` → confirmar exit 0.
+3. Incluir ambos archivos (original + fork) en el mismo commit.
+
+Un drift en `engine.js` produce incompatibilidad de vaults entre Extension y PWA.
