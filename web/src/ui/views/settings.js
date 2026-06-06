@@ -16,7 +16,10 @@ import {
   cambiarMasterPassword,
   exportarVaultBackup,
   importarVaultBackup,
+  cargarVaultDescifrado,
 } from '../../crypto/engine.js'
+import { generarCSVGenerico, generarCSVBitwarden } from '../../export/csv-exporter.js'
+import { inicializarWizardImportCSV }              from '../../import/import-wizard.js'
 import { idbStorage }          from '../../storage/indexeddb-adapter.js'
 import { verificarPersistencia } from '../../storage/persistence-manager.js'
 import {
@@ -29,6 +32,78 @@ import { GoogleDriveAdapter }  from '../../sync/google-drive-adapter.js'
 import { OneDriveAdapter }     from '../../sync/onedrive-adapter.js'
 import { sincronizar }         from '../../sync/sync-manager.js'
 import { navegar }             from '../router.js'
+
+// ── Modal seguro de contraseña (reemplaza prompt() nativo) ──
+
+// Inyecta los estilos del modal una sola vez en el <head>.
+// Usa variables CSS del design system para integrarse con el tema de la PWA.
+function _inyectarEstilosModal() {
+  if (document.getElementById('dpm-pass-modal-styles')) return
+  const style = document.createElement('style')
+  style.id = 'dpm-pass-modal-styles'
+  style.textContent = `
+    .dpm-pass-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999}
+    .dpm-pass-modal{background:var(--color-surface,#1a1a2e);border:1px solid var(--color-border,rgba(255,255,255,.12));border-radius:12px;padding:24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+    .dpm-pass-modal__titulo{color:var(--color-text,#e0e0e0);font-size:.875rem;margin:0;line-height:1.4}
+    .dpm-pass-modal__campo{position:relative}
+    .dpm-pass-modal__input{width:100%;padding:10px 40px 10px 12px;box-sizing:border-box;background:var(--color-input-bg,rgba(255,255,255,.06));border:1px solid var(--color-border,rgba(255,255,255,.12));border-radius:8px;color:var(--color-text,#e0e0e0);font-size:.9rem}
+    .dpm-pass-modal__toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--color-text-secondary,#888);font-size:.85rem;padding:4px;line-height:1}
+    .dpm-pass-modal__acciones{display:flex;gap:8px;justify-content:flex-end}
+  `
+  document.head.appendChild(style)
+}
+
+/**
+ * Solicita la contraseña maestra mediante un modal seguro con type="password".
+ * Retorna la contraseña ingresada, o null si el usuario canceló.
+ * Reemplaza prompt() nativo que mostraba la contraseña en texto plano (H-10).
+ *
+ * @param {string} titulo — texto descriptivo que aparece sobre el input
+ * @returns {Promise<string|null>}
+ */
+function _pedirContrasena(titulo) {
+  _inyectarEstilosModal()
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div')
+    overlay.className = 'dpm-pass-overlay'
+    overlay.innerHTML = `
+      <div class="dpm-pass-modal" role="dialog" aria-modal="true">
+        <p class="dpm-pass-modal__titulo">${titulo}</p>
+        <div class="dpm-pass-modal__campo">
+          <input type="password" class="dpm-pass-modal__input" id="dpm-pass-input"
+                 placeholder="Contraseña maestra" autocomplete="current-password">
+          <button type="button" class="dpm-pass-modal__toggle" id="dpm-pass-toggle"
+                  aria-label="Mostrar u ocultar contraseña">👁</button>
+        </div>
+        <div class="dpm-pass-modal__acciones">
+          <button type="button" class="btn btn--pequeño btn--secundario" id="dpm-pass-cancelar">Cancelar</button>
+          <button type="button" class="btn btn--pequeño btn--primario"   id="dpm-pass-ok">Continuar</button>
+        </div>
+      </div>`
+    document.body.appendChild(overlay)
+
+    const input    = overlay.querySelector('#dpm-pass-input')
+    const btnOk    = overlay.querySelector('#dpm-pass-ok')
+    const btnCan   = overlay.querySelector('#dpm-pass-cancelar')
+    const btnToggle = overlay.querySelector('#dpm-pass-toggle')
+
+    // Foco automático en el campo de contraseña
+    requestAnimationFrame(() => input.focus())
+
+    const confirmar = () => { overlay.remove(); resolve(input.value || null) }
+    const cancelar  = () => { overlay.remove(); resolve(null) }
+
+    btnToggle.addEventListener('click', () => {
+      input.type = input.type === 'password' ? 'text' : 'password'
+    })
+    btnOk.addEventListener('click',  confirmar)
+    btnCan.addEventListener('click', cancelar)
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  confirmar()
+      if (e.key === 'Escape') cancelar()
+    })
+  })
+}
 
 /** Monta la vista de settings en el contenedor dado */
 export async function montar(contenedor) {
@@ -47,7 +122,7 @@ export async function montar(contenedor) {
   const syncConf      = syncConfig.syncConfig ?? {}
   const proveedorSync = syncConf.proveedor ?? null
 
-  const estaConectadoGoogle    = proveedorSync === 'google'
+  const estaConectadoGoogle    = proveedorSync === 'google-drive'
   const estaConectadoOneDrive  = estaConectadoMicrosoft()
 
   contenedor.innerHTML = `
@@ -123,6 +198,69 @@ export async function montar(contenedor) {
         <div class="unlock__error oculto" id="backup-msg" role="alert"></div>
       </div>
 
+      <!-- ── 3b. Exportar / Importar CSV ── -->
+      <p class="seccion-titulo">EXPORTAR / IMPORTAR CSV</p>
+      <div class="settings__seccion tarjeta">
+        <div class="settings__fila">
+          <div class="settings__fila-info">
+            <div class="settings__fila-titulo">Exportar CSV</div>
+            <div class="settings__fila-descripcion">Descarga tus credenciales en formato compatible con otros gestores</div>
+          </div>
+          <div class="settings__fila-accion settings__fila-accion--multiple">
+            <button class="btn btn--pequeño btn--secundario" id="btn-exportar-csv-generico" type="button">Genérico</button>
+            <button class="btn btn--pequeño btn--secundario" id="btn-exportar-csv-bitwarden" type="button">Bitwarden</button>
+          </div>
+        </div>
+        <div class="settings__fila">
+          <div class="settings__fila-info">
+            <div class="settings__fila-titulo">Importar CSV</div>
+            <div class="settings__fila-descripcion">Importa desde Google PM, Bitwarden, LastPass, 1Password o CSV genérico</div>
+          </div>
+          <div class="settings__fila-accion">
+            <button class="btn btn--pequeño btn--secundario" id="btnAbrirImportarCSV" type="button">Importar</button>
+          </div>
+        </div>
+        <!-- ── Wizard de importación CSV (oculto por defecto) ── -->
+        <div id="panelImportarCSV" class="hidden">
+          <div class="settings__csv-wizard">
+            <label class="campo">
+              <span class="campo__etiqueta">Seleccionar archivo CSV</span>
+              <input type="file" id="inputArchivoCSV" accept=".csv" class="input">
+            </label>
+            <div id="grupoFormatoCSV" style="display:none">
+              <div id="badgeFormatoCSV" class="import-format-badge"></div>
+              <select id="selectFormatoCSV" class="input">
+                <option value="">-- Seleccionar formato --</option>
+                <option value="google">Google Password Manager</option>
+                <option value="bitwarden">Bitwarden</option>
+                <option value="lastpass">LastPass</option>
+                <option value="1password">1Password</option>
+                <option value="generico">CSV Genérico</option>
+              </select>
+            </div>
+            <div id="errorImportarCSV" class="unlock__error oculto" role="alert"></div>
+            <div id="grupoAccionesCSV" style="display:none" class="settings__csv-wizard-acciones">
+              <button class="btn btn--pequeño btn--primario"   id="btnPrevisualizarCSV"    type="button">Previsualizar importación</button>
+              <button class="btn btn--pequeño btn--secundario" id="btnCancelarImportarCSV" type="button">Cancelar</button>
+            </div>
+            <div id="panelPreviewCSV" class="hidden">
+              <div id="resumenPreviewCSV" class="csv-resumen"></div>
+              <div class="csv-tabla-scroll">
+                <table class="csv-preview-table">
+                  <thead>
+                    <tr><th>Sitio</th><th>URL</th><th>Usuario</th><th>Contraseña</th><th>Estado</th></tr>
+                  </thead>
+                  <tbody id="tbodyPreviewCSV"></tbody>
+                </table>
+              </div>
+              <button class="btn btn--pequeño btn--primario" id="btnConfirmarImportarCSV" type="button" disabled>Importar</button>
+            </div>
+            <div id="successImportarCSV" class="unlock__error alerta--exito oculto" role="status"></div>
+          </div>
+        </div>
+        <div class="unlock__error oculto" id="csv-msg" role="alert"></div>
+      </div>
+
       <!-- ── 4. Sincronización ── -->
       <p class="seccion-titulo" id="seccion-sync">SINCRONIZACIÓN</p>
       <div class="settings__seccion tarjeta">
@@ -194,7 +332,7 @@ export async function montar(contenedor) {
       </div>
 
       <p class="settings__version-pie">
-        Dacmos Password Manager · Zero-Knowledge · v0.4.1
+        Dacmos Password Manager · Zero-Knowledge · v0.4.2
       </p>
     </div>`
 
@@ -240,7 +378,7 @@ export async function montar(contenedor) {
 
   // ── Exportar backup ──
   contenedor.querySelector('#btn-exportar')?.addEventListener('click', async () => {
-    const password = prompt('Ingresa tu contraseña maestra para exportar el backup:')
+    const password = await _pedirContrasena('Ingresa tu contraseña maestra para exportar el backup:')
     if (!password) return
     const backupMsg = contenedor.querySelector('#backup-msg')
     try {
@@ -265,7 +403,7 @@ export async function montar(contenedor) {
     const backupMsg = contenedor.querySelector('#backup-msg')
     if (!archivo) return
 
-    const password = prompt('Ingresa la contraseña maestra del backup:')
+    const password = await _pedirContrasena('Ingresa la contraseña maestra del backup:')
     if (!password) { e.target.value = ''; return }
 
     // Bloquear el input mientras dura el import (evita doble submit)
@@ -306,12 +444,44 @@ export async function montar(contenedor) {
     }
   })
 
+  // ── Exportar CSV ──
+  contenedor.querySelector('#btn-exportar-csv-generico')?.addEventListener('click', async () => {
+    const clave = obtenerClave()
+    if (!clave) return
+    const csvMsg = contenedor.querySelector('#csv-msg')
+    try {
+      const credenciales = await cargarVaultDescifrado(clave)
+      const csv = generarCSVGenerico(credenciales)
+      _descargarArchivo(csv, 'text/csv', `dacmos-export-${new Date().toISOString().slice(0,10)}.csv`)
+    } catch (_) {
+      csvMsg.textContent = 'Error al exportar. Intenta de nuevo.'
+      csvMsg.classList.remove('oculto')
+    }
+  })
+
+  contenedor.querySelector('#btn-exportar-csv-bitwarden')?.addEventListener('click', async () => {
+    const clave = obtenerClave()
+    if (!clave) return
+    const csvMsg = contenedor.querySelector('#csv-msg')
+    try {
+      const credenciales = await cargarVaultDescifrado(clave)
+      const csv = generarCSVBitwarden(credenciales)
+      _descargarArchivo(csv, 'text/csv', `dacmos-bitwarden-${new Date().toISOString().slice(0,10)}.csv`)
+    } catch (_) {
+      csvMsg.textContent = 'Error al exportar. Intenta de nuevo.'
+      csvMsg.classList.remove('oculto')
+    }
+  })
+
+  // ── Import wizard CSV ──
+  inicializarWizardImportCSV(contenedor)
+
   // ── Sync Google Drive ──
   contenedor.querySelector('#btn-conectar-google')?.addEventListener('click', async () => {
     const msgEl = contenedor.querySelector('#sync-msg')
     try {
       await conectarGoogle()
-      await idbStorage.set({ syncConfig: { ...syncConf, proveedor: 'google' } })
+      await idbStorage.set({ syncConfig: { ...syncConf, proveedor: 'google-drive' } })
       // Sincronizar al conectar — proveedor gana en primera sync (D2).
       // Si el sync falla (ej. master password distinta), se ignora aquí
       // y el usuario puede reintentar desde el botón "Sincronizar".
@@ -404,6 +574,17 @@ export async function montar(contenedor) {
     limpiarSesion()
     navegar('#/unlock')
   })
+}
+
+/** Descarga un string como archivo en el navegador sin chrome.downloads */
+function _descargarArchivo(contenido, tipo, nombre) {
+  const blob = new Blob([contenido], { type: tipo })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = nombre
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 /** Formatea bytes en una cadena legible (B, KB, MB) */

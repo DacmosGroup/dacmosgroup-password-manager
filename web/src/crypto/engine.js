@@ -344,7 +344,11 @@ async function cargarVaultDescifrado(clave) {
 // ── CAMBIAR CONTRASEÑA MAESTRA ──
 // Re-cifra todo el vault con una nueva contraseña maestra
 // DECISIÓN DE SEGURIDAD: El proceso completo ocurre en memoria.
+let _cambioEnProgreso = false
 async function cambiarMasterPassword(passwordActual, passwordNueva) {
+  if (_cambioEnProgreso) throw new Error('CAMBIO_EN_PROGRESO')
+  _cambioEnProgreso = true
+  try {
   // Paso 1: Verificar contraseña actual
   const claveActual = await desbloquearVault(passwordActual);
   if (!claveActual) {
@@ -376,6 +380,9 @@ async function cambiarMasterPassword(passwordActual, passwordNueva) {
   });
 
   return claveNueva;
+  } finally {
+    _cambioEnProgreso = false
+  }
 }
 
 // ── EXPORTAR VAULT COMO BACKUP CIFRADO ──
@@ -466,10 +473,23 @@ async function importarVaultBackup(backup, passwordMaestra, opcionesImport = {})
   const claveNew    = await derivarClave(passwordMaestra, sal);
   const vaultBackup = await descifrarConVersion(backup.vaultCifrado, claveNew);
 
+  // Validar que el vault descifrado contiene un array de credenciales bien formadas.
+  // Filtrar silenciosamente entradas malformadas — evita corrupción del vault local.
+  const camposRequeridos = ['id', 'sitio', 'usuario', 'password']
+  const credsRaw = Array.isArray(vaultBackup.credenciales) ? vaultBackup.credenciales : []
+  const credsFiltradas = credsRaw.filter(c =>
+    c !== null && typeof c === 'object' &&
+    camposRequeridos.every(campo => Object.prototype.hasOwnProperty.call(c, campo))
+  )
+  if (credsFiltradas.length < credsRaw.length) {
+    // Alguna credencial del backup no cumple el schema — rechazar para evitar importar datos corruptos
+    throw new Error('BACKUP_CREDENCIALES_INVALIDAS')
+  }
+
   // Obtener datos del vault local para determinar el caso de importación
   const datosActuales = await idbStorage.get(['sal', 'vaultCifrado']);
 
-  let credencialesFinales = vaultBackup.credenciales || [];
+  let credencialesFinales = credsFiltradas;
   // claveParaGuardar: se asigna solo si vault local existe Y la password coincide.
   // Permanece null si no hay vault local o si la password no coincide (Casos 1 y 3).
   let claveParaGuardar = null;

@@ -20,6 +20,7 @@ import {
 import { activarSwipe }         from '../components/swipe-card.js'
 import { estaInstalable, instalar } from '../onboarding/pwa-install.js'
 import { navegar }              from '../router.js'
+import { escapeHtml }           from '../../utils/escape.js'
 
 /** Monta la vista del vault en el contenedor dado */
 export async function montar(contenedor) {
@@ -126,7 +127,7 @@ function _renderLista(contenedor, credenciales, filtro) {
         <div class="lista-vacia__icono">${filtro ? '🔍' : '🗄️'}</div>
         <p class="lista-vacia__texto">
           ${filtro
-            ? `Sin resultados para "${_escaparHtml(filtro)}"`
+            ? `Sin resultados para "${escapeHtml(filtro)}"`
             : 'Tu vault está vacío. Añade tu primera credencial.'}
         </p>
       </div>`
@@ -134,14 +135,14 @@ function _renderLista(contenedor, credenciales, filtro) {
   }
 
   contenedor.innerHTML = filtradas.map(cred => `
-    <div class="card" data-id="${_escaparHtml(cred.id)}">
+    <div class="card" data-id="${escapeHtml(cred.id)}">
       <div class="card__contenido">
         <div class="card__icono" aria-hidden="true">
           ${_inicialSitio(cred.sitio)}
         </div>
         <div class="card__info">
-          <div class="card__sitio">${_escaparHtml(cred.sitio || 'Sin nombre')}</div>
-          <div class="card__usuario">${_escaparHtml(cred.usuario || cred.url || '')}</div>
+          <div class="card__sitio">${escapeHtml(cred.sitio || 'Sin nombre')}</div>
+          <div class="card__usuario">${escapeHtml(cred.usuario || cred.url || '')}</div>
         </div>
         <div class="card__badges">
           ${cred.totp ? '<span class="badge badge--neutro">TOTP</span>' : ''}
@@ -191,18 +192,8 @@ async function _eliminarCredencial(id, listaCont, filtro) {
   _renderLista(listaCont, nuevas, filtro)
 }
 
-/** Escapa HTML para prevenir XSS */
-function _escaparHtml(texto) {
-  return String(texto ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
 /** Retorna la inicial del sitio para el ícono de la card */
 function _inicialSitio(sitio) {
   const s = String(sitio ?? '?').trim()
-  return _escaparHtml(s.charAt(0).toUpperCase() || '?')
+  return escapeHtml(s.charAt(0).toUpperCase() || '?')
 }

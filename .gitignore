@@ -2,6 +2,10 @@
 node_modules/
 npm-debug.log*
 
+# Artefacto de npm init generado al instalar Playwright para tests locales
+package.json
+package-lock.json
+
 # Archivos de sistema
 .DS_Store
 Thumbs.db
@@ -37,3 +41,6 @@ app/build/
 .gradle/
 build/
 local.properties
+
+# Documentos de sesión Claude Code (planificación interna, no doc formal)
+docs/auditoria-remediaciones-*.md

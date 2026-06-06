@@ -11,8 +11,13 @@
 
 | Rol | Responsabilidad |
 |-----|----------------|
-| **Claude en el chat del proyecto** | Arquitecto revisor — lee docs, propone arquitectura, valida resultados, aprueba commits |
-| **Claude Code** | Implementador — ejecuta solo lo aprobado, nunca propone arquitectura propia |
+| **Claude en el chat del proyecto** | Arquitecto revisor — lee docs, declara restricciones y principios, valida propuestas de Code, aprueba commits. Nunca implementa ni dicta soluciones. |
+| **Claude Code** | Implementador — lee docs, propone arquitectura y soluciones técnicas, ejecuta solo lo aprobado, reporta divergencias antes de implementar. |
+
+> **Nota importante sobre roles:** Code SÍ propone arquitectura y soluciones.
+> Lo que no hace es tomar decisiones de diseño de forma unilateral ni avanzar
+> cuando hay ambigüedad. El arquitecto aprueba, rechaza o redirige — nunca
+> resuelve por Code lo que Code puede y debe resolver solo.
 
 ---
 
@@ -20,15 +25,18 @@
 
 ```
 1. Claude lee docs del proyecto (roadmap + doc-técnico)
-2. Claude propone arquitectura
+2. Claude propone arquitectura (qué + por qué)
 3. Usuario aprueba o ajusta
 4. Claude redacta brief para Code
-5. Code implementa
-6. Code reporta resultados al chat
-7. Claude valida antes del commit
-8. Code hace commit de código
-9. Code actualiza documentación (commit separado)
-10. Usuario sube docs actualizados al proyecto Claude
+5. Code lee docs, propone plan detallado y reporta divergencias
+6. Claude valida el plan — responde con restricciones, NO con soluciones
+7. Se itera hasta que el plan sea correcto
+8. Claude autoriza implementación explícitamente
+9. Code implementa y reporta resultados
+10. Claude valida antes del commit
+11. Code hace commit de código
+12. Code actualiza documentación (commit separado)
+13. Usuario sube docs actualizados al proyecto Claude
 ```
 
 ---
@@ -68,56 +76,6 @@ Principios no negociables:
 - Código comentado en español
 
 Feature a desarrollar: [ESPECIFICAR]
-```
-
----
-
-## Captura de decisiones de sesión
-
-Antes de pedirle a Code que actualice `documento-tecnico.md`,
-generar un archivo temporal con las decisiones del chat:
-
-```
-docs/fX.X-decisiones-temp.md
-```
-
-Code lo lee, lo inserta en `documento-tecnico.md` en la sección
-correspondiente, y lo elimina en el mismo commit de documentación.
-
-**Qué capturar:**
-- Opciones descartadas y por qué
-- Riesgos identificados y mitigaciones
-- Contratos de API / serialización
-- Decisiones de diseño con razonamiento
-
----
-
-## Convención de commits
-
-```
-feat(scope):  nueva funcionalidad
-fix(scope):   corrección de bug
-docs:         solo documentación
-refactor:     sin cambio de comportamiento
-test:         scripts de verificación temporales
-chore:        mantenimiento del repo
-```
-
-Commits de código y documentación van **siempre separados**.
-
----
-
-## Cierre de sesión — checklist
-
-```
-[ ] Feature implementada y testeada
-[ ] Commit de código en feature/vX.X.X
-[ ] docs/fX.X-decisiones-temp.md generado (si hubo decisiones)
-[ ] Code insertó decisiones en documento-tecnico.md
-[ ] Archivo temporal eliminado
-[ ] Roadmap actualizado con ✅
-[ ] Commit de documentación separado
-[ ] Docs actualizados subidos al proyecto Claude
 ```
 
 ---
@@ -166,3 +124,232 @@ el brief le dijo "haz exactamente esto" en lugar de "logra esto".
 - El contenido JSON de un archivo de configuración
 - Los flags específicos de una herramienta CLI
 - El orden en que se resuelven los errores de compilación
+
+---
+
+## Manejo de divergencias — regla crítica
+
+Cuando Code reporta una divergencia durante la propuesta de arquitectura,
+el arquitecto **NO responde con la solución**. Responde con la restricción
+o principio que la solución debe satisfacer, y le pide a Code que proponga
+cómo satisfacerlo.
+
+**Flujo correcto ante una divergencia:**
+
+```
+Code: "En el service worker no tengo acceso a la clave AES —
+       ¿cómo implemento la verificación antes de persistir?"
+
+INCORRECTO — arquitecto da la solución:
+  "Compara sal_remoto vs sal_local. Si son distintas y hay sesión
+   activa, no persistir. Si no hay sesión, escribir todo e
+   invalidar sesión."
+
+CORRECTO — arquitecto declara la restricción:
+  "La integridad del vault local debe estar garantizada incluso
+   cuando el service worker no tiene acceso a la clave AES.
+   La solución no puede violar Zero-Knowledge. Propón cómo
+   satisfacer esa restricción."
+```
+
+**Por qué importa:** si el arquitecto resuelve las divergencias por Code,
+Code aprende a esperar soluciones en lugar de desarrollar criterio propio.
+Además, Code tiene acceso directo al código real — su propuesta parte de
+evidencia concreta, la del arquitecto parte de documentación.
+
+**La iteración es el proceso.** Si la propuesta de Code no satisface la
+restricción, el arquitecto señala exactamente qué principio se viola y
+por qué — no cómo arreglarlo. Se itera hasta convergencia.
+
+**Excepción válida:** cuando la divergencia involucra un contrato de
+serialización o formato de datos ya especificado en `documento-tecnico.md`,
+el arquitecto puede señalar que el formato es incorrecto y referir a la
+sección exacta del doc-técnico como fuente de verdad. Eso es declarar
+una restricción, no dar una solución.
+
+---
+
+## Captura de decisiones de sesión
+
+Antes de pedirle a Code que actualice `documento-tecnico.md`,
+generar un archivo temporal con las decisiones del chat:
+
+```
+docs/fX.X-decisiones-temp.md
+```
+
+Code lo lee, lo inserta en `documento-tecnico.md` en la sección
+correspondiente, y lo elimina en el mismo commit de documentación.
+
+**El archivo temporal debe quedar UNTRACKED (`U`) hasta que Code lo consuma.**
+No hacer `git add` de archivos temporales — su destino es el interior de
+`documento-tecnico.md`, no el historial de commits.
+
+**Qué capturar:**
+- Opciones descartadas y por qué
+- Riesgos identificados y mitigaciones
+- Contratos de API / serialización
+- Decisiones de diseño con razonamiento
+- Reglas de proceso aprobadas en la sesión
+
+---
+
+## Auditorías — consolidar, no re-auditar desde cero
+
+Cuando se lanza una auditoría de diagnóstico, Code construye sobre
+los hallazgos previos documentados — no redescubre lo ya conocido.
+
+**Flujo correcto:**
+1. Code lee el archivo de hallazgos previos (ej. `auditoria-Xh-decisiones-temp.md`)
+2. Para cada hallazgo existente: verifica estado actual contra el código vivo
+3. Identifica hallazgos nuevos no cubiertos
+4. Entrega tabla unificada con estado de cada hallazgo + evidencia
+
+Lanzar una auditoría nueva sin este punto de partida es desgaste —
+redescubrir lo ya documentado consume tokens y tiempo sin producir
+valor nuevo.
+
+---
+
+## Regla de proceso — aislamiento de entornos en desarrollo
+
+**La extensión load-unpacked (desarrollo) y la extensión CWS comparten
+el mismo `appDataFolder` en Google Drive del perfil Chrome activo.**
+
+Una operación de sync desde la extensión de desarrollo puede sobrescribir
+el vault real de producción del usuario.
+
+**Regla:** Nunca ejecutar operaciones de sync desde la extensión
+load-unpacked contra el Drive o OneDrive de producción. Usar perfil
+Chrome separado o cuenta de prueba para sesiones de desarrollo que
+involucren sync.
+
+Esta regla se aplica también a cualquier cliente PWA corriendo en
+`localhost` si comparte las credenciales OAuth del usuario real.
+
+---
+
+## Convención de commits
+
+```
+feat(scope):  nueva funcionalidad
+fix(scope):   corrección de bug
+docs:         solo documentación
+refactor:     sin cambio de comportamiento
+test:         scripts de verificación temporales
+chore:        mantenimiento del repo
+```
+
+Commits de código y documentación van **siempre separados**.
+
+---
+
+## Verificación funcional — cobertura obligatoria
+
+### Regla: todos los estados del componente en todos los contextos
+
+Los criterios de aceptación de cada brief deben cubrir **todos los estados
+del componente** y **todos los contextos de interacción** antes de que Code
+proponga arquitectura.
+
+**Contextos obligatorios para cualquier fix de UI/interacción:**
+
+| Contexto | Herramienta | Cuándo aplica |
+|----------|-------------|---------------|
+| Desktop mouse | Playwright Chromium estándar (sin touch) | Siempre |
+| Mobile touch Android | Playwright Pixel 5 (`hasTouch: true`) | Siempre |
+| Safari iOS real | Dispositivo físico o BrowserStack | v0.5.0+ |
+
+Un criterio de aceptación que no especifique ambos contextos (desktop mouse +
+mobile touch) está **incompleto** y no puede aprobarse.
+
+**Ejemplo — fix de interacción en card:**
+
+❌ Incompleto:
+> "Tap sobre card navega a credential-form"
+
+✅ Completo:
+> - Desktop mouse: click en card neutral → navega
+> - Desktop mouse: swipe con mouse → revela botones
+> - Desktop mouse: click en Editar (card swiped) → navega
+> - Desktop mouse: click en Eliminar (card swiped) → confirma/elimina
+> - Mobile touch: tap en card neutral → navega
+> - Mobile touch: swipe → revela botones
+> - Mobile touch: tap en Editar → navega
+> - Mobile touch: tap en Eliminar → confirma/elimina
+
+### Regla: gap en propuesta de Code → corregir el brief, no parchear
+
+Si el arquitecto detecta un gap en la propuesta de Code que debió estar
+cubierto por los criterios originales del brief, **el error es del brief**.
+
+Acción correcta:
+1. Objetar la propuesta señalando el escenario no cubierto
+2. Devolver a Code para que reevalúe con el escenario completo
+3. Code trae propuesta actualizada
+
+Acción incorrecta:
+- El arquitecto refina/completa la propuesta de Code
+- El arquitecto propone la solución al gap
+
+### Regla: diferencia Android vs iOS en pruebas
+
+- `Playwright Pixel 5` con `hasTouch: true` cubre **Chrome Android** con alta
+  fidelidad (motor Blink, Pointer Events completo).
+- **No** emula Safari iOS real (WebKit). Playwright webkit en Windows no es
+  Safari iOS real.
+- Safari iOS real se incorpora como criterio obligatorio en v0.5.0 cuando haya
+  inversión en Apple Developer.
+
+### Origen de estas reglas
+
+Aprendizaje directo de la sesión de verificación funcional v0.4.2 (2 junio
+2026): el fix `touch-action: pan-y` (commit `c868330`) fue verificado solo en
+Playwright iPhone 14 touch. El path desktop mouse falló porque
+`setPointerCapture` redirige `click` al elemento capturante en Chromium —
+comportamiento no reproducido por `touchscreen.tap()` de Playwright. El gap
+no se detectó porque los criterios del brief no especificaban desktop mouse
+explícitamente.
+
+---
+
+## Cierre de sesión — checklist
+
+```
+[ ] Feature/fix implementada y testeada
+[ ] Criterios de aceptación verificados y reportados
+[ ] Commit de código en la rama correspondiente
+[ ] docs/fX.X-decisiones-temp.md generado (si hubo decisiones)
+[ ] Code insertó decisiones en documento-tecnico.md
+[ ] Archivo(s) temporal(es) eliminado(s)
+[ ] Roadmap actualizado con ✅
+[ ] Commit de documentación separado
+[ ] Docs actualizados subidos al proyecto Claude
+```
+
+---
+
+## Reglas de versionado por plataforma
+
+El proyecto usa versionado **independiente por superficie** — Extension y PWA tienen su propio número de versión en sus respectivos `manifest.json`.
+
+| Plataforma | Archivo | Cuándo bumpar |
+|------------|---------|---------------|
+| Chrome Extension | `manifest.json` | Solo cuando se publica un nuevo paquete a CWS |
+| PWA | `web/manifest.json` | En cada deploy que contenga features o fixes para el usuario |
+
+**Regla de familia:** Ambas plataformas deben pertenecer a la misma familia `major.minor` cuando sea posible. El próximo release de la Extension debe usar `0.4.0` (no `0.3.2`) para alinearse con la familia `0.4.x` de la PWA.
+
+**No bumpar por alineación pura** — solo bumpar cuando hay cambios que justifican la actualización.
+
+---
+
+## Protocolo de sync de forks
+
+Antes de cualquier commit que toque `src/crypto/engine.js` o `src/health/password-health.js`:
+
+1. Portar el mismo cambio al fork en `web/src/`.
+2. Ejecutar `bash scripts/verify-crypto-sync.sh` → confirmar exit 0.
+3. Incluir ambos archivos (original + fork) en el mismo commit.
+
+Un drift en `engine.js` produce incompatibilidad de vaults entre Extension y PWA.

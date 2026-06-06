@@ -456,6 +456,48 @@ el número de iteraciones.
 
 ---
 
+## Auditoría Post-Release — Estado de remediaciones
+
+### Fase 1 — Crítico ✅ COMPLETADA (commits `cacb6d2`, `4aa8eea`)
+
+| ID | Hallazgo | Resolución | Commit |
+|----|----------|-----------|--------|
+| C1 | Versiones PWA vs Extension intencionalmente distintas sin documentar | Documentado en CLAUDE.md — Versioning Strategy | `4aa8eea` |
+| C2 | Sin mecanismo para verificar sincronía del fork `crypto/engine.js` | Script automatizado `scripts/verify-crypto-sync.sh` | `cacb6d2` |
+| C3 | CSV import/export ausente en PWA | Módulos `web/src/import/` y `web/src/export/` | `cacb6d2` |
+| C4 | OAuth `client_id` hardcodeado en `manifest.json` sin rationale de seguridad | Explicación de seguridad documentada en CLAUDE.md | `4aa8eea` |
+
+### Fase 2 — Alto ✅ COMPLETADA (commits `bd67602`, `efbc447`, `fd5d938`)
+
+| ID | Hallazgo | Resolución | Commit |
+|----|----------|-----------|--------|
+| A2 | Permiso `activeTab` declarado pero nunca usado | Removido de `manifest.json` | `bd67602` |
+| A3 | `escapeHtml()` duplicada en cada vista PWA (riesgo XSS) | Centralizado en `web/src/utils/escape.js` | `bd67602`, `fd5d938` |
+| A4 | Race condition en `cambiarMasterPassword()` bajo invocación concurrente | Flag `_cambioEnProgreso` con `finally` en ambos engines | `efbc447` |
+| A5 | Nomenclatura inconsistente "Mi Vault" / "Vault" | Unificado a "Vault" en Extension + PWA | `efbc447` |
+
+### Fase 3 — Medio ✅ COMPLETADA (commit `fix(security): Fase 3`)
+
+| ID | Hallazgo | Resolución |
+|----|----------|-----------|
+| M1 | `console.log` en service worker (Extension) | Eliminados de `src/background/service-worker.js` y `src/content/autofill.js` |
+| M2 | Sin validación de schema en `importarVaultBackup()` | Validación de campos requeridos antes de persistir — `BACKUP_CREDENCIALES_INVALIDAS` |
+| M3 | Sin debounce en MutationObserver del content script | Debounce de 300ms con `clearTimeout` antes de re-disparar |
+| M4 | `docs/documento-tecnico.md` desactualizado | Versión bumpeada a v0.4.2, CSV import/export documentado |
+| M5 | `docs/roadmap-v0.4.0.md` sin estado de auditoría | Este documento actualizado |
+| M6 | MSAL.js vendoreado sin documentar | `web/libs/VENDORED.md` creado |
+
+### Fase 4 — Bajo/Mantenimiento ✅ COMPLETADA (commit `fix(security): Fase 4`)
+
+| ID | Hallazgo | Resolución |
+|----|----------|-----------|
+| B1 | `src/utils/helpers.js` vacío | Eliminado |
+| B2 | `icon-180.svg` sin versión PNG para iOS Safari | `icon-180.png` generado, `web/manifest.json` actualizado |
+| B3 | CSV importer sin detección de encoding Latin-1 | `TextDecoder` con fallback Latin-1 en `web/src/import/import-wizard.js` |
+| B4 | Workbox sin SRI hash | Documentado como no aplicable (`importScripts()` no soporta SRI); mitigado via CSP + versión fija |
+
+---
+
 ## Decisiones técnicas abiertas
 
 | Decisión | Opciones | Criterio para resolver |
@@ -574,42 +616,57 @@ sin invalidación de fileId).
 
 ---
 
-## Bugs conocidos post-release
+### BUG-3 — Sync Chrome Extension ↔ PWA falla por sales incompatibles ✅ RESUELTO
 
-### BUG-1 — Vault vacío después de sync BYOC ✅ RESUELTO
+**Síntoma:** Al intentar sincronizar entre la extensión Chrome y la PWA usando
+Google Drive u OneDrive, el sync devuelve `SYNC_MASTER_PASSWORD_MISMATCH` aunque
+la master password sea idéntica en ambas instalaciones.
 
-Ver sección completa arriba con causa raíz, solución y commit.
+**Causa raíz confirmada (auditoría #2, 31 mayo 2026):**
+Dos causas independientes, ambas corregidas en v0.4.2:
 
-### BUG-2 — Service Worker sirve versión cacheada al primer load ✅ RESUELTO
+1. **AAD en AES-GCM (H-0/H-2):** El engine v0.3.1 publicado en CWS no implementa
+   `descifrarConVersion()`. Un blob `__version: 1` producido por la PWA falla en
+   la extensión porque el engine v0.3.1 no computa el AAD — el auth tag de GCM
+   es inválido.
 
-Ver sección completa arriba con causa raíz, solución y archivos modificados.
+2. **Sales incompatibles entre dispositivos (H-3/H-4):** Los sync managers de la
+   extensión subían únicamente `vaultCifrado` a Drive/OneDrive — sin las sales
+   (`sal`, `sal2`, `tokenVerificacion`). Al descargar en otro dispositivo, el
+   engine intentaba descifrar con sus propias sales locales → `SYNC_MASTER_PASSWORD_MISMATCH`.
+
+**Solución:** Blob enriquecido — cada upload incluye `sal + sal2 + tokenVerificacion`
+junto al vault cifrado. Al descargar, el destinatario actualiza sus sales locales
+con las del blob. La clave AES se deriva correctamente con la contraseña maestra
+y las sales del vault remoto.
+
+**Commit:** `fix/auditoria-remediaciones` → v0.4.2
+
+**Estado:** ✅ Resuelto — extensión Chrome (Google Drive + OneDrive) + PWA (scope ampliado).
 
 ---
 
-### BUG-3 — Sync Chrome Extension ↔ PWA falla por sales incompatibles
+### Auditoría #3 — Hallazgos de seguimiento (2026-06-06)
 
-**Síntoma:** Al intentar sincronizar entre la extensión Chrome y la PWA usando
-Google Drive, el sync devuelve el error `SYNC_MASTER_PASSWORD_MISMATCH` aunque
-la master password sea idéntica en ambas instalaciones.
+Auditoría profunda sobre el branch `fix/auditoria-remediaciones` tras las remediaciones de Auditoría #2.
 
-**Causa probable:** Las sales (`sal` y `sal2`) son únicas por instalación y se
-generan aleatoriamente en `configurarVault()`. La extensión y la PWA generan sus
-propias sales al configurarse de forma independiente. PBKDF2 con la misma password
-pero sales distintas produce claves AES distintas — el vault cifrado con la clave
-de la extensión no puede descifrarse con la clave derivada en la PWA.
+#### Fase 1 — CRÍTICO ✅ RESUELTO
 
-**Escenario afectado:** Usuario con extensión Chrome existente (vault configurado
-y en Drive) que instala la PWA por primera vez y crea un nuevo vault desde cero.
-Al conectar Drive y sincronizar, la PWA descarga el vault de la extensión e
-intenta descifrarlo con su propia clave derivada — falla con
-`SYNC_MASTER_PASSWORD_MISMATCH`. La operación hace rollback sin pérdida de datos.
+| ID | Hallazgo | Commit |
+|----|----------|--------|
+| C1 | Versión de PWA y Extension sin documentar como intencionalmente distintas | `4aa8eea` |
+| C2 | Sin mecanismo automatizado para verificar sincronía del fork crypto | `cacb6d2` — `scripts/verify-crypto-sync.sh` |
+| C3 | CSV import/export ausente en PWA (solo en Extension) | `cacb6d2` — `web/src/import/`, `web/src/export/` |
+| C4 | OAuth `client_id` hardcodeado sin explicación de rationale de seguridad | `4aa8eea` — documentado en CLAUDE.md |
 
-**Impacto:** Alto — el objetivo principal de v0.4.0 (acceso multi-dispositivo
-Extension↔PWA) no funciona en el escenario más común. El usuario ve el mensaje
-"El vault en el proveedor fue creado con una contraseña diferente" aunque la
-contraseña sea la misma.
+#### Fase 2 — ALTO ✅ RESUELTO
 
-**Estado:** Pendiente diagnóstico en próxima sesión.
+| ID | Hallazgo | Commit |
+|----|----------|--------|
+| A2 | Permiso `activeTab` en `manifest.json` declarado pero nunca usado | `bd67602` |
+| A3 | `_escaparHtml()` duplicada en cada vista PWA — riesgo XSS en vistas nuevas | `bd67602` + `fd5d938` — centralizada en `web/src/utils/escape.js` |
+| A4 | Race condition en `cambiarMasterPassword()` si se invoca concurrentemente | `efbc447` — flag `_cambioEnProgreso` + `finally` en ambos engines |
+| A5 | Nomenclatura inconsistente "Mi Vault" / "Vault" entre Extension y PWA | `efbc447` — unificado a "Vault" |
 
 ---
 

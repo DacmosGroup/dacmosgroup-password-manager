@@ -310,7 +310,7 @@ function solicitarAutocompletado() {
       }
     })
   } catch (_) {
-    console.log('DacmosGroup: extensión no disponible')
+    // extensión no disponible en este contexto — silenciar
   }
 }
 
@@ -540,6 +540,7 @@ chrome.runtime.onMessage.addListener((mensaje, sender, sendResponse) => {
 })
 
 // ── Observar cambios en el DOM (SPAs) ──
+let _debounceDetectar = null
 const observer = new MutationObserver(mutations => {
   const hayNuevosCampos = mutations.some(m =>
     Array.from(m.addedNodes).some(n =>
@@ -549,7 +550,10 @@ const observer = new MutationObserver(mutations => {
       )
     )
   )
-  if (hayNuevosCampos) setTimeout(detectarFormularios, 500)
+  if (hayNuevosCampos) {
+    clearTimeout(_debounceDetectar)
+    _debounceDetectar = setTimeout(detectarFormularios, 300)
+  }
 })
 
 observer.observe(document.body, { childList: true, subtree: true })

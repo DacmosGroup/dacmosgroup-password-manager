@@ -104,8 +104,14 @@ async function desbloquear() {
       window._abrirModalAlDesbloquear = false
     }
 
-  } catch (_) {
-    mostrarErrorUnlock('Error al desbloquear — intenta de nuevo')
+  } catch (err) {
+    // VAULT_VERSION_INCOMPATIBLE indica que el vault fue creado con una
+    // versión futura del engine — no es contraseña incorrecta.
+    if (err.message?.startsWith('VAULT_VERSION_INCOMPATIBLE')) {
+      mostrarErrorUnlock('Actualiza la extensión para abrir este vault')
+    } else {
+      mostrarErrorUnlock('Contraseña incorrecta — intenta de nuevo')
+    }
   } finally {
     btnDesbloquear.textContent = 'Desbloquear Vault'
     btnDesbloquear.disabled    = false

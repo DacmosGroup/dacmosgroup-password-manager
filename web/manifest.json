@@ -2,6 +2,7 @@
   "name": "Dacmos Password Manager",
   "short_name": "Dacmos PM",
   "description": "Gestor de contraseñas Zero-Knowledge — DacmosGroup.co",
+  "version": "0.4.2",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -28,6 +29,12 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/assets/icons/icon-192.png",

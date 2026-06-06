@@ -15,6 +15,7 @@
 import { analizarSaludLocal } from '../../health/password-health.js'
 import { sesionActiva, obtenerCredenciales } from '../../storage/session.js'
 import { navegar } from '../router.js'
+import { escapeHtml } from '../../utils/escape.js'
 
 /** Monta la vista de health en el contenedor dado */
 export async function montar(contenedor) {
@@ -114,8 +115,8 @@ function _renderItem(item) {
   return `
     <div class="health__item">
       <div class="health__item-info">
-        <div class="health__item-sitio">${_escaparHtml(item.sitio || 'Sin nombre')}</div>
-        <div class="health__item-entropia">${item.entropia} bits · ${item.usuario ? _escaparHtml(item.usuario) : ''}</div>
+        <div class="health__item-sitio">${escapeHtml(item.sitio || 'Sin nombre')}</div>
+        <div class="health__item-entropia">${item.entropia} bits · ${item.usuario ? escapeHtml(item.usuario) : ''}</div>
       </div>
       <div class="health__item-badges">
         ${badges.join('')}
@@ -123,12 +124,3 @@ function _renderItem(item) {
     </div>`
 }
 
-/** Escapa HTML para prevenir XSS */
-function _escaparHtml(texto) {
-  return String(texto ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}

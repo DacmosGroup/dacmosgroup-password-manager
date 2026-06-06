@@ -58,6 +58,9 @@ export function activarSwipe(card, manejadores) {
   card.addEventListener('pointerdown', (e) => {
     // Ignorar botones que no sean el principal (botón izquierdo / primer dedo)
     if (e.button !== 0 && e.pointerType !== 'touch') return
+    // Si el press cae sobre los botones de acción, no capturar — el click
+    // debe fluir naturalmente al botón sin ser redirigido a card por setPointerCapture
+    if (e.target.closest('.card__acciones')) return
     startX   = e.clientX
     currentX = e.clientX
     activo   = true
@@ -90,7 +93,12 @@ export function activarSwipe(card, manejadores) {
     if (delta < -UMBRAL_PX) {
       confirmarSwipe()
     } else {
+      const wasSwiped = swiped  // capturar antes de que resetear() borre el estado
       resetear()
+      // Tap limpio (≤8px de jitter) sobre card no-swiped → navegar a edición
+      if (!wasSwiped && Math.abs(delta) < 8) {
+        manejadores.onEditar?.(id)
+      }
     }
   })
 
@@ -120,11 +128,4 @@ export function activarSwipe(card, manejadores) {
     })
   }
 
-  // Tap en el contenido mientras está swiped → resetear (no navegar)
-  contenido.addEventListener('click', (e) => {
-    if (swiped) {
-      e.stopPropagation()
-      resetear()
-    }
-  })
 }

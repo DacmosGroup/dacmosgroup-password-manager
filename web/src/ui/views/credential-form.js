@@ -18,6 +18,7 @@ import {
   sesionActiva,
 } from '../../storage/session.js'
 import { navegar, atras, obtenerEstado } from '../router.js'
+import { escapeHtml }           from '../../utils/escape.js'
 
 // ── Generador de contraseñas inline ──
 // Sin dependencias externas. Rejection sampling para eliminar sesgo estadístico.
@@ -115,7 +116,7 @@ export async function montar(contenedor) {
                    id="cf-sitio"
                    class="input"
                    placeholder="Ej: Gmail, GitHub, Netflix"
-                   value="${_escaparHtml(credencial.sitio ?? '')}"
+                   value="${escapeHtml(credencial.sitio ?? '')}"
                    autocomplete="off"
                    autofocus>
           </div>
@@ -126,7 +127,7 @@ export async function montar(contenedor) {
                    id="cf-url"
                    class="input"
                    placeholder="https://ejemplo.com"
-                   value="${_escaparHtml(credencial.url ?? '')}"
+                   value="${escapeHtml(credencial.url ?? '')}"
                    autocomplete="off">
           </div>
 
@@ -136,7 +137,7 @@ export async function montar(contenedor) {
                    id="cf-usuario"
                    class="input"
                    placeholder="usuario@ejemplo.com"
-                   value="${_escaparHtml(credencial.usuario ?? '')}"
+                   value="${escapeHtml(credencial.usuario ?? '')}"
                    autocomplete="off">
           </div>
 
@@ -147,7 +148,7 @@ export async function montar(contenedor) {
                      id="cf-password"
                      class="input"
                      placeholder="Contraseña"
-                     value="${_escaparHtml(credencial.password ?? '')}"
+                     value="${escapeHtml(credencial.password ?? '')}"
                      autocomplete="new-password">
               <button type="button"
                       class="campo__toggle"
@@ -168,7 +169,7 @@ export async function montar(contenedor) {
                    id="cf-totp"
                    class="input"
                    placeholder="Clave secreta Base32 (opcional)"
-                   value="${_escaparHtml(credencial.totp ?? '')}"
+                   value="${escapeHtml(credencial.totp ?? '')}"
                    autocomplete="off"
                    spellcheck="false">
           </div>
@@ -178,7 +179,7 @@ export async function montar(contenedor) {
             <textarea id="cf-notas"
                       class="input"
                       placeholder="Notas adicionales (no se muestran en autofill)"
-                      rows="3">${_escaparHtml(credencial.notas ?? '')}</textarea>
+                      rows="3">${escapeHtml(credencial.notas ?? '')}</textarea>
           </div>
         </div>
 
@@ -326,12 +327,3 @@ export async function montar(contenedor) {
   })
 }
 
-/** Escapa HTML para prevenir XSS en valores insertados via innerHTML */
-function _escaparHtml(texto) {
-  return String(texto ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}

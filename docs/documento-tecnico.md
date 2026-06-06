@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Versión 0.4.1 · Mayo 2026**
+**Versión 0.4.2 · Junio 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -77,11 +77,11 @@ App Nativa (v0.5.0+):
 
 | Plataforma | Versión | Notas |
 |------------|---------|-------|
-| **PWA** (`dpm.dacmosgroup.co`) | **v0.4.1** | Versión activa — incluye remediaciones de auditoría |
-| **Chrome Extension** (Chrome Web Store) | **v0.3.1** | Ciclo de release independiente — los PRs de remediación v0.4.x afectaron principalmente la PWA; el bump de la extensión se realizará en el próximo release dedicado |
-| **APK Android** (GitHub Releases + IzzyOnDroid) | **v0.4.1** | Generado via TWA — sigue la versión de la PWA |
+| **PWA** (`dpm.dacmosgroup.co`) | **v0.4.2** | Versión activa — incluye remediaciones de auditoría (Fases 1 y 2) |
+| **Chrome Extension** (Chrome Web Store) | **v0.3.1** | Ciclo de release independiente — próximo release será v0.4.0 CWS con remediaciones de Fase 2 |
+| **APK Android** (GitHub Releases + IzzyOnDroid) | **v0.4.2** | Generado via TWA — sigue la versión de la PWA |
 
-> **Nota:** La Chrome Extension y la PWA comparten el motor de cifrado (`engine.js`) pero tienen cadencias de release separadas. Un vault creado con la extensión v0.3.1 es plenamente compatible con la PWA v0.4.1 (backward compat garantizada — ver Sección 13).
+> **Nota:** La Chrome Extension y la PWA comparten el motor de cifrado (`engine.js`) pero tienen cadencias de release separadas. Un vault creado con la extensión v0.3.1 es plenamente compatible con la PWA v0.4.2 (backward compat garantizada — ver Sección 13).
 
 ### Decisiones técnicas F4.1
 
@@ -714,7 +714,7 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 |--------|--------|-----------|
 | Robo de chrome.storage.local / IndexedDB | Alto | Todos los datos están cifrados con AES-256-GCM |
 | Fuerza bruta en master password | Alto | PBKDF2-SHA256 × 600,000 iteraciones |
-| Inyección XSS en vault UI | Medio | Función escapeHtml() en todos los datos del usuario |
+| Inyección XSS en vault UI | Medio | `escapeHtml()` centralizada en `web/src/utils/escape.js` e importada en todas las vistas PWA con innerHTML sobre datos de usuario (vault, credential-form, generator, health) |
 | Content script malicioso | Medio | Aislamiento de contextos MV3 |
 | Supply chain (librerías) | Alto | Sin dependencias de crypto de terceros |
 | Biometría bypasseable en mobile | Alto | BiometricPrompt.CryptoObject obligatorio (v0.5.0+) |
@@ -724,7 +724,8 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 | Exposición en portapapeles | Medio | Limpieza automática configurable (default: 30 segundos) |
 | Session hijacking (Extensión) | Bajo | chrome.storage.session accesible solo por la extensión — aislamiento MV3 |
 | Tokens OAuth en sessionStorage (PWA) | Bajo | MSAL almacena tokens de Microsoft en sessionStorage — aislado por origen, no cifrado por el API; el cifrado es del perfil del browser en disco. Tokens de Google viven en memoria pura (nunca en storage). |
-| XSS en PWA | Medio | La PWA no tiene el aislamiento MV3 de múltiples contextos. Un XSS exitoso en `dpm.dacmosgroup.co` podría acceder a las variables de `session.js`. Mitigaciones: CSP sin `unsafe-inline`/`unsafe-eval` (implementada desde v0.4.1), `escapeHtml()` en todos los datos de usuario, sin `eval()`. |
+| XSS en PWA | Medio | La PWA no tiene el aislamiento MV3 de múltiples contextos. Un XSS exitoso en `dpm.dacmosgroup.co` podría acceder a las variables de `session.js`. Mitigaciones: CSP sin `unsafe-inline`/`unsafe-eval` (desde v0.4.1), `escapeHtml()` centralizada en módulo compartido aplicada en todas las vistas, sin `eval()`. Permiso `activeTab` eliminado del manifest (v0.4.2, superficie reducida). |
+| Cambio de master password concurrente | Bajo | Flag `_cambioEnProgreso` (módulo) en ambos engines previene re-entrada en `cambiarMasterPassword()`; liberado en `finally` para evitar bloqueo permanente. |
 | Service Worker comprometido (PWA) | Medio | Un SW interceptor puede servir assets modificados a todos los clientes de ese origen. Mitigaciones: HTTPS obligatorio en Cloudflare Pages, SW servido desde el mismo origen (`'self'`), `worker-src` restringida en CSP, Workbox fijado a versión exacta (`7.0.0`). |
 
 ### Limitaciones conocidas
@@ -750,7 +751,7 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 
 | Bug | Síntoma | Causa probable | Impacto | Estado |
 |-----|---------|----------------|---------|--------|
-| BUG-3 | Sync Chrome Extension ↔ PWA devuelve `SYNC_MASTER_PASSWORD_MISMATCH` aunque la master password sea idéntica | `sal` y `sal2` son únicas por instalación. La extensión y la PWA generan sales independientes al configurarse — PBKDF2 con la misma password pero sales distintas produce claves AES distintas. El vault cifrado con la clave de la extensión no puede descifrarse con la clave derivada en la PWA. | Alto — el objetivo principal de v0.4.0 (multi-dispositivo Extension↔PWA) no funciona en el escenario más común: usuario con extensión existente que configura la PWA desde cero | Pendiente diagnóstico |
+| BUG-3 | Sync Chrome Extension ↔ PWA devuelve `SYNC_MASTER_PASSWORD_MISMATCH` aunque la master password sea idéntica | Dos causas confirmadas: (1) AAD en AES-GCM — engine v0.3.1 no implementa `descifrarConVersion()`, el auth tag falla con blobs v1. (2) Sales incompatibles — los sync managers subían solo `vaultCifrado` sin sal/sal2/token; el destinatario no puede derivar la clave correcta. | Alto — el objetivo principal de v0.4.0 (multi-dispositivo Extension↔PWA) no funciona en el escenario más común | ✅ Resuelto en v0.4.2 — rama `fix/auditoria-remediaciones` (commit `b3edba4`) |
 
 ### Nota operativa de desarrollo
 
@@ -774,6 +775,7 @@ v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
 v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
 v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.4.1 ✅  Remediación auditoría de seguridad — 5 hallazgos corregidos (A-1, M-1..4, B-1..2)
+v0.4.2 ✅  Remediación auditoría Fases 1+2 (C1-C4, A2-A5) + CSV import/export en PWA + BUG-3 sync salts
 v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
 v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
@@ -1399,6 +1401,16 @@ que `pointermove` y `pointerup` lleguen al elemento aunque el dedo
 salga de sus límites durante el gesto. Sin esto, el swipe se interrumpe
 si el usuario arrastra demasiado rápido y el dedo sale momentáneamente.
 
+`touch-action: pan-y` en `.card__contenido` es condición necesaria para que
+`setPointerCapture` funcione sin `pointercancel` en Chrome Android. Sin esta
+propiedad, el browser reclama el puntero al detectar movimiento mínimo y
+silencia tanto el swipe como el tap.
+
+El guard `e.target.closest('.card__acciones')` en el handler `pointerdown` es
+condición necesaria para que los botones Editar/Eliminar reciban sus propios
+eventos `click`. Sin él, `setPointerCapture` redirige el `click` a `card`
+(el elemento capturante) y los handlers de los botones nunca se ejecutan.
+
 ### Clase CSS sin-nav para vistas de pantalla completa
 
 Las vistas setup, unlock y credential-form son de pantalla completa —
@@ -1812,9 +1824,313 @@ deploys de producción.
 | `web/service-worker.js` | Editado | `SW_DEPLOY_ID = 'dev'` como placeholder; nombres de caché y campos `revision` parametrizados; listener `activate` limpia cachés de deploys anteriores |
 | `.github/workflows/deploy-pwa.yml` | Editado | Paso que inyecta los primeros 7 chars del commit SHA como `SW_DEPLOY_ID` antes de cada deploy |
 
+### Comportamiento en entorno de desarrollo (localhost)
+
+**Fecha:** 2 junio 2026
+**Sesión:** Arquitecto revisor — desbloqueo de verificación funcional v0.4.2
+
+#### Síntoma
+
+Durante la verificación funcional de v0.4.2 (`fix/auditoria-remediaciones`),
+los cambios del commit `787c80b` (tap card / `swipe-card.js`) no se reflejaban
+en `localhost` ni tras Clear Site Data + Unregister SW. Bloqueaba los criterios
+de aceptación C1/C2/C3, que se verifican interactuando con las cards en la UI
+de la PWA.
+
+#### Causa raíz
+
+Es la causa raíz de BUG-2 reapareciendo en el dev-path que el fix de
+producción no cubre. El fix de BUG-2 reemplaza `SW_DEPLOY_ID` vía CI (`sed`)
+únicamente en cada deploy a Cloudflare. En `localhost` no hay CI, así que
+`SW_DEPLOY_ID` queda en su placeholder `'dev'` — constante por diseño. Como
+Workbox usa el `revision` derivado de `SW_DEPLOY_ID` como clave de
+invalidación, un asset editado con `revision` sin cambiar es tratado como
+"sin cambios" → Workbox sirve la copia cacheada y nunca refetchea.
+
+Culpables concurrentes en el fallo de "Clear Site Data + Unregister SW":
+1. `Unregister` no surte efecto hasta cerrar todos los clientes (tabs) del origin.
+2. Repoblación inmediata del precache desde servidor estático local / HTTP disk cache que devuelve 304.
+3. Ruta runtime `CacheFirst` sin revalidación (cache por URL, TTL 30 días).
+
+#### Decisión: Opción A — bypass del SW gated por hostname
+
+| Opción | Estado | Razón |
+|--------|--------|-------|
+| **A — bypass gated por hostname (`ENTORNO_DEV`)** | ✅ Aprobada | Dev siempre fresco, prod intacto, sin toggles manuales |
+| B — `SW_DEPLOY_ID = 'dev-' + Date.now()` en localhost | Descartada | Re-precachea todo en cada reload y aún exige "Update on reload" para tomar el nuevo id |
+| C — solo proceso (DevTools "Bypass for network" + "Update on reload") | Desbloqueo inmediato | Útil para cerrar C1–C7 en sesión, pero no enforced |
+| Workbox Inject Manifest | Descartada (ya en BUG-2) | Requiere build step — incompatible con stack sin bundler |
+
+**Resolución:** C como desbloqueo inmediato + A como fix durable en el mismo PR de v0.4.2.
+
+#### Contrato de implementación
+
+`web/service-worker.js`:
+
+```javascript
+const ENTORNO_DEV = ['localhost', '127.0.0.1', '[::1]']
+    .includes(self.location.hostname);
+```
+
+- `precacheAndRoute([...])` y la ruta runtime `CacheFirst` de assets se registran
+  solo si `!ENTORNO_DEV`. En dev el fetch de assets pasa a red.
+- La ruta `NetworkFirst` de HTML no cambia (va a red primero, no produce stale).
+- El listener `activate`, en `ENTORNO_DEV`, limpia todas las Cache Storage del origin.
+- `skipWaiting()` + `clientsClaim()` sin cambios.
+
+#### Riesgos mitigados
+
+| # | Riesgo | Mitigación |
+|---|--------|------------|
+| R1 | La rama dev llega a producción | Gate runtime por hostname real; Cloudflare jamás sirve `localhost`. Guard + comentario explícito; revisión en PR |
+| R2 | Superficie de amenaza del SW | El bypass reduce caché, no añade capacidad → no ensancha la superficie en prod |
+| R3 | `offline.html` no funciona en localhost dev | Aceptable; offline es preocupación de prod. Documentado |
+
 ---
 
-## 21. Referencias
+## 21. Auditoría Profunda — Hallazgos v0.4.1 / v0.4.2
+
+**Fecha:** 31 mayo 2026
+**Disparada por:** sync PWA ↔ Extension falla + vault inaccesible en extensión CWS.
+**Branch auditado:** main + feature/v0.4.0
+
+### H-0 [URGENTE] — Causa raíz del vault inaccesible ✅ Resuelto v0.4.2
+
+**Síntoma:** "Error al verificar — intenta de nuevo" al desbloquear la extensión CWS v0.3.1.
+
+**Diagnóstico confirmado via chrome.storage.local DevTools:**
+El sync de la extensión descargó el vault completo de la PWA (blob v1 con AAD) e instaló las sales de la PWA en chrome.storage.local. El storage era internamente consistente (todo v1) pero la extensión CWS v0.3.1 usa engine.js sin `descifrarConVersion()` — llama a `descifrar()` sin AAD → AES-GCM auth tag falla.
+
+**Cierre:** Publicar extensión v0.4.2 con engine.js que incluye `descifrarConVersion()`.
+
+---
+
+### H-1 [CRÍTICO — Integrity] — Vault overwrite sin verificación ✅ Resuelto v0.4.2
+
+**Archivo:** `src/sync/sync-manager.js`, `src/sync/onedrive-sync-manager.js`
+
+El sync de la extensión almacenaba el blob descargado directamente en chrome.storage.local sin verificar compatibilidad con el vault local. La PWA había corregido esto en BUG-1 (rollback si descifrado falla) pero la extensión nunca recibió ese fix.
+
+**Remediación implementada:** Verificación defensiva por comparación de sales:
+- Sal igual a la local → actualización segura (mismo origen de claves).
+- Sal distinta + sesión activa → NO escribe, error visible al usuario.
+- Sal distinta + sin sesión → escribe todo, invalida sesión, notifica al usuario.
+- Blob legacy (sin sal) → comportamiento anterior (backward compat).
+
+---
+
+### H-2 [CRÍTICO — Confidentiality] — engine.js v1 incompatible con CWS v0.3.1 ✅ Resuelto v0.4.2
+
+La extensión publicada en CWS (v0.3.1) no tiene `descifrarConVersion()`. El repo (main) sí la tiene. El vault v1 producido por la PWA no puede descifrarse por el engine v0.3.1. Cierre: publicar v0.4.2.
+
+---
+
+### H-3 [CRÍTICO — Integrity] — BUG-3 fix incompleto: OneDrive no enriquece blob ✅ Resuelto v0.4.2
+
+**Archivo:** `src/sync/onedrive-sync-manager.js`
+
+El fix de BUG-3 (blob enriquecido con sal/sal2/tokenVerificacion) había sido implementado solo para Google Drive en feature/v0.4.0. OneDrive seguía subiendo el blob sin enriquecer. Corregido: ambos sync managers de la extensión (y el de la PWA, scope ampliado aprobado) implementan el mismo patrón.
+
+---
+
+### H-4 [ALTO — Availability] — BUG-3 fix no estaba en producción ✅ Resuelto v0.4.2
+
+Los commits 233ebcc y 266a024 (fix BUG-3 parcial) estaban solo en feature/v0.4.0. La PWA desplegada y la extensión CWS no los tenían. Resuelto al publicar v0.4.2 con todos los fixes mergeados desde main.
+
+---
+
+### H-5 [ALTO — Non-repudiation] — Sin verificación de identidad del vault en sync
+
+El sync no puede confirmar que el vault en Drive "pertenece" a esta instalación. No existe identificador de instalación opaco en el blob. **Deuda técnica aceptada hasta v0.5.0** (sync per-item con deviceId opaco, ver Sección 15).
+
+---
+
+### H-6 [ALTO — Confidentiality] — vault.js enmascaraba errores críticos ✅ Resuelto v0.4.2
+
+**Archivo:** `src/ui/vault/vault.js`
+
+El catch genérico `catch (_)` convertía DOMException, TypeError, SyntaxError y VAULT_VERSION_INCOMPATIBLE en el mismo string genérico "Error al desbloquear — intenta de nuevo". El usuario no podía distinguir entre contraseña incorrecta y versión incompatible.
+
+**Remediación:** `catch (err)` con distinción explícita:
+- `VAULT_VERSION_INCOMPATIBLE` → "Actualiza la extensión para abrir este vault"
+- Cualquier otro error → "Contraseña incorrecta — intenta de nuevo"
+
+---
+
+### H-7 [MEDIO — Integrity] — Inconsistencia nombre proveedor Google Drive ✅ Resuelto v0.4.2
+
+La PWA usaba el string `'google'` para el proveedor mientras la extensión usaba `'google-drive'`. Normalizado a `'google-drive'` en todos los componentes. No produce choque funcional en v0.4.x (storages separados) pero podría causar bugs en v0.5.0 con Capacitor compartiendo storage.
+
+---
+
+### H-8 [MEDIO — Availability] — sesionActiva persiste tras reinicio
+
+`sesionActiva: true` puede quedar en chrome.storage.local tras reinicio del service worker. El popup puede mostrar "desbloqueado" sin credenciales en session storage. No compromete seguridad (clave AES limpiada). **Deuda técnica — resolución en v0.5.0.**
+
+---
+
+### H-9 [BAJO — Non-repudiation] — Sin logging de sync
+
+No hay registro de sync events (quién subió, cuándo, qué timestamp ganó LWW). **Deuda técnica — resolución en v0.5.0** con sync per-item + Lamport clock.
+
+---
+
+### H-10 [NUEVO — UX/Security] — Campo contraseña en diálogo importar muestra texto plano ✅ Resuelto v0.4.2
+
+**Archivo:** `web/src/ui/views/settings.js`
+
+Los diálogos de exportar e importar backup usaban `prompt()` nativo, que muestra la contraseña en texto claro mientras se escribe. Reemplazados por `_pedirContrasena()`: modal con `<input type="password">`, toggle de visibilidad, soporte Enter/Escape.
+
+---
+
+### Estado de recuperación del vault (incidente sesión 31 mayo 2026)
+
+- **Vault en Drive:** Intacto — blob v1 con sales de la extensión original.
+- **Backup local:** `dacmos-backup-2026-05-31T22:04:59.json` — 1KB, formato v1 con envelope completo, 2 credenciales confirmadas.
+- **Ruta de recuperación:** Importar backup en la PWA v0.4.2 (importarVaultBackup() funciona correctamente; el error previo era por el catch genérico en console.error, no en el engine).
+
+---
+
+## 22. Decisiones de Implementación — v0.4.2
+
+**Fecha:** 1 junio 2026
+**Sesión:** Arquitecto revisor (Claude) — aprobación de estrategia de remediación post-auditoría #2
+
+### Causa raíz confirmada — incompatibilidad cross-platform
+
+La incompatibilidad entre Chrome Extension v0.3.1 (CWS) y PWA v0.4.1 es de **AAD en AES-GCM**, no de sales.
+
+El engine.js publicado en CWS (v0.3.1) no implementa `descifrarConVersion()`, `serializarAAD()`, ni el parámetro `additionalData` en ninguna llamada a `crypto.subtle`. Toda la lógica de AAD/versionado se introdujo en v0.4.0 y nunca se publicó a CWS. Un blob `__version: 1` producido por la PWA no puede descifrarse por el engine v0.3.1 — el auth tag de AES-GCM falla porque la contraparte no computa el mismo AAD.
+
+Las sales (BUG-3) son un hallazgo separado y correcto, pero no la causa del bloqueo actual del usuario.
+
+### H-4 — BUG-3 fix nunca llegó a main
+
+El commit `233ebcc` (fix de sales para Google Drive) existe únicamente en `feature/v0.4.0`. No fue mergeado a `main`. Por tanto:
+- La PWA desplegada en `dpm.dacmosgroup.co` (desde main) no tenía enriquecimiento de sales en Drive.
+- La extensión CWS nunca tuvo ese fix.
+
+Ambas superficies se corrigen en v0.4.2.
+
+### Decisión: Opción B — rama fix/auditoria-remediaciones desde main
+
+**Opciones evaluadas:**
+- A: Hotpatch v0.3.2 (solo engine.js) → descartada: deja H-1, H-3 abiertos.
+- **B: fix/auditoria-remediaciones → v0.4.2 → APROBADA.**
+- C: Merge feature/v0.4.0 + remediaciones → descartada: 269 líneas no auditadas en setup.js; H-3 OneDrive tampoco resuelto en esa rama.
+- D: Hotpatch + release limpio → descartada: vault tiene solo 2 credenciales desechables; doble submission CWS no justificada.
+
+**Razonamiento:** El vault del usuario es desechable (2 credenciales, backups disponibles). Un solo release limpio con todos los hallazgos cerrados es preferible.
+
+### Decisión: re-implementar BUG-3 desde spec, no cherry-pick
+
+El fix de BUG-3 para Google Drive (commit `233ebcc`, solo en `feature/v0.4.0`) **no se cherry-pickeó** en `fix/auditoria-remediaciones`. Se re-implementó en ambos proveedores de la extensión (Google Drive y OneDrive) y en la PWA (scope ampliado) usando `docs/documento-tecnico.md §19` como spec de referencia.
+
+**Razón:** `feature/v0.4.0` contiene cambios no auditados (setup.js, 269 líneas nuevas) fuera del scope de v0.4.2. Importar esa rama introduce superficie no revisada en un release de seguridad.
+
+### Formato del blob enriquecido (BUG-3)
+
+```
+// Blob legacy (v0.3.x, upload sin enriquecimiento):
+{ "__version": 1, "kdf": "PBKDF2-SHA256", "kdfIterations": 600000, "iv": "...", "datos": "..." }
+
+// Blob enriquecido (v0.4.2+, formato plano):
+{ "__version": 1, "kdf": "PBKDF2-SHA256", "kdfIterations": 600000, "iv": "...", "datos": "...",
+  "sal": "<base64>", "sal2": "<base64>", "tokenVerificacion": { ... } }
+```
+
+**Detección:** `blobRemoto.sal !== undefined` → enriquecido; sin campo `sal` → legacy.
+**Backward compat:** Blobs legacy se procesan sin verificación de sales (mismo comportamiento anterior).
+**Extracción:** `const { sal, sal2, tokenVerificacion, ...vaultCifrado } = blobEnriquecido` — el vault se guarda en `vaultCifrado`, las sales en sus claves propias en storage.
+
+### Decisión: verificación defensiva en service worker sin clave AES (H-1)
+
+El service worker de la extensión NO tiene acceso a la clave AES (principio Zero-Knowledge documentado: "The AES key stays only in JS memory within the page/popup context"). La verificación "intentar descifrar antes de persistir" se implementa mediante comparación de sales:
+
+| Escenario | Acción |
+|-----------|--------|
+| `sal_remoto === sal_local` | Escribir vault + sales (compatible) |
+| `sal_remoto !== sal_local` + sesión activa | NO escribir — error visible. La clave AES en sesión no puede descifrar el vault remoto |
+| `sal_remoto !== sal_local` + sin sesión | Escribir todo + invalidar sesión + notificar |
+| Blob legacy (sin `sal`) | Escritura directa (backward compat) |
+
+### Decisión: scope ampliado — PWA sync-manager incluida en Bloque 2
+
+Aprobado por el arquitecto para cerrar el criterio de aceptación 1 (round-trip PWA→Extension). `web/src/sync/sync-manager.js` incluye enriquecimiento en upload y extracción + rollback completo de sales en descarga.
+
+### Regla de proceso — aislamiento de Drive en desarrollo
+
+La extensión load-unpacked (desarrollo) y la extensión CWS comparten el mismo `appDataFolder` en Google Drive del perfil Chrome activo. Una operación de sync desde la extensión de desarrollo puede sobrescribir el vault real de producción — fue la causa del incidente de esta sesión.
+
+**Regla:** Nunca ejecutar operaciones de sync desde la extensión load-unpacked contra el Drive/OneDrive de producción. Usar perfil Chrome separado o cuenta de prueba. Documentado en `.claude/CLAUDE.md`.
+
+### CSV Import/Export en PWA (C3 — Fase 1)
+
+Hallazgo C3 de la auditoría identificó que CSV import/export existía en la extensión Chrome pero no en la PWA. Cerrado en v0.4.2 con los siguientes módulos:
+
+| Módulo | Ruta | Descripción |
+|--------|------|-------------|
+| CSV Importer | `web/src/import/csv-importer.js` | Parser RFC 4180 con detección automática de formato (Google, Bitwarden, LastPass, 1Password, genérico). Maneja BOM UTF-8, campos citados, CRLF. |
+| Import Wizard | `web/src/import/import-wizard.js` | UI del wizard de importación. Vista dentro de Settings → Importar credenciales. |
+| CSV Exporter | `web/src/export/csv-exporter.js` | Exporta el vault descifrado como CSV. Formato compatible con Google Password Manager. |
+
+**Decisión de implementación:** Fork de `src/import/csv-importer.js` y `src/export/csv-exporter.js`. La lógica es idéntica — no se introdujeron diferencias de comportamiento. Los módulos PWA eliminan referencias a `chrome.*` que no existen en el contexto PWA (los originales no tenían ninguna, así que los archivos son byte-for-byte iguales salvo el comentario de cabecera).
+
+**Esquema de credencial importada:**
+```json
+{ "sitio": "string", "url": "string", "usuario": "string", "password": "string", "notas": "string" }
+```
+El importador filtra silenciosamente entradas sin `usuario` y sin `password`. Si falta `sitio`, lo deriva del hostname de `url`.
+
+**Validación de schema en backup import (M2 — Fase 3):** `importarVaultBackup()` en ambos engines valida ahora que cada credencial del backup tenga los campos `id`, `sitio`, `usuario`, `password` antes de persistir. Backups malformados lanzan `BACKUP_CREDENCIALES_INVALIDAS`.
+
+---
+
+### 7 criterios de aceptación — v0.4.2
+
+1. Round-trip PWA→Extension: credencial creada en PWA sincroniza a Drive y es visible en extensión v0.4.2 desbloqueada.
+2. Round-trip Extension→PWA: credencial creada en extensión sincroniza a Drive y es visible en PWA desbloqueada.
+3. H-1 cerrado: forzar descarga de vault con contraseña distinta no sobrescribe el vault local; error visible; vault intacto.
+4. H-3 cerrado: sync OneDrive incluye sal, sal2, tokenVerificacion en el blob subido.
+5. H-6 cerrado: extensión v0.4.2 con vault v1 en storage muestra "Actualiza la extensión" (no "Error al desbloquear").
+6. H-10 cerrado: campo contraseña en import/export no visible al escribir.
+7. Docs reconciliados: roadmap sin sección duplicada; BUG-3 con commit correcto; manifest.json version == tag de release; 0 catch silenciosos en paths de descifrado o import/export.
+
+---
+
+## 23. Versionado por superficie
+
+A partir de v0.4.2, cada superficie versiona de forma independiente.
+El mismo número de versión hoy no implica ciclos de release acoplados
+en el futuro: la extensión Chrome sigue el ciclo de Chrome Web Store
+(revisión manual, días de latencia) y la PWA sigue el ciclo de
+Cloudflare Pages (deploy inmediato en cada push a main).
+
+### Fuentes de verdad por superficie
+
+| Superficie | Archivo | Ciclo de release |
+|------------|---------|-----------------|
+| Chrome Extension | `manifest.json` → campo `"version"` | Chrome Web Store (review manual) |
+| PWA | `web/manifest.json` → campo `"version"` | Cloudflare Pages (deploy en push a main) |
+| Vault format | `__version` en blob cifrado (`web/src/crypto/engine.js`) | Contrato compartido — cambiar requiere migración en ambas superficies |
+
+### Compatibilidad inicial
+
+| Extension | PWA | Vault `__version` | Compatible |
+|-----------|-----|-------------------|-----------|
+| v0.4.2+   | v0.4.2+ | 1 | ✅ |
+| v0.3.1 (CWS) | cualquiera | 1 | ❌ AAD incompatible — Extension muestra "Actualiza la extensión" |
+| cualquiera | cualquiera | 0 (legacy, sin campo) | ✅ backward compat vía path sin AAD |
+
+**Regla de evolución:** un incremento en `__version` del blob (ej. v1→v2)
+requiere que AMBAS superficies soporten el nuevo formato antes de que
+cualquier cliente produzca blobs con ese `__version`. El campo
+`VAULT_VERSION_INCOMPATIBLE` en `engine.js` es el mecanismo de
+detección de incompatibilidad en runtime.
+
+---
+
+## 24. Referencias
 
 ### Estándares y especificaciones
 

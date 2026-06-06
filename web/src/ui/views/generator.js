@@ -11,8 +11,9 @@
  * Botón 📋 para copiar al portapapeles.
  *
  * Generación: rejection sampling con crypto.getRandomValues() — sin sesgo.
- * Sin dependencias externas.
  */
+
+import { escapeHtml } from '../../utils/escape.js'
 
 // Historial en memoria de módulo — persiste mientras la vista no se destruye
 // pero se pierde al cerrar la pestaña (no es material sensible — solo conveniencia)
@@ -267,20 +268,11 @@ function _renderHistorial() {
   if (_historial.length === 0) return ''
   return _historial.map(p => `
     <div class="generator__historial-item">
-      <span class="generator__historial-pass monospace">${_escaparHtml(p)}</span>
+      <span class="generator__historial-pass monospace">${escapeHtml(p)}</span>
       <button class="btn btn--pequeño btn--secundario"
-              data-copiar="${_escaparHtml(p)}"
+              data-copiar="${escapeHtml(p)}"
               type="button"
               aria-label="Copiar">📋</button>
     </div>`).join('')
 }
 
-/** Escapa HTML para prevenir XSS */
-function _escaparHtml(texto) {
-  return String(texto ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}

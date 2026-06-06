@@ -343,6 +343,8 @@ textarea.input {
   background: var(--color-surface);
   will-change: transform;  /* compositing en GPU para animaciones suaves */
   min-height: var(--touch-min);
+  touch-action: pan-y;  /* browser maneja scroll vertical, JS maneja swipe horizontal */
+  cursor: pointer;      /* feedback visual de interactividad */
 }
 
 .card__icono {
