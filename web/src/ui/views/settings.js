@@ -16,7 +16,10 @@ import {
   cambiarMasterPassword,
   exportarVaultBackup,
   importarVaultBackup,
+  cargarVaultDescifrado,
 } from '../../crypto/engine.js'
+import { generarCSVGenerico, generarCSVBitwarden } from '../../export/csv-exporter.js'
+import { inicializarWizardImportCSV }              from '../../import/import-wizard.js'
 import { idbStorage }          from '../../storage/indexeddb-adapter.js'
 import { verificarPersistencia } from '../../storage/persistence-manager.js'
 import {
@@ -193,6 +196,69 @@ export async function montar(contenedor) {
           </div>
         </div>
         <div class="unlock__error oculto" id="backup-msg" role="alert"></div>
+      </div>
+
+      <!-- ── 3b. Exportar / Importar CSV ── -->
+      <p class="seccion-titulo">EXPORTAR / IMPORTAR CSV</p>
+      <div class="settings__seccion tarjeta">
+        <div class="settings__fila">
+          <div class="settings__fila-info">
+            <div class="settings__fila-titulo">Exportar CSV</div>
+            <div class="settings__fila-descripcion">Descarga tus credenciales en formato compatible con otros gestores</div>
+          </div>
+          <div class="settings__fila-accion settings__fila-accion--multiple">
+            <button class="btn btn--pequeño btn--secundario" id="btn-exportar-csv-generico" type="button">Genérico</button>
+            <button class="btn btn--pequeño btn--secundario" id="btn-exportar-csv-bitwarden" type="button">Bitwarden</button>
+          </div>
+        </div>
+        <div class="settings__fila">
+          <div class="settings__fila-info">
+            <div class="settings__fila-titulo">Importar CSV</div>
+            <div class="settings__fila-descripcion">Importa desde Google PM, Bitwarden, LastPass, 1Password o CSV genérico</div>
+          </div>
+          <div class="settings__fila-accion">
+            <button class="btn btn--pequeño btn--secundario" id="btnAbrirImportarCSV" type="button">Importar</button>
+          </div>
+        </div>
+        <!-- ── Wizard de importación CSV (oculto por defecto) ── -->
+        <div id="panelImportarCSV" class="hidden">
+          <div class="settings__csv-wizard">
+            <label class="campo">
+              <span class="campo__etiqueta">Seleccionar archivo CSV</span>
+              <input type="file" id="inputArchivoCSV" accept=".csv" class="input">
+            </label>
+            <div id="grupoFormatoCSV" style="display:none">
+              <div id="badgeFormatoCSV" class="import-format-badge"></div>
+              <select id="selectFormatoCSV" class="input">
+                <option value="">-- Seleccionar formato --</option>
+                <option value="google">Google Password Manager</option>
+                <option value="bitwarden">Bitwarden</option>
+                <option value="lastpass">LastPass</option>
+                <option value="1password">1Password</option>
+                <option value="generico">CSV Genérico</option>
+              </select>
+            </div>
+            <div id="errorImportarCSV" class="unlock__error oculto" role="alert"></div>
+            <div id="grupoAccionesCSV" style="display:none" class="settings__csv-wizard-acciones">
+              <button class="btn btn--pequeño btn--primario"   id="btnPrevisualizarCSV"    type="button">Previsualizar importación</button>
+              <button class="btn btn--pequeño btn--secundario" id="btnCancelarImportarCSV" type="button">Cancelar</button>
+            </div>
+            <div id="panelPreviewCSV" class="hidden">
+              <div id="resumenPreviewCSV" class="csv-resumen"></div>
+              <div class="csv-tabla-scroll">
+                <table class="csv-preview-table">
+                  <thead>
+                    <tr><th>Sitio</th><th>URL</th><th>Usuario</th><th>Contraseña</th><th>Estado</th></tr>
+                  </thead>
+                  <tbody id="tbodyPreviewCSV"></tbody>
+                </table>
+              </div>
+              <button class="btn btn--pequeño btn--primario" id="btnConfirmarImportarCSV" type="button" disabled>Importar</button>
+            </div>
+            <div id="successImportarCSV" class="unlock__error alerta--exito oculto" role="status"></div>
+          </div>
+        </div>
+        <div class="unlock__error oculto" id="csv-msg" role="alert"></div>
       </div>
 
       <!-- ── 4. Sincronización ── -->
@@ -378,6 +444,38 @@ export async function montar(contenedor) {
     }
   })
 
+  // ── Exportar CSV ──
+  contenedor.querySelector('#btn-exportar-csv-generico')?.addEventListener('click', async () => {
+    const clave = obtenerClave()
+    if (!clave) return
+    const csvMsg = contenedor.querySelector('#csv-msg')
+    try {
+      const credenciales = await cargarVaultDescifrado(clave)
+      const csv = generarCSVGenerico(credenciales)
+      _descargarArchivo(csv, 'text/csv', `dacmos-export-${new Date().toISOString().slice(0,10)}.csv`)
+    } catch (_) {
+      csvMsg.textContent = 'Error al exportar. Intenta de nuevo.'
+      csvMsg.classList.remove('oculto')
+    }
+  })
+
+  contenedor.querySelector('#btn-exportar-csv-bitwarden')?.addEventListener('click', async () => {
+    const clave = obtenerClave()
+    if (!clave) return
+    const csvMsg = contenedor.querySelector('#csv-msg')
+    try {
+      const credenciales = await cargarVaultDescifrado(clave)
+      const csv = generarCSVBitwarden(credenciales)
+      _descargarArchivo(csv, 'text/csv', `dacmos-bitwarden-${new Date().toISOString().slice(0,10)}.csv`)
+    } catch (_) {
+      csvMsg.textContent = 'Error al exportar. Intenta de nuevo.'
+      csvMsg.classList.remove('oculto')
+    }
+  })
+
+  // ── Import wizard CSV ──
+  inicializarWizardImportCSV(contenedor)
+
   // ── Sync Google Drive ──
   contenedor.querySelector('#btn-conectar-google')?.addEventListener('click', async () => {
     const msgEl = contenedor.querySelector('#sync-msg')
@@ -476,6 +574,17 @@ export async function montar(contenedor) {
     limpiarSesion()
     navegar('#/unlock')
   })
+}
+
+/** Descarga un string como archivo en el navegador sin chrome.downloads */
+function _descargarArchivo(contenido, tipo, nombre) {
+  const blob = new Blob([contenido], { type: tipo })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = nombre
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 /** Formatea bytes en una cadena legible (B, KB, MB) */
