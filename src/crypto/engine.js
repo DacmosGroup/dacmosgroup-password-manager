@@ -349,7 +349,11 @@ async function cargarVaultDescifrado(clave) {
 // ── CAMBIAR CONTRASEÑA MAESTRA ──
 // Re-cifra todo el vault con una nueva contraseña maestra
 // DECISIÓN DE SEGURIDAD: El proceso completo ocurre en memoria.
+let _cambioEnProgreso = false
 async function cambiarMasterPassword(passwordActual, passwordNueva) {
+  if (_cambioEnProgreso) throw new Error('CAMBIO_EN_PROGRESO')
+  _cambioEnProgreso = true
+  try {
   // Paso 1: Verificar contraseña actual
   const claveActual = await desbloquearVault(passwordActual);
   if (!claveActual) {
@@ -383,6 +387,9 @@ async function cambiarMasterPassword(passwordActual, passwordNueva) {
   });
 
   return claveNueva;
+  } finally {
+    _cambioEnProgreso = false
+  }
 }
 
 // ── EXPORTAR VAULT COMO BACKUP CIFRADO ──
