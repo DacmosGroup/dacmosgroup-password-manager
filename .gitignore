@@ -41,3 +41,6 @@ app/build/
 .gradle/
 build/
 local.properties
+
+# Documentos de sesión Claude Code (planificación interna, no doc formal)
+docs/auditoria-remediaciones-*.md
