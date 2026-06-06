@@ -604,6 +604,30 @@ y las sales del vault remoto.
 
 ---
 
+### Auditoría #3 — Hallazgos de seguimiento (2026-06-06)
+
+Auditoría profunda sobre el branch `fix/auditoria-remediaciones` tras las remediaciones de Auditoría #2.
+
+#### Fase 1 — CRÍTICO ✅ RESUELTO
+
+| ID | Hallazgo | Commit |
+|----|----------|--------|
+| C1 | Versión de PWA y Extension sin documentar como intencionalmente distintas | `4aa8eea` |
+| C2 | Sin mecanismo automatizado para verificar sincronía del fork crypto | `cacb6d2` — `scripts/verify-crypto-sync.sh` |
+| C3 | CSV import/export ausente en PWA (solo en Extension) | `cacb6d2` — `web/src/import/`, `web/src/export/` |
+| C4 | OAuth `client_id` hardcodeado sin explicación de rationale de seguridad | `4aa8eea` — documentado en CLAUDE.md |
+
+#### Fase 2 — ALTO ✅ RESUELTO
+
+| ID | Hallazgo | Commit |
+|----|----------|--------|
+| A2 | Permiso `activeTab` en `manifest.json` declarado pero nunca usado | `bd67602` |
+| A3 | `_escaparHtml()` duplicada en cada vista PWA — riesgo XSS en vistas nuevas | `bd67602` + `fd5d938` — centralizada en `web/src/utils/escape.js` |
+| A4 | Race condition en `cambiarMasterPassword()` si se invoca concurrentemente | `efbc447` — flag `_cambioEnProgreso` + `finally` en ambos engines |
+| A5 | Nomenclatura inconsistente "Mi Vault" / "Vault" entre Extension y PWA | `efbc447` — unificado a "Vault" |
+
+---
+
 > **DacmosGroup.co** — Tecnología compleja, explicada de forma simple.
 >
 > *Datos · Nube · Movilidad · Seguridad*

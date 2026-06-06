@@ -77,11 +77,11 @@ App Nativa (v0.5.0+):
 
 | Plataforma | Versión | Notas |
 |------------|---------|-------|
-| **PWA** (`dpm.dacmosgroup.co`) | **v0.4.1** | Versión activa — incluye remediaciones de auditoría |
-| **Chrome Extension** (Chrome Web Store) | **v0.3.1** | Ciclo de release independiente — los PRs de remediación v0.4.x afectaron principalmente la PWA; el bump de la extensión se realizará en el próximo release dedicado |
-| **APK Android** (GitHub Releases + IzzyOnDroid) | **v0.4.1** | Generado via TWA — sigue la versión de la PWA |
+| **PWA** (`dpm.dacmosgroup.co`) | **v0.4.2** | Versión activa — incluye remediaciones de auditoría (Fases 1 y 2) |
+| **Chrome Extension** (Chrome Web Store) | **v0.3.1** | Ciclo de release independiente — próximo release será v0.4.0 CWS con remediaciones de Fase 2 |
+| **APK Android** (GitHub Releases + IzzyOnDroid) | **v0.4.2** | Generado via TWA — sigue la versión de la PWA |
 
-> **Nota:** La Chrome Extension y la PWA comparten el motor de cifrado (`engine.js`) pero tienen cadencias de release separadas. Un vault creado con la extensión v0.3.1 es plenamente compatible con la PWA v0.4.1 (backward compat garantizada — ver Sección 13).
+> **Nota:** La Chrome Extension y la PWA comparten el motor de cifrado (`engine.js`) pero tienen cadencias de release separadas. Un vault creado con la extensión v0.3.1 es plenamente compatible con la PWA v0.4.2 (backward compat garantizada — ver Sección 13).
 
 ### Decisiones técnicas F4.1
 
@@ -714,7 +714,7 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 |--------|--------|-----------|
 | Robo de chrome.storage.local / IndexedDB | Alto | Todos los datos están cifrados con AES-256-GCM |
 | Fuerza bruta en master password | Alto | PBKDF2-SHA256 × 600,000 iteraciones |
-| Inyección XSS en vault UI | Medio | Función escapeHtml() en todos los datos del usuario |
+| Inyección XSS en vault UI | Medio | `escapeHtml()` centralizada en `web/src/utils/escape.js` e importada en todas las vistas PWA con innerHTML sobre datos de usuario (vault, credential-form, generator, health) |
 | Content script malicioso | Medio | Aislamiento de contextos MV3 |
 | Supply chain (librerías) | Alto | Sin dependencias de crypto de terceros |
 | Biometría bypasseable en mobile | Alto | BiometricPrompt.CryptoObject obligatorio (v0.5.0+) |
@@ -724,7 +724,8 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 | Exposición en portapapeles | Medio | Limpieza automática configurable (default: 30 segundos) |
 | Session hijacking (Extensión) | Bajo | chrome.storage.session accesible solo por la extensión — aislamiento MV3 |
 | Tokens OAuth en sessionStorage (PWA) | Bajo | MSAL almacena tokens de Microsoft en sessionStorage — aislado por origen, no cifrado por el API; el cifrado es del perfil del browser en disco. Tokens de Google viven en memoria pura (nunca en storage). |
-| XSS en PWA | Medio | La PWA no tiene el aislamiento MV3 de múltiples contextos. Un XSS exitoso en `dpm.dacmosgroup.co` podría acceder a las variables de `session.js`. Mitigaciones: CSP sin `unsafe-inline`/`unsafe-eval` (implementada desde v0.4.1), `escapeHtml()` en todos los datos de usuario, sin `eval()`. |
+| XSS en PWA | Medio | La PWA no tiene el aislamiento MV3 de múltiples contextos. Un XSS exitoso en `dpm.dacmosgroup.co` podría acceder a las variables de `session.js`. Mitigaciones: CSP sin `unsafe-inline`/`unsafe-eval` (desde v0.4.1), `escapeHtml()` centralizada en módulo compartido aplicada en todas las vistas, sin `eval()`. Permiso `activeTab` eliminado del manifest (v0.4.2, superficie reducida). |
+| Cambio de master password concurrente | Bajo | Flag `_cambioEnProgreso` (módulo) en ambos engines previene re-entrada en `cambiarMasterPassword()`; liberado en `finally` para evitar bloqueo permanente. |
 | Service Worker comprometido (PWA) | Medio | Un SW interceptor puede servir assets modificados a todos los clientes de ese origen. Mitigaciones: HTTPS obligatorio en Cloudflare Pages, SW servido desde el mismo origen (`'self'`), `worker-src` restringida en CSP, Workbox fijado a versión exacta (`7.0.0`). |
 
 ### Limitaciones conocidas
