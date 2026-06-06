@@ -456,6 +456,48 @@ el número de iteraciones.
 
 ---
 
+## Auditoría Post-Release — Estado de remediaciones
+
+### Fase 1 — Crítico ✅ COMPLETADA (commits `cacb6d2`, `4aa8eea`)
+
+| ID | Hallazgo | Resolución | Commit |
+|----|----------|-----------|--------|
+| C1 | Versiones PWA vs Extension intencionalmente distintas sin documentar | Documentado en CLAUDE.md — Versioning Strategy | `4aa8eea` |
+| C2 | Sin mecanismo para verificar sincronía del fork `crypto/engine.js` | Script automatizado `scripts/verify-crypto-sync.sh` | `cacb6d2` |
+| C3 | CSV import/export ausente en PWA | Módulos `web/src/import/` y `web/src/export/` | `cacb6d2` |
+| C4 | OAuth `client_id` hardcodeado en `manifest.json` sin rationale de seguridad | Explicación de seguridad documentada en CLAUDE.md | `4aa8eea` |
+
+### Fase 2 — Alto ✅ COMPLETADA (commits `bd67602`, `efbc447`, `fd5d938`)
+
+| ID | Hallazgo | Resolución | Commit |
+|----|----------|-----------|--------|
+| A2 | Permiso `activeTab` declarado pero nunca usado | Removido de `manifest.json` | `bd67602` |
+| A3 | `escapeHtml()` duplicada en cada vista PWA (riesgo XSS) | Centralizado en `web/src/utils/escape.js` | `bd67602`, `fd5d938` |
+| A4 | Race condition en `cambiarMasterPassword()` bajo invocación concurrente | Flag `_cambioEnProgreso` con `finally` en ambos engines | `efbc447` |
+| A5 | Nomenclatura inconsistente "Mi Vault" / "Vault" | Unificado a "Vault" en Extension + PWA | `efbc447` |
+
+### Fase 3 — Medio ✅ COMPLETADA (commit `fix(security): Fase 3`)
+
+| ID | Hallazgo | Resolución |
+|----|----------|-----------|
+| M1 | `console.log` en service worker (Extension) | Eliminados de `src/background/service-worker.js` y `src/content/autofill.js` |
+| M2 | Sin validación de schema en `importarVaultBackup()` | Validación de campos requeridos antes de persistir — `BACKUP_CREDENCIALES_INVALIDAS` |
+| M3 | Sin debounce en MutationObserver del content script | Debounce de 300ms con `clearTimeout` antes de re-disparar |
+| M4 | `docs/documento-tecnico.md` desactualizado | Versión bumpeada a v0.4.2, CSV import/export documentado |
+| M5 | `docs/roadmap-v0.4.0.md` sin estado de auditoría | Este documento actualizado |
+| M6 | MSAL.js vendoreado sin documentar | `web/libs/VENDORED.md` creado |
+
+### Fase 4 — Bajo/Mantenimiento ✅ COMPLETADA (commit `fix(security): Fase 4`)
+
+| ID | Hallazgo | Resolución |
+|----|----------|-----------|
+| B1 | `src/utils/helpers.js` vacío | Eliminado |
+| B2 | `icon-180.svg` sin versión PNG para iOS Safari | `icon-180.png` generado, `web/manifest.json` actualizado |
+| B3 | CSV importer sin detección de encoding Latin-1 | `TextDecoder` con fallback Latin-1 en `web/src/import/import-wizard.js` |
+| B4 | Workbox sin SRI hash | Documentado como no aplicable (`importScripts()` no soporta SRI); mitigado via CSP + versión fija |
+
+---
+
 ## Decisiones técnicas abiertas
 
 | Decisión | Opciones | Criterio para resolver |

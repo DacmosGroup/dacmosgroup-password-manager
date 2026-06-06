@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Versión 0.4.1 · Mayo 2026**
+**Versión 0.4.2 · Junio 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -775,6 +775,7 @@ v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
 v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
 v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.4.1 ✅  Remediación auditoría de seguridad — 5 hallazgos corregidos (A-1, M-1..4, B-1..2)
+v0.4.2 ✅  Remediación auditoría Fases 1+2 (C1-C4, A2-A5) + CSV import/export en PWA + BUG-3 sync salts
 v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
 v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
@@ -2062,6 +2063,28 @@ Aprobado por el arquitecto para cerrar el criterio de aceptación 1 (round-trip 
 La extensión load-unpacked (desarrollo) y la extensión CWS comparten el mismo `appDataFolder` en Google Drive del perfil Chrome activo. Una operación de sync desde la extensión de desarrollo puede sobrescribir el vault real de producción — fue la causa del incidente de esta sesión.
 
 **Regla:** Nunca ejecutar operaciones de sync desde la extensión load-unpacked contra el Drive/OneDrive de producción. Usar perfil Chrome separado o cuenta de prueba. Documentado en `.claude/CLAUDE.md`.
+
+### CSV Import/Export en PWA (C3 — Fase 1)
+
+Hallazgo C3 de la auditoría identificó que CSV import/export existía en la extensión Chrome pero no en la PWA. Cerrado en v0.4.2 con los siguientes módulos:
+
+| Módulo | Ruta | Descripción |
+|--------|------|-------------|
+| CSV Importer | `web/src/import/csv-importer.js` | Parser RFC 4180 con detección automática de formato (Google, Bitwarden, LastPass, 1Password, genérico). Maneja BOM UTF-8, campos citados, CRLF. |
+| Import Wizard | `web/src/import/import-wizard.js` | UI del wizard de importación. Vista dentro de Settings → Importar credenciales. |
+| CSV Exporter | `web/src/export/csv-exporter.js` | Exporta el vault descifrado como CSV. Formato compatible con Google Password Manager. |
+
+**Decisión de implementación:** Fork de `src/import/csv-importer.js` y `src/export/csv-exporter.js`. La lógica es idéntica — no se introdujeron diferencias de comportamiento. Los módulos PWA eliminan referencias a `chrome.*` que no existen en el contexto PWA (los originales no tenían ninguna, así que los archivos son byte-for-byte iguales salvo el comentario de cabecera).
+
+**Esquema de credencial importada:**
+```json
+{ "sitio": "string", "url": "string", "usuario": "string", "password": "string", "notas": "string" }
+```
+El importador filtra silenciosamente entradas sin `usuario` y sin `password`. Si falta `sitio`, lo deriva del hostname de `url`.
+
+**Validación de schema en backup import (M2 — Fase 3):** `importarVaultBackup()` en ambos engines valida ahora que cada credencial del backup tenga los campos `id`, `sitio`, `usuario`, `password` antes de persistir. Backups malformados lanzan `BACKUP_CREDENCIALES_INVALIDAS`.
+
+---
 
 ### 7 criterios de aceptación — v0.4.2
 

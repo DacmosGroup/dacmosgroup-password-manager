@@ -32,7 +32,6 @@ function dispararSync() {
 
 // ── Al instalar la extensión ──
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Dacmos Password Manager instalado');
   chrome.storage.local.get(['config'], (result) => {
     if (!result.config) {
       chrome.storage.local.set({
@@ -78,7 +77,6 @@ function resetearTimerInactividad() {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'autoLock') {
     bloquearVault();
-    console.log('DacmosGroup: vault bloqueado por inactividad');
   }
 });
 

@@ -111,8 +111,9 @@ async function manejarArchivoSeleccionado(e) {
   elSuccessMsg.classList.add('hidden')
 
   try {
-    const texto = await archivo.text()
-    _filasCSV   = parsearCSV(texto)
+    const buffer = await archivo.arrayBuffer()
+    const texto  = _decodificarCSV(buffer)
+    _filasCSV    = parsearCSV(texto)
 
     if (_filasCSV.length < 2) {
       mostrarError('El archivo CSV está vacío o no contiene filas de datos.')
@@ -333,6 +334,18 @@ async function confirmarImportacion() {
 function cancelarImportacion() {
   elPanel.classList.add('hidden')
   resetearWizard()
+}
+
+// ── Detección de encoding del archivo CSV ──
+// Intenta UTF-8 estricto primero. Si el archivo contiene bytes inválidos para
+// UTF-8 (común en CSVs exportados por Excel en Windows o managers legacy),
+// decodifica como ISO-8859-1 (Latin-1 / Windows-1252).
+function _decodificarCSV(buffer) {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buffer)
+  } catch (_) {
+    return new TextDecoder('iso-8859-1').decode(buffer)
+  }
 }
 
 // ── Clave canónica de deduplicación URL + usuario ──
