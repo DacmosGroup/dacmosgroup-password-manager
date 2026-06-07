@@ -171,18 +171,28 @@ async function sincronizar() {
   const { vaultCifrado } = await new Promise(resolve =>
     chrome.storage.local.get(['vaultCifrado'], resolve)
   )
-  if (!vaultCifrado) {
-    await actualizarEstado('error', 'No hay vault local')
-    return
-  }
 
-  // Obtener timestamp del archivo en Drive (puede fallar si hay sin conexión)
+  // Obtener timestamp del archivo en Drive (puede fallar si no hay conexión)
   let modRemoto
   try {
     modRemoto = await adapter.ultimaModificacion()
   } catch (err) {
     const sinToken = err.message === 'TOKEN_NO_DISPONIBLE' || /oauth|auth/i.test(err.message)
     await actualizarEstado('pendiente', sinToken ? 'Sin conexión con Google' : err.message)
+    return
+  }
+
+  if (!vaultCifrado) {
+    // Sin vault local: descargar desde Drive si existe (caso restore en nuevo dispositivo)
+    if (modRemoto === null) {
+      await actualizarEstado('error', 'No hay vault local ni en Drive')
+      return
+    }
+    await _descargar(adapter)
+    // Marcar vault como configurado tras la restauración desde Drive
+    await new Promise(resolve =>
+      chrome.storage.local.set({ vaultConfigurado: true }, resolve)
+    )
     return
   }
 

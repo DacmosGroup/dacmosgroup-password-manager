@@ -1,12 +1,23 @@
 /**
  * setup.js — Vista de configuración inicial del vault (F4.4 + F4.5)
  *
- * Se muestra cuando el vault no está configurado (primera visita).
- * Flujo al guardar:
+ * Dos caminos:
+ *   A) Crear vault nuevo  — genera salts locales, crea vault en IDB, navega a #/vault
+ *   B) Restaurar desde tu nube — descarga vault (con salts) desde Google Drive u OneDrive,
+ *      marca vaultConfigurado, navega a #/unlock para que el usuario desbloquee
+ *
+ * Flujo A al guardar:
  *   1. configurarVault(password)    — crea el vault en IndexedDB
  *   2. solicitarPersistencia()      — solicita persistencia al browser (F4.5)
  *   3. Guardar estado en idbStorage — 'persistenciaEstado'
  *   4. navegar('#/vault')           — ir a la vista principal
+ *
+ * Flujo B (restaurar):
+ *   1. Autenticar con el proveedor elegido (Google Drive / OneDrive)
+ *   2. sincronizar(adapter)         — descarga vault + salts a IDB (D2: sin vault local,
+ *                                     el proveedor siempre gana)
+ *   3. idbStorage.set({ vaultConfigurado: true, syncConfig: { proveedor } })
+ *   4. navegar('#/unlock')          — el usuario desbloquea con su contraseña maestra
  */
 
 import { configurarVault }      from '../../crypto/engine.js'
@@ -15,9 +26,59 @@ import { solicitarPersistencia } from '../../storage/persistence-manager.js'
 import { establecerClave, establecerCredenciales } from '../../storage/session.js'
 import { navegar }              from '../router.js'
 import { calcularEntropia }     from '../../health/password-health.js'
+import { conectar as conectarGoogle }              from '../../auth/google-auth.js'
+import { conectar as conectarMicrosoft }           from '../../auth/microsoft-auth.js'
+import { GoogleDriveAdapter }   from '../../sync/google-drive-adapter.js'
+import { OneDriveAdapter }      from '../../sync/onedrive-adapter.js'
+import { sincronizar }          from '../../sync/sync-manager.js'
 
 /** Monta la vista de setup en el contenedor dado */
 export async function montar(contenedor) {
+  _montarEleccion(contenedor)
+}
+
+// ── Fase 1: Pantalla de elección ─────────────────────────────────────────────
+
+function _montarEleccion(contenedor) {
+  contenedor.innerHTML = `
+    <div class="vista--centrada">
+      <div class="tarjeta tarjeta--setup">
+        <div class="setup__logo">🔐</div>
+        <h1 class="setup__titulo">Dacmos Password Manager</h1>
+        <p class="setup__subtitulo">¿Cómo quieres comenzar?</p>
+
+        <div class="setup__opciones">
+          <button class="btn btn--primario btn--completo" id="btn-crear-nuevo">
+            Crear vault nuevo
+          </button>
+
+          <div class="setup__divisor">
+            <span>¿Ya tienes un vault en otro dispositivo?</span>
+          </div>
+
+          <button class="btn btn--secundario btn--completo" id="btn-restaurar">
+            Restaurar desde tu nube
+          </button>
+        </div>
+
+        <p class="auth__nota-pie">
+          Zero-Knowledge · AES-256-GCM · Local-first
+        </p>
+      </div>
+    </div>`
+
+  contenedor.querySelector('#btn-crear-nuevo').addEventListener('click', () => {
+    _montarCrear(contenedor)
+  })
+
+  contenedor.querySelector('#btn-restaurar').addEventListener('click', () => {
+    _montarRestaurar(contenedor)
+  })
+}
+
+// ── Fase 2A: Crear vault nuevo ────────────────────────────────────────────────
+
+function _montarCrear(contenedor) {
   contenedor.innerHTML = `
     <div class="vista--centrada">
       <div class="tarjeta tarjeta--setup">
@@ -38,7 +99,6 @@ export async function montar(contenedor) {
                      minlength="8">
               <button type="button" class="campo__toggle" id="toggle-pass1" aria-label="Mostrar contraseña">👁️</button>
             </div>
-            <!-- Indicador de fortaleza -->
             <div class="fuerza-password" id="fuerza-container">
               <div class="fuerza-password__barra">
                 <div class="fuerza-password__relleno" id="fuerza-barra"></div>
@@ -66,13 +126,16 @@ export async function montar(contenedor) {
           </button>
         </form>
 
+        <button class="btn btn--ghost btn--completo" id="btn-volver" style="margin-top:8px">
+          ← Volver
+        </button>
+
         <p class="auth__nota-pie">
           Zero-Knowledge · AES-256-GCM · Local-first
         </p>
       </div>
     </div>`
 
-  // ── Referencias DOM ──
   const form        = contenedor.querySelector('#form-setup')
   const inputPass   = contenedor.querySelector('#setup-password')
   const inputConf   = contenedor.querySelector('#setup-confirmar')
@@ -81,22 +144,20 @@ export async function montar(contenedor) {
   const fuerzaBarra = contenedor.querySelector('#fuerza-barra')
   const fuerzaLabel = contenedor.querySelector('#fuerza-etiqueta')
 
-  // ── Toggle de visibilidad ──
   contenedor.querySelector('#toggle-pass1').addEventListener('click', () => {
     inputPass.type = inputPass.type === 'password' ? 'text' : 'password'
   })
   contenedor.querySelector('#toggle-pass2').addEventListener('click', () => {
     inputConf.type = inputConf.type === 'password' ? 'text' : 'password'
   })
-
-  // ── Indicador de fortaleza ──
-  inputPass.addEventListener('input', () => {
-    const password = inputPass.value
-    const bits     = calcularEntropia(password)
-    _actualizarFuerza(bits, fuerzaBarra, fuerzaLabel)
+  contenedor.querySelector('#btn-volver').addEventListener('click', () => {
+    _montarEleccion(contenedor)
   })
 
-  // ── Submit del formulario ──
+  inputPass.addEventListener('input', () => {
+    _actualizarFuerza(calcularEntropia(inputPass.value), fuerzaBarra, fuerzaLabel)
+  })
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
     _ocultarError(errorEl)
@@ -104,7 +165,6 @@ export async function montar(contenedor) {
     const password  = inputPass.value
     const confirmar = inputConf.value
 
-    // Validaciones básicas
     if (password.length < 8) {
       _mostrarError(errorEl, 'La contraseña debe tener al menos 8 caracteres.')
       return
@@ -114,30 +174,20 @@ export async function montar(contenedor) {
       return
     }
 
-    // Bloquear el formulario durante la operación (PBKDF2 ~1s)
     btnCrear.disabled    = true
     btnCrear.textContent = 'Creando vault...'
 
     try {
-      // 1. Crear vault cifrado (PBKDF2 + AES-256-GCM)
       const clave = await configurarVault(password)
-
-      // 2. Establecer sesión en memoria
       establecerClave(clave)
       establecerCredenciales([])
 
-      // 3. Solicitar persistencia al browser (F4.5)
-      //    Llamamos desde el event handler para cumplir el gesture requirement
       const { concedida, soportada } = await solicitarPersistencia()
-
-      // 4. Guardar estado de persistencia para el banner y settings
       const estadoPersistencia = !soportada
         ? 'no-soportada'
         : concedida ? 'concedida' : 'rechazada'
 
       await idbStorage.set({ persistenciaEstado: estadoPersistencia })
-
-      // 5. Navegar al vault
       await navegar('#/vault')
 
     } catch (error) {
@@ -149,7 +199,135 @@ export async function montar(contenedor) {
   })
 }
 
-// ── Helpers privados ──
+// ── Fase 2B: Restaurar desde tu nube ─────────────────────────────────────────
+
+function _montarRestaurar(contenedor) {
+  contenedor.innerHTML = `
+    <div class="vista--centrada">
+      <div class="tarjeta tarjeta--setup">
+        <div class="setup__logo">☁️</div>
+        <h1 class="setup__titulo">Restaurar desde tu nube</h1>
+
+        <div class="setup__aviso" id="aviso-sync">
+          <p>⚠️ <strong>Antes de continuar:</strong> sincroniza tu vault en tu dispositivo
+          principal para asegurarte de tener la versión más reciente.</p>
+        </div>
+
+        <p class="setup__subtitulo">Selecciona el proveedor donde tienes tu vault:</p>
+
+        <div class="setup__opciones">
+          <button class="btn btn--primario btn--completo" id="btn-restore-google">
+            Google Drive
+          </button>
+          <button class="btn btn--secundario btn--completo" id="btn-restore-onedrive">
+            OneDrive
+          </button>
+        </div>
+
+        <div class="unlock__error oculto" id="restore-error" role="alert"></div>
+        <div class="setup__estado oculto" id="restore-estado"></div>
+
+        <button class="btn btn--ghost btn--completo" id="btn-volver-restaurar" style="margin-top:8px">
+          ← Volver
+        </button>
+
+        <p class="auth__nota-pie">
+          Zero-Knowledge · AES-256-GCM · Local-first
+        </p>
+      </div>
+    </div>`
+
+  contenedor.querySelector('#btn-volver-restaurar').addEventListener('click', () => {
+    _montarEleccion(contenedor)
+  })
+
+  contenedor.querySelector('#btn-restore-google').addEventListener('click', async () => {
+    await _ejecutarRestore(contenedor, 'google-drive')
+  })
+
+  contenedor.querySelector('#btn-restore-onedrive').addEventListener('click', async () => {
+    await _ejecutarRestore(contenedor, 'onedrive')
+  })
+}
+
+async function _ejecutarRestore(contenedor, proveedor) {
+  const btnGoogle   = contenedor.querySelector('#btn-restore-google')
+  const btnOneDrive = contenedor.querySelector('#btn-restore-onedrive')
+  const btnVolver   = contenedor.querySelector('#btn-volver-restaurar')
+  const errorEl     = contenedor.querySelector('#restore-error')
+  const estadoEl    = contenedor.querySelector('#restore-estado')
+
+  const _bloquear = () => {
+    btnGoogle.disabled = btnOneDrive.disabled = btnVolver.disabled = true
+  }
+  const _desbloquear = () => {
+    btnGoogle.disabled = btnOneDrive.disabled = btnVolver.disabled = false
+  }
+
+  _bloquear()
+  _ocultarError(errorEl)
+  estadoEl.classList.remove('oculto')
+  estadoEl.textContent = 'Conectando...'
+
+  try {
+    let adapter
+
+    if (proveedor === 'google-drive') {
+      await conectarGoogle()
+      adapter = new GoogleDriveAdapter()
+    } else {
+      await conectarMicrosoft()
+      adapter = new OneDriveAdapter()
+    }
+
+    estadoEl.textContent = 'Verificando vault en la nube...'
+
+    const modRemoto = await adapter.ultimaModificacion()
+    if (modRemoto === null) {
+      _desbloquear()
+      estadoEl.classList.add('oculto')
+      _mostrarError(errorEl,
+        'No se encontró vault en este proveedor. Sincroniza primero desde tu dispositivo principal.'
+      )
+      return
+    }
+
+    const fechaSync = new Date(modRemoto).toLocaleString('es', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+    estadoEl.textContent = `Vault encontrado · Última modificación: ${fechaSync}. Descargando...`
+
+    await sincronizar(adapter)
+
+    // Marcar vault como configurado y registrar el proveedor activo
+    const datosActuales = await idbStorage.get(['syncConfig'])
+    await idbStorage.set({
+      vaultConfigurado: true,
+      syncConfig: { ...(datosActuales.syncConfig ?? {}), proveedor },
+    })
+
+    estadoEl.textContent = '✅ Vault restaurado. Ingresa tu contraseña maestra para continuar.'
+    await navegar('#/unlock')
+
+  } catch (err) {
+    console.error('Error al restaurar vault:', err)
+    _desbloquear()
+    estadoEl.classList.add('oculto')
+
+    const msg = err?.message ?? ''
+    if (msg.includes('GOOGLE_AUTH_ERROR') || msg.includes('popup_closed'))
+      _mostrarError(errorEl, 'Autenticación cancelada. Intenta de nuevo.')
+    else if (msg.includes('SYNC_MASTER_PASSWORD_MISMATCH'))
+      _mostrarError(errorEl, 'El vault en la nube usa una contraseña diferente.')
+    else if (msg.includes('MICROSOFT_POPUP_BLOQUEADO'))
+      _mostrarError(errorEl, 'Popup bloqueado. Permite popups para esta página e intenta de nuevo.')
+    else
+      _mostrarError(errorEl, 'Error al restaurar. Verifica tu conexión e intenta de nuevo.')
+  }
+}
+
+// ── Helpers privados ──────────────────────────────────────────────────────────
 
 function _mostrarError(el, mensaje) {
   el.textContent = mensaje
@@ -160,7 +338,6 @@ function _ocultarError(el) {
   el.classList.add('oculto')
 }
 
-/** Actualiza el indicador visual de fortaleza de contraseña */
 function _actualizarFuerza(bits, barra, etiqueta) {
   let porcentaje, color, texto
 
