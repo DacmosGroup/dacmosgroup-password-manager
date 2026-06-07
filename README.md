@@ -70,7 +70,7 @@
 | F3.4 | Versión dinámica en Settings — leída desde manifest.json | ✅ |
 | F3.5 | Fix autocompletado en formularios Create/Confirm password | ✅ |
 
-### ✅ Fase 3 — PWA Mobile v0.4.0 + Remediación v0.4.1 (COMPLETADA)
+### ✅ Fase 3 — PWA Mobile v0.4.0 + Remediación v0.4.1 + Auditoría v0.4.2 (COMPLETADA)
 
 | Feature | Descripción | Estado |
 |---------|-------------|--------|
@@ -82,6 +82,7 @@
 | F4.6 | APK Android via TWA — distribución sin Play Store | ✅ |
 | F4.7 | Formato versionado del blob — habilita migración no destructiva a Argon2id | ✅ |
 | v0.4.1 | Remediación auditoría: importarVaultBackup (A-1), timeout GIS (M-1), errores OAuth (M-2), CSP sin unsafe-inline (M-3), fileId cache Drive (B-2), SW update flow (B-1) | ✅ |
+| v0.4.2 | Auditoría #3: 4 Críticos (C1–C4) + 4 Altos (A2–A5) resueltos. Flujo multi-dispositivo "Restaurar desde tu nube" en Extension y PWA. Version display en popup. 7 criterios de aceptación verificados (round-trip manual 2026-06-06). | ✅ |
 
 ### ⏳ Fase 4 — App Nativa v0.5.0 (PENDIENTE)
 
@@ -140,13 +141,13 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ## 📦 Chrome Web Store
 
-Disponible en modo no listado — instalación via enlace directo:
+v0.4.0 en revisión (submitted 2026-06-06) — visibilidad pública al aprobar. Instalación via enlace directo:
 
 `https://chromewebstore.google.com/detail/dacmos-password-manager/aflgjjkallibohcebggkkjdlhdnainai`
 
 ---
 
-## 🔑 Funciones Principales v0.4.1
+## 🔑 Funciones Principales v0.4.2
 
 - **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
 - **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
