@@ -230,5 +230,10 @@ document.getElementById('navSettings').addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/settings/settings.html') });
 });
 
+// ── Version en footer ──
+const _v = chrome.runtime.getManifest().version
+const _footerEl = document.getElementById('footerVersion')
+if (_footerEl) _footerEl.textContent = `DacmosGroup.com · Zero-Knowledge · AES-256-GCM · v${_v}`
+
 // ── Arrancar ──
 inicializar();
