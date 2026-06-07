@@ -145,14 +145,21 @@ Round-trip: unlock → create credential → close tab → reopen → unlock →
 
 This project uses **per-platform independent versioning** — each platform tracks its own release cadence and feature milestones:
 
-| Platform | Manifest | Current | Release channel |
-|----------|----------|---------|-----------------|
-| Chrome Extension | `manifest.json` | `0.3.1` | Chrome Web Store (manual review) |
-| PWA | `web/manifest.json` | `0.4.2` | Cloudflare Pages (auto-deploy on push) |
+| Platform | Manifest | Code (main) | CWS / Store | Estado |
+|----------|----------|-------------|-------------|--------|
+| Chrome Extension | `manifest.json` | `0.4.0` | `0.3.1` publicada | Código listo; pendiente pruebas manuales + submission CWS |
+| PWA | `web/manifest.json` | `0.4.2` | `0.4.2` en Cloudflare Pages | En producción |
+| APK Android (TWA) | GitHub Releases | `0.4.2` | IzzyOnDroid | En producción |
 
-**Design decision:** The `v0.4.x` family in the PWA maps directly to the `F4.x` feature set (IndexedDB, OAuth PKCE, persistence, mobile UX). The Extension has not yet shipped F4.x-class features so it remains in the `v0.3.x` family.
+**Estado auditoría:** Fases 1–4 completas (commit `4970463`, merge `01c8623`). Branch `fix/auditoria-remediaciones` cerrada.
 
-**Going forward:** Both platforms share the same major.minor family once the Extension ships its next release. The next Extension CWS release should use `v0.4.0` (not `v0.3.2`) to signal alignment with the PWA generation. Do NOT bump version numbers just for alignment — only bump when the platform ships new features.
+**Próximo paso obligatorio:** pruebas manuales antes de submission CWS v0.4.0:
+1. Cargar la **raíz del repo** (donde está `manifest.json`) como extensión desempaquetada en Chrome — NO `src/`
+2. Verificar setup, lock/unlock, autofill, badge
+3. Sync round-trip Extension ↔ PWA (con cuenta de prueba — NUNCA con cuenta de producción desde load-unpacked)
+4. Solo después de pruebas exitosas: subir ZIP a CWS Developer Dashboard
+
+**Design decision:** v0.4.x unifica ambas plataformas en la misma familia de versiones a partir de la próxima submission CWS. Do NOT bump version numbers just for alignment — only bump when the platform ships new features.
 
 **Google OAuth Client ID in manifest.json:** The `client_id` field is a public OAuth2 client identifier — not a secret. Its presence in the public repository is intentional. Protection comes from: (a) authorized redirect URIs in Google Cloud Console, (b) Chrome Web Store signing for the Extension distribution.
 

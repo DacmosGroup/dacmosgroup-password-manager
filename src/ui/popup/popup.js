@@ -105,8 +105,8 @@ async function obtenerEstado() {
 
 async function cargarConteoCredenciales() {
   return new Promise((resolve) => {
-    chrome.storage.local.get(['credenciales'], (result) => {
-      const conteo = result.credenciales ? result.credenciales.length : 0;
+    chrome.storage.session.get(['credencialesSesion'], (result) => {
+      const conteo = result.credencialesSesion ? result.credencialesSesion.length : 0;
       const el = document.getElementById('credentialCount');
       if (el) el.textContent = `${conteo} credencial${conteo !== 1 ? 'es' : ''}`;
       resolve(conteo);
@@ -118,6 +118,39 @@ async function cargarConteoCredenciales() {
 
 document.getElementById('btnGoSetup').addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/settings/settings.html') });
+});
+
+document.getElementById('btnRestoreGoogle').addEventListener('click', async () => {
+  const btn     = document.getElementById('btnRestoreGoogle')
+  const errorEl = document.getElementById('setupRestoreError')
+
+  btn.disabled    = true
+  btn.textContent = 'Conectando con Google...'
+  errorEl.classList.add('hidden')
+
+  const resp = await new Promise(resolve =>
+    chrome.runtime.sendMessage({ tipo: 'SYNC_CONECTAR' }, resolve)
+  )
+
+  if (resp?.ok) {
+    const { vaultConfigurado } = await new Promise(resolve =>
+      chrome.storage.local.get(['vaultConfigurado'], resolve)
+    )
+    if (vaultConfigurado) {
+      mostrarVista(viewLocked)
+      actualizarEstado(false)
+    } else {
+      errorEl.classList.remove('hidden')
+      errorEl.textContent = 'No se encontró vault en Google Drive. Sincroniza primero desde tu dispositivo principal.'
+      btn.disabled    = false
+      btn.textContent = 'Restaurar desde Google Drive'
+    }
+  } else {
+    errorEl.classList.remove('hidden')
+    errorEl.textContent = resp?.error || 'Error al conectar con Google Drive'
+    btn.disabled    = false
+    btn.textContent = 'Restaurar desde Google Drive'
+  }
 });
 
 document.getElementById('btnTogglePassword').addEventListener('click', () => {
