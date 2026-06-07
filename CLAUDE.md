@@ -147,17 +147,18 @@ This project uses **per-platform independent versioning** — each platform trac
 
 | Platform | Manifest | Code (main) | CWS / Store | Estado |
 |----------|----------|-------------|-------------|--------|
-| Chrome Extension | `manifest.json` | `0.4.0` | `0.3.1` publicada | Código listo; pendiente pruebas manuales + submission CWS |
+| Chrome Extension | `manifest.json` | `0.4.0` | `0.4.0` en review CWS (submitted 2026-06-06, PUBLIC) | En revisión — aprobación esperada 1–3 días hábiles |
 | PWA | `web/manifest.json` | `0.4.2` | `0.4.2` en Cloudflare Pages | En producción |
 | APK Android (TWA) | GitHub Releases | `0.4.2` | IzzyOnDroid | En producción |
 
 **Estado auditoría:** Fases 1–4 completas (commit `4970463`, merge `01c8623`). Branch `fix/auditoria-remediaciones` cerrada.
 
-**Próximo paso obligatorio:** pruebas manuales antes de submission CWS v0.4.0:
-1. Cargar la **raíz del repo** (donde está `manifest.json`) como extensión desempaquetada en Chrome — NO `src/`
-2. Verificar setup, lock/unlock, autofill, badge
-3. Sync round-trip Extension ↔ PWA (con cuenta de prueba — NUNCA con cuenta de producción desde load-unpacked)
-4. Solo después de pruebas exitosas: subir ZIP a CWS Developer Dashboard
+**Testing completado (2026-06-06):** Bloques 1–8 APROBADOS — incluyendo sync round-trip Extension ↔ PWA en ambas direcciones.
+
+**Próximo hito — v0.5.0:**
+- Auto-lock timer funcional en PWA
+- Monetización $1–1.50/mes vía Stripe
+- Actualizar screenshots en CWS
 
 **Design decision:** v0.4.x unifica ambas plataformas en la misma familia de versiones a partir de la próxima submission CWS. Do NOT bump version numbers just for alignment — only bump when the platform ships new features.
 
