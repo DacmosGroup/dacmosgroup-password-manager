@@ -448,9 +448,9 @@ el número de iteraciones.
 - [x] F4.5 — Persistencia: `navigator.storage.persist()` + UX educativa en iOS ✅
 - [x] F4.6 — Distribución: dominio dpm.dacmosgroup.co + assetlinks + APK TWA firmado ✅
 - [x] F4.7 — Versionado del blob: campo `__version` en todos los blobs nuevos ✅
-- [ ] Compatibilidad cruzada PWA ↔ Chrome Extension verificada (round-trip)
-- [ ] Android Developer Console gratuito registrado (antes de sep 2026)
-- [ ] Versión bumpeada a 0.4.0 en manifest de la extensión Y en PWA manifest
+- [x] Compatibilidad cruzada PWA ↔ Chrome Extension verificada (round-trip) ✅ — Bloque 8 aprobado 2026-06-06 (ambas direcciones: Extension→PWA y PWA→Extension fresh restore)
+- [ ] Android Developer Console gratuito registrado (antes de sep 2026) ⚠️ PENDIENTE
+- [x] Versión bumpeada: Extension manifest.json → 0.4.0 ✅ / PWA web/manifest.json → 0.4.2 ✅
 - [x] PR mergeado a main con descripción completa ✅
 - [x] Desplegado en dpm.dacmosgroup.co ✅
 
