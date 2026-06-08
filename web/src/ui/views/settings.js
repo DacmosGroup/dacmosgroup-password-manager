@@ -32,6 +32,7 @@ import { GoogleDriveAdapter }  from '../../sync/google-drive-adapter.js'
 import { OneDriveAdapter }     from '../../sync/onedrive-adapter.js'
 import { sincronizar }         from '../../sync/sync-manager.js'
 import { navegar }             from '../router.js'
+import * as autoLock           from '../../auto-lock/auto-lock-manager.js'
 
 // ── Modal seguro de contraseña (reemplaza prompt() nativo) ──
 
@@ -167,6 +168,27 @@ export async function montar(contenedor) {
               <input type="checkbox" id="s-limpiar-clip" ${configActual.limpiarPortapapeles !== false ? 'checked' : ''} aria-label="Limpiar portapapeles">
               <span class="toggle__slider"></span>
             </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 2b. Bloqueo automático (F5-A) ── -->
+      <p class="seccion-titulo">BLOQUEO AUTOMÁTICO</p>
+      <div class="settings__seccion tarjeta">
+        <div class="settings__fila">
+          <div class="settings__fila-info">
+            <div class="settings__fila-titulo">Bloquear vault por inactividad</div>
+            <div class="settings__fila-descripcion">Cierra la sesión automáticamente si no hay actividad</div>
+          </div>
+          <div class="settings__fila-accion">
+            <select id="s-auto-lock" class="input">
+              <option value="1"  ${(configActual.autoLock ?? 5) === 1  ? 'selected' : ''}>1 min</option>
+              <option value="5"  ${(configActual.autoLock ?? 5) === 5  ? 'selected' : ''}>5 min</option>
+              <option value="15" ${(configActual.autoLock ?? 5) === 15 ? 'selected' : ''}>15 min</option>
+              <option value="30" ${(configActual.autoLock ?? 5) === 30 ? 'selected' : ''}>30 min</option>
+              <option value="60" ${(configActual.autoLock ?? 5) === 60 ? 'selected' : ''}>1 hora</option>
+              <option value="0"  ${(configActual.autoLock ?? 5) === 0  ? 'selected' : ''}>Nunca</option>
+            </select>
           </div>
         </div>
       </div>
@@ -567,10 +589,24 @@ export async function montar(contenedor) {
   // ── Toggle portapapeles ──
   contenedor.querySelector('#s-limpiar-clip').addEventListener('change', async (e) => {
     await idbStorage.set({ config: { ...configActual, limpiarPortapapeles: e.target.checked } })
+    configActual.limpiarPortapapeles = e.target.checked
+  })
+
+  // ── Selector bloqueo automático (F5-A) ──
+  contenedor.querySelector('#s-auto-lock').addEventListener('change', async (e) => {
+    const minutos = parseInt(e.target.value)
+    await idbStorage.set({ config: { ...configActual, autoLock: minutos } })
+    configActual.autoLock = minutos
+    autoLock.destroy()
+    autoLock.init({
+      limitMinutos: minutos,
+      onLock: () => { limpiarSesion(); navegar('#/unlock') },
+    })
   })
 
   // ── Bloquear vault ──
   contenedor.querySelector('#btn-bloquear').addEventListener('click', () => {
+    autoLock.destroy()
     limpiarSesion()
     navegar('#/unlock')
   })

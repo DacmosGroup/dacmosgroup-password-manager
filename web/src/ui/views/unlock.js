@@ -9,9 +9,10 @@
  */
 
 import { desbloquearVault, cargarVaultDescifrado } from '../../crypto/engine.js'
-import { establecerClave, establecerCredenciales } from '../../storage/session.js'
+import { establecerClave, establecerCredenciales, limpiarSesion } from '../../storage/session.js'
 import { navegar } from '../router.js'
 import { idbStorage } from '../../storage/indexeddb-adapter.js'
+import * as autoLock from '../../auto-lock/auto-lock-manager.js'
 
 /** Monta la vista de desbloqueo en el contenedor dado */
 export async function montar(contenedor) {
@@ -119,6 +120,13 @@ export async function montar(contenedor) {
       establecerClave(clave)
       const credenciales = await cargarVaultDescifrado(clave)
       establecerCredenciales(credenciales)
+
+      // Iniciar auto-lock (F5-A)
+      const { config: cfg } = await idbStorage.get(['config'])
+      autoLock.init({
+        limitMinutos: cfg?.autoLock ?? 5,
+        onLock: () => { limpiarSesion(); navegar('#/unlock') },
+      })
 
       await navegar('#/vault')
 
