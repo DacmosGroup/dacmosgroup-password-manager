@@ -560,7 +560,10 @@ v0.2.0 ✅  Paridad competitiva (F1.1-F1.6)
 v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
 v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
 v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
-v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
+v0.4.1 ✅  Ext: flujo "¿Olvidaste tu contraseña?" — escape hatch desde pantalla bloqueada
+v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispositivo
+v0.4.3 ✅  PWA: paridad con v0.4.1 Ext — flujo "¿Olvidaste tu contraseña?"
+v0.5.0 ⏳  Auto-lock PWA + integración Stripe (primer producto monetizado)
 v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
 v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store

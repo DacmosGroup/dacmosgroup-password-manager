@@ -1,6 +1,6 @@
 # 📖 Guía de Usuario — Dacmos Password Manager
 
-**Versión 0.3.1 · Mayo 2026**
+**Versión 0.4.3 · Junio 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 ---
@@ -85,9 +85,11 @@ Datos cifrados almacenados localmente
 
 ### ⚠️ Advertencia importante
 
-> **Si olvidas tu contraseña maestra, no hay forma de recuperar tus credenciales.**
+> **Si olvidas tu contraseña maestra, no hay forma de recuperar tus credenciales existentes.**
 >
 > No existe un mecanismo de recuperación por diseño — eso garantiza que nadie más pueda acceder a tus datos. Guarda tu contraseña maestra en un lugar seguro y realiza backups periódicos.
+>
+> Si pierdes tu contraseña maestra puedes crear un vault nuevo vacío desde la pantalla de desbloqueo ("¿Olvidaste tu contraseña?"). El vault anterior y sus backups quedan permanentemente inaccesibles — esta acción no se puede deshacer.
 
 ---
 
@@ -314,8 +316,14 @@ tu propio almacenamiento en la nube (**BYOC — Bring Your Own Cloud**).
 
 **¿Qué pasa si olvido mi contraseña maestra?**
 
-No existe mecanismo de recuperación — esto es por diseño. Realiza backups
-periódicos y guarda tu contraseña maestra en un lugar físico seguro.
+Tus credenciales cifradas son irrecuperables — esto es por diseño (Zero-Knowledge). Sin embargo, desde v0.4.1 puedes crear un vault nuevo vacío sin desinstalar la app:
+
+1. En la pantalla de desbloqueo, haz clic en **"¿Olvidaste tu contraseña?"**
+2. Lee la advertencia — tu vault anterior y todos sus backups quedarán inaccesibles
+3. Confirma con **"Crear vault nuevo"**
+4. Configura una nueva contraseña maestra y empieza desde cero
+
+Prevención: realiza backups periódicos desde Configuración → Exportar vault, y guarda tu contraseña maestra en un lugar físico seguro.
 
 ---
 
