@@ -31,13 +31,17 @@
 18. [Decisiones de Implementación — F4.6](#18-decisiones-de-implementación--f46)
 19. [Decisiones de Implementación — BUG-1](#19-decisiones-de-implementación--bug-1)
 20. [Decisiones de Implementación — BUG-2](#20-decisiones-de-implementación--bug-2)
-21. [Referencias](#21-referencias)
+21. [Auditoría Profunda — Hallazgos v0.4.1 / v0.4.2](#21-auditoría-profunda--hallazgos-v041--v042)
+22. [Decisiones de Implementación — v0.4.2](#22-decisiones-de-implementación--v042)
+23. [Versionado por superficie](#23-versionado-por-superficie)
+24. [Decisiones de Sesión — v0.5.0 Replanificación Estratégica](#24-decisiones-de-sesión--v050-replanificación-estratégica)
+25. [Referencias](#25-referencias)
 
 ---
 
 ## 1. Visión General
 
-Dacmos Password Manager es una extensión Chrome construida con **Manifest V3** que implementa un gestor de contraseñas con modelo **Zero-Knowledge local-first**. A partir de v0.4.0, el mismo vault es accesible desde mobile mediante una **Progressive Web App (PWA)**, y en v0.5.0 como app nativa via Capacitor.
+Dacmos Password Manager es una extensión Chrome construida con **Manifest V3** que implementa un gestor de contraseñas con modelo **Zero-Knowledge local-first**. A partir de v0.4.0, el mismo vault es accesible desde mobile mediante una **Progressive Web App (PWA)**. v0.5.0 añade auto-lock timer e i18n ES/EN/PT-BR. v0.6.0 empaqueta la PWA como app nativa via Capacitor.
 
 ### Principios de diseño
 
@@ -66,7 +70,7 @@ PWA Mobile (v0.4.0+):
 ├── Almacenamiento: IndexedDB (reemplazo de chrome.storage.local)
 └── Despliegue:     Cloudflare Pages (dpm.dacmosgroup.co)
 
-App Nativa (v0.5.0+):
+App Nativa (v0.6.0+):
 ├── Plataforma:     Capacitor (iOS + Android)
 ├── Crypto:         crypto.subtle en WKWebView / Chromium WebView
 ├── Almacenamiento: iOS Keychain / Android Keystore
@@ -776,10 +780,12 @@ v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
 v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.4.1 ✅  Remediación auditoría de seguridad — 5 hallazgos corregidos (A-1, M-1..4, B-1..2)
 v0.4.2 ✅  Remediación auditoría Fases 1+2 (C1-C4, A2-A5) + CSV import/export en PWA + BUG-3 sync salts
-v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
-v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
-v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
-v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
+v0.5.0 ⏳  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
+v0.6.0 ⏳  Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
+v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
+v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)
+v0.9.0 ⏳  Argon2id opcional + preparación auditoría
+v1.0.0 ⏳  Auditoría Cure53 + App Store + Play Store público
 ```
 
 ### Fase 4 — PWA Mobile (v0.4.0)
@@ -792,7 +798,7 @@ La expansión mobile reutiliza el código JavaScript existente sin modificar la 
 - OAuth PKCE con Google Identity Services JS y MSAL.js v3 — reemplaza `chrome.identity`
 - Workbox Service Worker — cache-first offline, compatible con todos los browsers mobile
 
-### Fase 5 — Capacitor (v0.5.0)
+### Fase 5 — Capacitor (v0.6.0)
 
 La misma PWA de v0.4.0 ejecuta dentro de un shell Capacitor nativo:
 
@@ -2130,7 +2136,100 @@ detección de incompatibilidad en runtime.
 
 ---
 
-## 24. Referencias
+## 24. Decisiones de Sesión — v0.5.0 Replanificación Estratégica
+
+**Fecha:** 2026-06-08
+**Contexto:** Pausa estratégica post-publicación CWS — replanificación del roadmap
+antes de iniciar la implementación de v0.5.0.
+
+### Contexto de la decisión
+
+La publicación de la Chrome Extension en CWS el 2026-06-08 cambia el perfil
+de audiencia del producto: de LATAM hispanohablante exclusivo a descubrimiento
+global potencial. Esto desencadenó una revisión estratégica del roadmap antes
+de continuar con la implementación de v0.5.0.
+
+### D1 — Alcance revisado de v0.5.0
+
+v0.5.0 contiene exactamente dos features:
+- **F5-A:** Auto-lock timer en PWA (paridad con Chrome Extension)
+- **F5-B:** Internacionalización (i18n) ES / EN / PT-BR en Extension + PWA
+
+| Feature | Nueva versión | Razón del movimiento |
+|---|---|---|
+| Capacitor wrapping (iOS + Android nativo) | v0.6.0 | Depende de i18n completo — Capacitor hereda i18n de v0.5.0 sin costo adicional si el orden es correcto |
+| Integración Stripe / monetización | v0.8.0 | Sin masa crítica de usuarios; la Extension se publicó en esta fecha |
+| Biometría nativa | v0.6.0 | Requiere Capacitor como base |
+| Play Store / App Store | v0.6.0+ | Requiere Capacitor + i18n |
+
+### D2 — Monetización postergada
+
+Monetización (Stripe, modelo lifetime $29) postergada hasta que exista masa crítica
+de usuarios medible. No hay fecha fija — la condición de activación es tracción real,
+no calendario.
+
+**Modelo de monetización confirmado (resuelve contradicción entre docs):**
+
+| Año | Modelo |
+|---|---|
+| Año 1 (2026) | 100% gratuito + donaciones opcionales |
+| Año 2 (2027) | Lifetime $29 USD — features avanzados, tier free completo se mantiene |
+| Año 3 (2028) | Business $3/usuario/mes + upsell consultoría DacmosGroup |
+
+> **Nota:** Cualquier referencia a "$1–1.50/mes" en la documentación es incorrecta.
+> El modelo correcto es el documentado en ADR-001 (lifetime $29 en Año 2).
+
+### D3 — Estrategia de internacionalización (i18n)
+
+Detección automática de idioma del browser como punto de partida, con opción
+explícita de cambio en Settings. Tres idiomas: ES, EN, PT-BR.
+
+**Fallback chain:** idioma preferido del usuario → ES → EN (si la key no existe en ES).
+
+#### Chrome Extension — `chrome.i18n` nativo MV3
+
+- Estructura: `_locales/es/messages.json`, `_locales/en/messages.json`, `_locales/pt_BR/messages.json`
+- API: `chrome.i18n.getMessage('key')` — wrapper `t('key')` para uso en JS
+- HTML: atributos `data-i18n="key"` + walker en `init()` de cada página
+- Detección: automática desde el idioma del browser Chrome
+- Override usuario: campo `config.idioma` en `chrome.storage.local`
+- Beneficio: CWS muestra descripción localizada automáticamente si `_locales/` contiene la descripción del producto
+
+#### PWA — módulo custom `web/src/i18n/i18n.js`
+
+- Estructura: función `t(key, vars)` + diccionarios por idioma en `web/src/i18n/strings.{es,en,pt_BR}.js`
+- Detección: `navigator.language` → ES si empieza con 'es', PT-BR si empieza con 'pt', EN para el resto
+- Override usuario: campo `config.idioma` en IndexedDB
+- Toggle UI: vista Settings — prominente, con tres opciones visibles
+
+#### Contrato de strings compartido
+
+Ambas plataformas usan las mismas keys. Los archivos de strings se mantienen en
+sincronía manual (Extension `_locales/` ↔ PWA `i18n/strings.*.js`). La disciplina
+es suficiente para 3 idiomas sin introducir un build step.
+
+### D4 — Roadmap completo actualizado
+
+```
+v0.1.1 ✅  MVP — Chrome Extension Zero-Knowledge
+v0.2.0 ✅  Paridad competitiva (F1.1–F1.6)
+v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
+v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
+v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
+v0.4.1 ✅  Ext: flujo "¿Olvidaste tu contraseña?"
+v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispositivo
+v0.4.3 ✅  PWA: paridad con v0.4.1 Ext
+v0.5.0 ⏳  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
+v0.6.0 ⏳  Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
+v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
+v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)
+v0.9.0 ⏳  Argon2id opcional + preparación auditoría
+v1.0.0 ⏳  Auditoría Cure53 + App Store + Play Store público
+```
+
+---
+
+## 25. Referencias
 
 ### Estándares y especificaciones
 

@@ -1,33 +1,26 @@
 # 🗺️ Roadmap — Dacmos Password Manager v0.5.0
 
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
-**Documento generado:** Mayo 2026 · **Actualizado:** Junio 2026
+**Documento generado:** Mayo 2026 · **Actualizado:** 2026-06-08
 **Versión base:** 0.4.3 (v0.4.x completo ✅)
 **Versión objetivo:** 0.5.0
 
-> ⚠️ **Nota de actualización (2026-06-08):** El alcance de v0.5.0 fue revisado.
-> El próximo sprint prioriza **auto-lock timer en PWA + integración Stripe** (primer producto monetizado).
-> Las features de Capacitor/biometría/Play Store se mueven a v0.6.0+.
-> Referencia arquitectural: `docs/decisions/ADR-001-stack-mobile.md`
+> ✅ **Alcance confirmado (2026-06-08):** La publicación de la Extension en CWS
+> desencadenó una revisión estratégica. v0.5.0 contiene exactamente dos features:
+> **F5-A:** Auto-lock timer en PWA (paridad con Chrome Extension)
+> **F5-B:** Internacionalización (i18n) ES / EN / PT-BR (Extension + PWA)
+>
+> Capacitor/biometría/Play Store se mueven a v0.6.0. Referencia arquitectural:
+> `docs/documento-tecnico.md §24` · `docs/decisions/ADR-001-stack-mobile.md`
 
 ---
 
 ## Contexto estratégico
 
-v0.5.0 convierte la PWA de v0.4.0 en una **app nativa para iOS y Android**
-usando Capacitor como shell. El mismo bundle JS que sirve la PWA se ejecuta
-dentro de WKWebView (iOS) y Chromium WebView (Android), activando acceso
-a APIs nativas del sistema operativo que una PWA no puede tocar.
-
-**Las barreras que elimina v0.5.0:**
-
-| Limitación de v0.4.0 (PWA) | Solución en v0.5.0 (Capacitor) |
-|-----------------------------|-------------------------------|
-| Sin biometría (Face ID / Fingerprint) | Módulo nativo Keychain + Keystore |
-| Eviction de datos en iOS Safari | Almacenamiento en iOS Keychain — sin eviction |
-| Sin distribución en Play Store | Google Play Store ($25 vitalicio) |
-| OAuth en popup del navegador | Custom scheme + Universal/App Links |
-| Sync LWW con posible pérdida de datos | Sync per-item con Lamport ordering + tombstones |
+La Extension publicada en CWS (2026-06-08) expande el perfil de audiencia a
+descubrimiento global potencial. Publicar una app nativa monolingüe en español
+en Play Store desperdiciaría el primer listing. v0.5.0 prioriza i18n primero;
+Capacitor hereda ese trabajo sin costo adicional en v0.6.0.
 
 ---
 
@@ -35,165 +28,82 @@ a APIs nativas del sistema operativo que una PWA no puede tocar.
 
 - Zero-Knowledge local-first
 - AES-256-GCM + PBKDF2-SHA256 × 600,000 iteraciones
-- Sin dependencias externas de crypto — `crypto.subtle` en WKWebView/WebView
+- Sin dependencias externas de crypto — `crypto.subtle`
 - Sin servidores propios — BYOC (Google Drive / OneDrive)
-- Código comentado en español
-- Compatibilidad bit-exacta del vault (Chrome Extension ↔ PWA ↔ app Capacitor)
-
----
-
-## Stack tecnológico — Capacitor
-
-```
-├── Shell:          Capacitor 6+ (iOS + Android)
-├── Bundle JS:      El mismo de v0.4.0 — sin cambios de lógica
-├── Crypto:         crypto.subtle en WKWebView / Chromium WebView (idéntico a PWA)
-├── Biometría:      Módulo nativo propio (Swift + Kotlin) — NO expo-local-authentication
-├── Almacenamiento: @aparajita/capacitor-secure-storage (iOS Keychain / Android Keystore)
-├── OAuth:          Custom URL scheme + Universal Links (iOS) / App Links (Android)
-├── Build iOS:      Codemagic free tier (500 min/mes macOS M2) — sin Mac local
-├── Build Android:  GitHub Actions (gratuito) — igual que v0.4.0
-└── Distribución:   Google Play Store + GitHub Releases + F-Droid
-```
+- Compatibilidad bit-exacta del vault (Chrome Extension ↔ PWA)
 
 ---
 
 ## Features v0.5.0
 
-### F5.1 — Setup Capacitor + reestructura del repo
+### F5-A — Auto-lock timer en PWA
 
-**Alcance:**
-- Añadir Capacitor al proyecto existente sobre la base PWA de v0.4.0
-- `capacitor.config.json` apuntando al build de la PWA como `webDir`
-- Targets nativos: `ios/` y `android/` generados por `npx cap add ios android`
-- Pipeline de build en Codemagic (iOS, free tier) + GitHub Actions (Android)
-- Sin reestructura de monorepo — Capacitor se agrega encima de `web/`
+**Problema:** La Chrome Extension usa `chrome.alarms` para auto-lock (sobrevive al
+sleep del service worker MV3). La PWA no tiene `chrome.alarms` — la implementación
+usa exclusivamente Web APIs estándar.
 
-**Criterio de completitud:**
-- `npx cap run android` ejecuta la PWA en emulador Android
-- `npx cap run ios` ejecuta la PWA en simulador iOS (via Codemagic)
+**Comportamiento:**
+- Timer configurable: 1 min / 5 min / 15 min / 30 min / 1 hora / Nunca
+- Paridad exacta con los valores de la Chrome Extension
+- Se resetea con cualquier interacción del usuario (tap, scroll, input, keydown)
+- Al ir a background (`visibilitychange → hidden`): timer se cancela (setTimeout es
+  poco fiable en background mobile)
+- Al volver a foreground: si `Date.now() - _tsLastActivity >= limitMs` → bloqueo
+  inmediato; si no → timer reanuda con tiempo restante
+- Al dispararse: `limpiarSesion()` + `navegar('#/unlock')` (misma secuencia que
+  el botón "Bloquear vault" manual ya existente)
+- `config.autoLock` (integer, minutos) persiste en IndexedDB — mismo nombre de campo
+  que `chrome.storage.local.config.autoLock` en la Extension
 
----
+**Módulo nuevo:** `web/src/auto-lock/auto-lock-manager.js`
 
-### F5.2 — Biometría nativa Zero-Knowledge
-
-**El feature más crítico de seguridad de v0.5.0.**
-
-La biometría permite desbloquear el vault sin escribir la contraseña maestra
-en cada sesión, pero sin comprometer el modelo Zero-Knowledge.
-
-**Patrón de seguridad (igual que 1Password y Bitwarden):**
-
-```
-Primera vez:
-  Usuario ingresa contraseña maestra
-  → Derivar vault_key (PBKDF2 → AES-256)
-  → Generar wrap_key en Secure Enclave (iOS) / Keystore StrongBox (Android)
-  → Cifrar vault_key con wrap_key → guardar en Keychain/Keystore
-  → La contraseña maestra nunca se almacena
-
-Desbloqueos siguientes:
-  Face ID / Touch ID / Fingerprint
-  → Autenticar con BiometricPrompt.CryptoObject (Android) o LAContext (iOS)
-  → Recuperar wrap_key del Secure Enclave / Keystore
-  → Descifrar vault_key → vault desbloqueado
-
-Invalidación automática:
-  Si el usuario añade huellas nuevas → wrap_key invalidada → pedir contraseña
-  Implementado con .biometryCurrentSet (iOS) / setUserAuthenticationValidityDuration(-1) (Android)
+```javascript
+export function init({ limitMinutos, onLock }) { ... }  // 0 = "Nunca"
+export function reset()   { ... }  // resetea _tsLastActivity + setTimeout
+export function destroy() { ... }  // idempotente — safe para llamar N veces
 ```
 
-**Implementación:** módulo nativo propio en Swift (iOS) + Kotlin (Android),
-integrado como Capacitor plugin local. NO se usa `expo-local-authentication`
-(ver ADR-001, Problema #2).
-
-**Archivos nuevos:**
-- `ios/App/DacmosBiometrics/` — plugin Swift
-- `android/app/src/main/java/.../DacmosBiometrics/` — plugin Kotlin
-- `web/src/native/biometrics-plugin.js` — wrapper JS del plugin
+**Integración:**
+- `web/src/ui/views/unlock.js` — `init()` post-desbloqueo exitoso
+- `web/src/ui/views/settings.js` — selector UI + `destroy()` antes de re-init
+  + `destroy()` en bloqueo manual existente
 
 ---
 
-### F5.3 — Almacenamiento seguro nativo
+### F5-B — Internacionalización (i18n) ES / EN / PT-BR
 
-**Problema que resuelve:** en la PWA (v0.4.0) IndexedDB puede ser evictado
-en iOS Safari tras 7 días. En la app Capacitor el vault vive en el
-iOS Keychain o Android Keystore — sin eviction posible, incluso si el
-usuario no abre la app por semanas.
+**Audit previo (D5):** ~350–400 strings dispersos en Extension; ~100–110 en PWA.
+Ambas plataformas requieren centralización previa antes de crear los archivos de
+traducción. El contrato de keys se valida con el arquitecto antes de Commit 3 y 4.
 
-**Implementación:**
-- `@aparajita/capacitor-secure-storage` — wrapper sobre iOS Keychain
-  y Android Keystore con API key-value
-- El vault cifrado `{ __version, kdf, iv, datos }` se almacena como
-  valor string bajo la clave `dacmos:vault`
-- La `vault_key` envuelta por biometría se almacena bajo `dacmos:wrap_key`
+**Idiomas:**
+| Código | Idioma | Razón |
+|---|---|---|
+| es | Español | Idioma primario — identidad de marca DacmosGroup |
+| en | Inglés | Fallback universal — máxima cobertura CWS |
+| pt-BR | Portugués Brasil | Mercado más grande de LATAM |
 
----
+**Fallback chain:** idioma del usuario → ES → EN.
 
-### F5.4 — OAuth nativo con deep links
+#### Chrome Extension — `chrome.i18n` nativo MV3
 
-En la app Capacitor, los popups OAuth del browser no funcionan igual que
-en la PWA. Se reemplaza por el flujo nativo con redirect a la app.
+- `_locales/es/messages.json`, `_locales/en/messages.json`, `_locales/pt_BR/messages.json`
+- API: `chrome.i18n.getMessage('key')` — wrapper `t('key')` para JS
+- HTML: atributos `data-i18n="key"` + walker DOM en cada `init()`
+- Detección: automática desde el idioma del browser Chrome
+- Override: `config.idioma` en `chrome.storage.local`
 
-**iOS:** Universal Links con dominio propio (`dpm.dacmosgroup.co`)
-**Android:** App Links con `assetlinks.json` en el dominio
+#### PWA — módulo custom `web/src/i18n/i18n.js`
 
-Esto elimina la fricción del popup de browser que el usuario ve en v0.4.0
-al conectar Google Drive u OneDrive.
+- Función `t(key, vars)` exportada
+- Diccionarios: `web/src/i18n/strings.es.js`, `strings.en.js`, `strings.pt_BR.js`
+- Detección: `navigator.language` → ES si empieza con 'es', PT-BR si empieza con 'pt',
+  EN para el resto
+- Override: `config.idioma` en IndexedDB (persiste entre sesiones)
+- Toggle UI: Settings — prominente, tres opciones visibles
 
----
-
-### F5.5 — Sync per-item con Lamport ordering y tombstones
-
-**El cambio arquitectural de sync más importante desde v0.3.0.**
-
-El modelo actual (un solo blob `vault.encrypted`) garantiza pérdida silenciosa
-de credenciales si dos dispositivos editan offline simultáneamente — el
-último en subir sobreescribe al otro. Para un gestor de contraseñas esto
-es inaceptable.
-
-**Nuevo modelo:**
-
-```
-/Apps/Dacmos/
-  manifest.encrypted          ← índice cifrado de todos los items
-  items/
-    <item-uuid>.enc            ← un archivo por credencial
-    <item-uuid>.enc
-    ...
-  tombstones/
-    <item-uuid>.tomb           ← marcador de eliminación (TTL: 90 días)
-```
-
-**Resolución de conflictos:**
-- Lamport clock por dispositivo embebido en cada item
-- LWW (Last Write Wins) a nivel de campo individual, no de item completo
-- Conditional writes con `If-Match` etag en Drive y OneDrive
-- Tombstones con TTL de 90 días para deletes — sin pérdida silenciosa
-
-**Backward compat:** si se detecta el blob monolítico de v0.4.0, se migra
-automáticamente al nuevo formato en el primer sync de v0.5.0.
-
----
-
-### F5.6 — Distribución: Google Play Store + Codemagic builds
-
-**Google Play Store ($25 vitalicio — primera inversión del proyecto):**
-- El $25 de Play Console se justifica en este momento porque ya hay
-  una base de usuarios PWA/APK validada desde v0.4.0
-- Publica la app Capacitor (no la TWA) para acceso a APIs nativas completas
-- Auto-updates via Play Store — elimina la fricción del APK manual
-
-**Builds iOS sin Mac local:**
-- Codemagic free tier: 500 minutos/mes en macOS M2
-- ~10–20 minutos por build → 25–50 builds iOS/mes gratuitos
-- Fastlane Match para gestión de certificados y provisioning profiles
-- Output: IPA distribuible via TestFlight (requiere Apple Developer $99)
-
-**Nota:** Apple Developer Program ($99/año) es prerequisito para TestFlight
-y App Store. Esta inversión se activa en v0.5.0 si hay usuarios iOS
-validados desde la PWA de v0.4.0. Si no, los builds iOS quedan en
-modo "internal testing" para el founder únicamente hasta v0.6.0.
+**Contrato de keys compartido:** mismas keys en ambas plataformas. Sincronía manual —
+sin build step.
 
 ---
 
@@ -201,25 +111,26 @@ modo "internal testing" para el founder únicamente hasta v0.6.0.
 
 | Feature | Versión | Razón |
 |---------|---------|-------|
-| AutoFill nativo iOS | v0.6.0 | Requiere Credential Provider Extension (Swift puro, target separado) |
-| AutoFill nativo Android | v0.6.0 | Requiere Android Autofill Service + Credential Manager API (Kotlin) |
-| Apple App Store (público) | v0.6.0 | Se publica cuando el autofill nativo esté listo |
-| Argon2id como KDF alternativo | v0.7.0 | El versionado del blob desde v0.4.0 lo habilita |
-| Monetización | v0.7.0 | Sin infraestructura de pagos todavía |
+| Capacitor wrapping (iOS + Android nativo) | v0.6.0 | Hereda i18n de v0.5.0 — el orden correcto es i18n primero |
+| Biometría nativa | v0.6.0 | Requiere Capacitor como base |
+| Play Store / App Store (público) | v0.6.0+ | Requiere Capacitor + i18n |
+| AutoFill nativo iOS / Android | v0.7.0 | Requiere Capacitor (Credential Provider Extension) |
+| Integración Stripe / monetización | v0.8.0 | Sin masa crítica de usuarios aún |
+| Sync per-item con Lamport ordering | v0.6.0 | Scope reducido en v0.5.0 |
+| Argon2id como KDF alternativo | v0.9.0 | El versionado del blob desde v0.4.0 lo habilita |
 
 ---
 
 ## Criterios de completitud
 
-*(Se detallan cuando v0.4.0 esté shippeado)*
-
-- [ ] F5.1 — App Capacitor ejecuta la PWA de v0.4.0 en iOS y Android
-- [ ] F5.2 — Biometría nativa funcional con patrón Secure Enclave / Keystore
-- [ ] F5.3 — Almacenamiento en Keychain/Keystore sin eviction
-- [ ] F5.4 — OAuth nativo via deep links (sin popup de browser)
-- [ ] F5.5 — Sync per-item con Lamport ordering verificado en escenario offline multi-device
-- [ ] F5.6 — App en Google Play Store + builds iOS en Codemagic
-- [ ] Versión bumpeada a 0.5.0
+- [ ] F5-A — Auto-lock funciona en mobile: background >X min → bloqueo inmediato al volver al foreground
+- [ ] F5-A — Selector en Settings guarda/carga `config.autoLock` en IndexedDB
+- [ ] F5-A — `destroy()` es idempotente — no produce error si se llama N veces
+- [ ] F5-B — Extension muestra todos los strings en EN al cambiar idioma del browser a inglés
+- [ ] F5-B — PWA detecta automáticamente el idioma del browser (ES / EN / PT-BR)
+- [ ] F5-B — Override manual en Settings persiste entre sesiones (IndexedDB)
+- [ ] F5-B — Contrato de keys aprobado por arquitecto antes de crear archivos de traducción
+- [ ] Versión bumpeada a 0.5.0 en `manifest.json` + `web/manifest.json`
 - [ ] PR mergeado a main
 
 ---
@@ -228,11 +139,9 @@ modo "internal testing" para el founder únicamente hasta v0.6.0.
 
 | # | Learning | Aplicación en contenido |
 |---|----------|------------------------|
-| L1 | Secure Enclave iOS vs Keystore Android | Video: seguridad hardware en mobile |
-| L2 | BiometricPrompt.CryptoObject — el detalle que marca la diferencia | Post técnico: biometría correcta para password managers |
-| L3 | Sync distribuido sin servidor: Lamport clocks y CRDTs | Video: diseñar sistemas offline-first |
-| L4 | Capacitor vs React Native: la decisión correcta para cada proyecto | Video: comparativa práctica con código real |
-| L5 | Codemagic free tier: builds iOS sin Mac en 2026 | Tutorial: CI/CD mobile desde Windows |
+| L1 | Auto-lock sin `chrome.alarms`: `visibilitychange` + `Date.now()` | Post técnico: PWA vs Extension — diferencias reales de APIs |
+| L2 | `chrome.i18n` vs módulo custom — dos sistemas, mismo contrato de keys | Video: i18n en apps multi-plataforma sin bundler |
+| L3 | Audit de strings antes de i18n: el costo real del hardcoding | Post: refactor previo — por qué es obligatorio |
 
 ---
 
@@ -247,10 +156,12 @@ v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.4.1 ✅  Ext: flujo "¿Olvidaste tu contraseña?" — escape hatch desde pantalla bloqueada
 v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispositivo
 v0.4.3 ✅  PWA: paridad con v0.4.1 Ext — flujo "¿Olvidaste tu contraseña?"
-v0.5.0 ⏳  Auto-lock PWA + integración Stripe (primer producto monetizado)
-v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
-v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
-v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
+v0.5.0 ⏳  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
+v0.6.0 ⏳  Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
+v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
+v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)
+v0.9.0 ⏳  Argon2id opcional + preparación auditoría
+v1.0.0 ⏳  Auditoría Cure53 + App Store + Play Store público
 ```
 
 ---

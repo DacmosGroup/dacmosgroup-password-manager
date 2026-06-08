@@ -85,17 +85,17 @@
 | v0.4.2 | Auditoría #3: 4 Críticos (C1–C4) + 4 Altos (A2–A5) resueltos. Flujo multi-dispositivo "Restaurar desde tu nube" en Extension y PWA. Version display en popup. 7 criterios de aceptación verificados (round-trip manual 2026-06-06). | ✅ |
 | v0.4.1 (Ext) / v0.4.3 (PWA) | Flujo "¿Olvidaste tu contraseña?" — escape hatch desde pantalla bloqueada para crear vault nuevo vacío. Principio ZK mantenido: datos cifrados anteriores irrecuperables por diseño. | ✅ |
 
-### ⏳ Fase 4 — Monetización + UX v0.5.0 (PENDIENTE)
+### ⏳ Fase 5 — v0.5.0 (PENDIENTE)
 
-- Auto-lock timer en PWA (paridad con Extension)
-- Integración Stripe — modelo de suscripción $1–1.50/mes LATAM
-- Actualizar screenshots en CWS con nueva pantalla de desbloqueo
+- Auto-lock timer en PWA (paridad con Chrome Extension)
+- Internacionalización (i18n) ES / EN / PT-BR — Extension + PWA
 
-### ⏳ Fase 5 — Autofill Nativo v0.6.0 (PENDIENTE)
+### ⏳ Fase 6 — Capacitor + Autofill Nativo v0.6.0+ (PENDIENTE)
 
+- Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
 - iOS AutoFill Credential Provider Extension (Swift nativo)
 - Android Autofill Service + Credential Manager API (Kotlin nativo)
-- Apple App Store + listado público Chrome Web Store
+- Apple App Store + Google Play Store
 
 ---
 
@@ -110,10 +110,12 @@ v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.4.1 ✅  Ext: flujo "¿Olvidaste tu contraseña?" — escape hatch desde pantalla bloqueada
 v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispositivo
 v0.4.3 ✅  PWA: paridad con v0.4.1 Ext — flujo "¿Olvidaste tu contraseña?"
-v0.5.0 ⏳  Auto-lock PWA + integración Stripe (primer producto monetizado)
-v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
-v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
-v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
+v0.5.0 ⏳  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
+v0.6.0 ⏳  Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
+v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
+v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)
+v0.9.0 ⏳  Argon2id opcional + preparación auditoría
+v1.0.0 ⏳  Auditoría Cure53 + App Store + Play Store público
 ```
 
 > Decisiones arquitecturales documentadas en `docs/decisions/`.
