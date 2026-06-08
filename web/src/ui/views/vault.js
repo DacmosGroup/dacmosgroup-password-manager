@@ -21,6 +21,7 @@ import { activarSwipe }         from '../components/swipe-card.js'
 import { estaInstalable, instalar } from '../onboarding/pwa-install.js'
 import { navegar }              from '../router.js'
 import { escapeHtml }           from '../../utils/escape.js'
+import { t }                    from '../../i18n/i18n.js'
 
 /** Monta la vista del vault en el contenedor dado */
 export async function montar(contenedor) {
@@ -38,13 +39,13 @@ export async function montar(contenedor) {
   contenedor.innerHTML = `
     <div class="vista">
       <header class="vault__header">
-        <h1 class="vault__titulo">🔐 Vault</h1>
+        <h1 class="vault__titulo">🔐 ${t('nav.vault')}</h1>
         <div class="vault__acciones">
           <button class="btn btn--pequeño btn--secundario oculto" id="btn-instalar" type="button">
-            📱 Añadir al inicio
+            ${t('vault.btn.install')}
           </button>
           <button class="btn btn--primario btn--pequeño" id="btn-nueva" type="button">
-            + Nueva
+            ${t('vault.btn.new')}
           </button>
         </div>
       </header>
@@ -52,17 +53,18 @@ export async function montar(contenedor) {
       ${mostrarBanner ? `
       <div class="banner-persistencia" id="banner-persistencia" role="alert">
         <p>
-          ⚠️ Tu vault local puede borrarse si no abres la app durante 7+ días.
-          <a href="#" id="banner-sync-link">Configura la sincronización</a> para protegerlo.
+          ${t('vault.banner.persistence')}
+          <a href="#" id="banner-sync-link">${t('vault.banner.sync.link')}</a>
         </p>
-        <button class="banner-persistencia__cerrar" id="btn-banner-cerrar" aria-label="Cerrar aviso">✕</button>
+        <button class="banner-persistencia__cerrar" id="btn-banner-cerrar"
+                aria-label="${t('vault.banner.close')}">✕</button>
       </div>` : ''}
 
       <div class="vault__buscador">
         <input type="search"
                id="input-buscar"
                class="input"
-               placeholder="Buscar por sitio o usuario..."
+               placeholder="${t('vault.search.placeholder')}"
                autocomplete="off"
                spellcheck="false">
       </div>
@@ -127,8 +129,8 @@ function _renderLista(contenedor, credenciales, filtro) {
         <div class="lista-vacia__icono">${filtro ? '🔍' : '🗄️'}</div>
         <p class="lista-vacia__texto">
           ${filtro
-            ? `Sin resultados para "${escapeHtml(filtro)}"`
-            : 'Tu vault está vacío. Añade tu primera credencial.'}
+            ? t('vault.no.results', { term: escapeHtml(filtro) })
+            : t('vault.empty.text')}
         </p>
       </div>`
     return
@@ -141,7 +143,7 @@ function _renderLista(contenedor, credenciales, filtro) {
           ${_inicialSitio(cred.sitio)}
         </div>
         <div class="card__info">
-          <div class="card__sitio">${escapeHtml(cred.sitio || 'Sin nombre')}</div>
+          <div class="card__sitio">${escapeHtml(cred.sitio || t('vault.card.fallback'))}</div>
           <div class="card__usuario">${escapeHtml(cred.usuario || cred.url || '')}</div>
         </div>
         <div class="card__badges">
@@ -149,8 +151,8 @@ function _renderLista(contenedor, credenciales, filtro) {
         </div>
       </div>
       <div class="card__acciones" aria-hidden="true">
-        <button class="card__accion card__accion--editar"  type="button">Editar</button>
-        <button class="card__accion card__accion--eliminar" type="button">Eliminar</button>
+        <button class="card__accion card__accion--editar"  type="button">${t('common.edit.title')}</button>
+        <button class="card__accion card__accion--eliminar" type="button">${t('common.delete.title')}</button>
       </div>
     </div>`).join('')
 
@@ -174,9 +176,9 @@ function _editarCredencial(id) {
 /** Elimina una credencial tras confirmación del usuario */
 async function _eliminarCredencial(id, listaCont, filtro) {
   const credencial = obtenerCredenciales().find(c => c.id === id)
-  const nombre     = credencial?.sitio || 'esta credencial'
+  const nombre     = credencial?.sitio || t('vault.card.fallback')
 
-  if (!confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return
+  if (!confirm(t('vault.delete.confirm', { name: nombre }))) return
 
   const clave = obtenerClave()
   if (!clave) {

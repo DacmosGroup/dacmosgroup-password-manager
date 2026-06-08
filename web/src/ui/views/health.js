@@ -16,6 +16,7 @@ import { analizarSaludLocal } from '../../health/password-health.js'
 import { sesionActiva, obtenerCredenciales } from '../../storage/session.js'
 import { navegar } from '../router.js'
 import { escapeHtml } from '../../utils/escape.js'
+import { t } from '../../i18n/i18n.js'
 
 /** Monta la vista de health en el contenedor dado */
 export async function montar(contenedor) {
@@ -28,8 +29,8 @@ export async function montar(contenedor) {
   // Estado de carga mientras se procesa el análisis
   contenedor.innerHTML = `
     <div class="vista">
-      <h1 class="health__titulo">🛡️ Salud del Vault</h1>
-      <div class="cargando">Analizando contraseñas...</div>
+      <h1 class="health__titulo">${t('health.titulo')}</h1>
+      <div class="cargando">${t('health.loading')}</div>
     </div>`
 
   const credenciales = obtenerCredenciales()
@@ -37,12 +38,10 @@ export async function montar(contenedor) {
   if (credenciales.length === 0) {
     contenedor.innerHTML = `
       <div class="vista">
-        <h1 class="health__titulo">🛡️ Salud del Vault</h1>
+        <h1 class="health__titulo">${t('health.titulo')}</h1>
         <div class="lista-vacia">
           <div class="lista-vacia__icono">🛡️</div>
-          <p class="lista-vacia__texto">
-            Añade credenciales a tu vault para ver el análisis de seguridad.
-          </p>
+          <p class="lista-vacia__texto">${t('health.empty')}</p>
         </div>
       </div>`
     return
@@ -54,46 +53,44 @@ export async function montar(contenedor) {
 
     contenedor.innerHTML = `
       <div class="vista">
-        <h1 class="health__titulo">🛡️ Salud del Vault</h1>
+        <h1 class="health__titulo">${t('health.titulo')}</h1>
 
         <!-- Contadores principales -->
         <div class="health__contadores">
           <div class="health__contador health__contador--seguras">
             <div class="health__contador-numero">${Math.max(0, seguras)}</div>
-            <div class="health__contador-label">Seguras</div>
+            <div class="health__contador-label">${t('health.counter.safe')}</div>
           </div>
           <div class="health__contador health__contador--debiles">
             <div class="health__contador-numero">${reporte.debiles}</div>
-            <div class="health__contador-label">Débiles</div>
+            <div class="health__contador-label">${t('health.counter.weak')}</div>
           </div>
           <div class="health__contador health__contador--reutiliz">
             <div class="health__contador-numero">${reporte.reutilizadas}</div>
-            <div class="health__contador-label">Reutilizadas</div>
+            <div class="health__contador-label">${t('health.counter.reused')}</div>
           </div>
           <div class="health__contador health__contador--comprom">
             <div class="health__contador-numero">${reporte.comprometidas}</div>
-            <div class="health__contador-label">Comprometidas</div>
+            <div class="health__contador-label">${t('health.counter.compromised')}</div>
           </div>
         </div>
 
-        <p class="seccion-titulo">DETALLE POR CREDENCIAL</p>
+        <p class="seccion-titulo">${t('health.detail.title')}</p>
 
         <!-- Lista de credenciales con sus métricas -->
         <div id="lista-health">
           ${reporte.items.map(item => _renderItem(item)).join('')}
         </div>
 
-        <p class="health__nota-pie">
-          Análisis local · Sin llamadas de red · Zero-Knowledge
-        </p>
+        <p class="health__nota-pie">${t('health.footer')}</p>
       </div>`
 
   } catch (error) {
     console.error('Error al analizar vault:', error)
     contenedor.innerHTML = `
       <div class="vista">
-        <h1 class="health__titulo">🛡️ Salud del Vault</h1>
-        <p class="error-texto">Error al analizar las contraseñas. Intenta de nuevo.</p>
+        <h1 class="health__titulo">${t('health.titulo')}</h1>
+        <p class="error-texto">${t('health.error')}</p>
       </div>`
   }
 }
@@ -103,19 +100,19 @@ function _renderItem(item) {
   const badges = []
 
   if (item.esDebil) {
-    badges.push('<span class="badge badge--aviso">Débil</span>')
+    badges.push(`<span class="badge badge--aviso">${t('health.badge.weak')}</span>`)
   }
   if (item.esReutilizada) {
-    badges.push('<span class="badge badge--peligro">Reutilizada</span>')
+    badges.push(`<span class="badge badge--peligro">${t('health.badge.reused')}</span>`)
   }
   if (!item.esDebil && !item.esReutilizada) {
-    badges.push('<span class="badge badge--exito">Segura</span>')
+    badges.push(`<span class="badge badge--exito">${t('health.badge.safe')}</span>`)
   }
 
   return `
     <div class="health__item">
       <div class="health__item-info">
-        <div class="health__item-sitio">${escapeHtml(item.sitio || 'Sin nombre')}</div>
+        <div class="health__item-sitio">${escapeHtml(item.sitio || t('vault.card.fallback'))}</div>
         <div class="health__item-entropia">${item.entropia} bits · ${item.usuario ? escapeHtml(item.usuario) : ''}</div>
       </div>
       <div class="health__item-badges">
@@ -123,4 +120,3 @@ function _renderItem(item) {
       </div>
     </div>`
 }
-

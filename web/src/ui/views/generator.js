@@ -14,6 +14,7 @@
  */
 
 import { escapeHtml } from '../../utils/escape.js'
+import { t }          from '../../i18n/i18n.js'
 
 // Historial en memoria de módulo — persiste mientras la vista no se destruye
 // pero se pierde al cerrar la pestaña (no es material sensible — solo conveniencia)
@@ -91,14 +92,16 @@ export async function montar(contenedor) {
 
   contenedor.innerHTML = `
     <div class="vista">
-      <h1 class="generator__titulo">⚡ Generador de Contraseñas</h1>
+      <h1 class="generator__titulo">${t('generator.titulo')}</h1>
 
       <!-- Output -->
       <div class="generator__output">
-        <span class="generator__password monospace" id="gen-output">
-          Pulsa "Generar" para comenzar
+        <span class="generator__password monospace" id="gen-output"
+              data-has-password="false">
+          ${t('generator.initial.text')}
         </span>
-        <button class="btn btn--pequeño btn--secundario" id="btn-copiar" type="button" title="Copiar al portapapeles">
+        <button class="btn btn--pequeño btn--secundario" id="btn-copiar" type="button"
+                title="${t('generator.copy.title')}">
           📋
         </button>
       </div>
@@ -110,68 +113,75 @@ export async function montar(contenedor) {
       <div class="generator__controles">
         <!-- Longitud -->
         <div class="generator__control">
-          <span class="generator__control-label">Longitud</span>
+          <span class="generator__control-label">${t('generator.control.length')}</span>
           <div class="generator__longitud">
-            <input type="range" id="gen-longitud" min="8" max="64" value="16" aria-label="Longitud">
+            <input type="range" id="gen-longitud" min="8" max="64" value="16"
+                   aria-label="${t('generator.control.length')}">
             <span class="generator__longitud-valor" id="gen-longitud-valor">16</span>
           </div>
         </div>
 
         <!-- Mayúsculas -->
         <div class="generator__control">
-          <span class="generator__control-label">Mayúsculas (A–Z)</span>
+          <span class="generator__control-label">${t('generator.control.uppercase')}</span>
           <label class="toggle">
-            <input type="checkbox" id="gen-mayus" checked aria-label="Incluir mayúsculas">
+            <input type="checkbox" id="gen-mayus" checked
+                   aria-label="${t('generator.control.uppercase.aria')}">
             <span class="toggle__slider"></span>
           </label>
         </div>
 
         <!-- Minúsculas -->
         <div class="generator__control">
-          <span class="generator__control-label">Minúsculas (a–z)</span>
+          <span class="generator__control-label">${t('generator.control.lowercase')}</span>
           <label class="toggle">
-            <input type="checkbox" id="gen-minus" checked aria-label="Incluir minúsculas">
+            <input type="checkbox" id="gen-minus" checked
+                   aria-label="${t('generator.control.lowercase.aria')}">
             <span class="toggle__slider"></span>
           </label>
         </div>
 
         <!-- Números -->
         <div class="generator__control">
-          <span class="generator__control-label">Números (0–9)</span>
+          <span class="generator__control-label">${t('generator.control.numbers')}</span>
           <label class="toggle">
-            <input type="checkbox" id="gen-numeros" checked aria-label="Incluir números">
+            <input type="checkbox" id="gen-numeros" checked
+                   aria-label="${t('generator.control.numbers.aria')}">
             <span class="toggle__slider"></span>
           </label>
         </div>
 
         <!-- Símbolos -->
         <div class="generator__control">
-          <span class="generator__control-label">Símbolos (!@#$…)</span>
+          <span class="generator__control-label">${t('generator.control.symbols')}</span>
           <label class="toggle">
-            <input type="checkbox" id="gen-simbolos" checked aria-label="Incluir símbolos">
+            <input type="checkbox" id="gen-simbolos" checked
+                   aria-label="${t('generator.control.symbols.aria')}">
             <span class="toggle__slider"></span>
           </label>
         </div>
 
         <!-- Excluir ambiguos -->
         <div class="generator__control">
-          <span class="generator__control-label" title="Excluye: 0, O, o, I, l, 1">
-            Excluir ambiguos
+          <span class="generator__control-label"
+                title="${t('generator.control.ambiguous.title')}">
+            ${t('generator.control.ambiguous')}
           </span>
           <label class="toggle">
-            <input type="checkbox" id="gen-ambiguos" aria-label="Excluir caracteres ambiguos">
+            <input type="checkbox" id="gen-ambiguos"
+                   aria-label="${t('generator.control.ambiguous.aria')}">
             <span class="toggle__slider"></span>
           </label>
         </div>
       </div>
 
       <button class="btn btn--primario btn--completo" id="btn-generar" type="button">
-        ⚡ Generar contraseña
+        ${t('generator.btn.generate')}
       </button>
 
       <!-- Historial de sesión -->
       <div class="generator__historial ${_historial.length ? '' : 'oculto'}" id="historial-contenedor">
-        <div class="generator__historial-titulo">Historial de sesión</div>
+        <div class="generator__historial-titulo">${t('generator.history.title')}</div>
         <div id="historial-lista">
           ${_renderHistorial()}
         </div>
@@ -212,13 +222,15 @@ export async function montar(contenedor) {
   function generarYMostrar() {
     const { password, entropia } = _generar(opciones)
     if (!password) {
-      outputEl.textContent = 'Selecciona al menos un tipo de carácter'
+      outputEl.textContent = t('generator.error.no.charset')
+      outputEl.dataset.hasPassword = 'false'
       entropiaEl.textContent = ''
       return
     }
 
     outputEl.textContent  = password
-    entropiaEl.textContent = `${entropia} bits de entropía`
+    outputEl.dataset.hasPassword = 'true'
+    entropiaEl.textContent = t('generator.entropy', { bits: entropia })
 
     // Añadir al historial (máximo 5 últimas)
     _historial.unshift(password)
@@ -233,9 +245,10 @@ export async function montar(contenedor) {
 
   // ── Copiar al portapapeles ──
   btnCopiar.addEventListener('click', async () => {
-    const texto = outputEl.textContent.trim()
-    if (!texto || texto.startsWith('Pulsa') || texto.startsWith('Selecciona')) return
+    // data-has-password evita copiar el texto placeholder (idioma-agnóstico)
+    if (outputEl.dataset.hasPassword !== 'true') return
 
+    const texto = outputEl.textContent.trim()
     try {
       await navigator.clipboard.writeText(texto)
       const original = btnCopiar.textContent
@@ -272,7 +285,6 @@ function _renderHistorial() {
       <button class="btn btn--pequeño btn--secundario"
               data-copiar="${escapeHtml(p)}"
               type="button"
-              aria-label="Copiar">📋</button>
+              aria-label="${t('generator.copy.aria')}">📋</button>
     </div>`).join('')
 }
-

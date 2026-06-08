@@ -33,11 +33,10 @@ import { OneDriveAdapter }     from '../../sync/onedrive-adapter.js'
 import { sincronizar }         from '../../sync/sync-manager.js'
 import { navegar }             from '../router.js'
 import * as autoLock           from '../../auto-lock/auto-lock-manager.js'
+import { initI18n, t }         from '../../i18n/i18n.js'
 
 // ── Modal seguro de contraseña (reemplaza prompt() nativo) ──
 
-// Inyecta los estilos del modal una sola vez en el <head>.
-// Usa variables CSS del design system para integrarse con el tema de la PWA.
 function _inyectarEstilosModal() {
   if (document.getElementById('dpm-pass-modal-styles')) return
   const style = document.createElement('style')
@@ -72,13 +71,13 @@ function _pedirContrasena(titulo) {
         <p class="dpm-pass-modal__titulo">${titulo}</p>
         <div class="dpm-pass-modal__campo">
           <input type="password" class="dpm-pass-modal__input" id="dpm-pass-input"
-                 placeholder="Contraseña maestra" autocomplete="current-password">
+                 placeholder="${t('settings.modal.placeholder')}" autocomplete="current-password">
           <button type="button" class="dpm-pass-modal__toggle" id="dpm-pass-toggle"
-                  aria-label="Mostrar u ocultar contraseña">👁</button>
+                  aria-label="${t('settings.modal.aria.toggle')}">👁</button>
         </div>
         <div class="dpm-pass-modal__acciones">
-          <button type="button" class="btn btn--pequeño btn--secundario" id="dpm-pass-cancelar">Cancelar</button>
-          <button type="button" class="btn btn--pequeño btn--primario"   id="dpm-pass-ok">Continuar</button>
+          <button type="button" class="btn btn--pequeño btn--secundario" id="dpm-pass-cancelar">${t('settings.modal.btn.cancel')}</button>
+          <button type="button" class="btn btn--pequeño btn--primario"   id="dpm-pass-ok">${t('settings.modal.btn.continue')}</button>
         </div>
       </div>`
     document.body.appendChild(overlay)
@@ -88,7 +87,6 @@ function _pedirContrasena(titulo) {
     const btnCan   = overlay.querySelector('#dpm-pass-cancelar')
     const btnToggle = overlay.querySelector('#dpm-pass-toggle')
 
-    // Foco automático en el campo de contraseña
     requestAnimationFrame(() => input.focus())
 
     const confirmar = () => { overlay.remove(); resolve(input.value || null) }
@@ -113,7 +111,6 @@ export async function montar(contenedor) {
     return
   }
 
-  // Carga asíncrona del estado antes de renderizar
   const [persistencia, syncConfig] = await Promise.all([
     verificarPersistencia(),
     idbStorage.get(['syncConfig', 'config']),
@@ -122,50 +119,72 @@ export async function montar(contenedor) {
   const configActual  = syncConfig.config  ?? {}
   const syncConf      = syncConfig.syncConfig ?? {}
   const proveedorSync = syncConf.proveedor ?? null
+  const idiomaActual  = configActual.idioma ?? 'auto'
 
   const estaConectadoGoogle    = proveedorSync === 'google-drive'
   const estaConectadoOneDrive  = estaConectadoMicrosoft()
 
+  const _btnIdioma = (val, label) => {
+    const activo = idiomaActual === val
+    return `<button type="button" class="btn btn--pequeño ${activo ? 'btn--primario' : 'btn--secundario'}" data-idioma="${val}">${label}</button>`
+  }
+
   contenedor.innerHTML = `
     <div class="vista">
-      <h1 class="settings__titulo">⚙️ Configuración</h1>
+      <h1 class="settings__titulo">${t('settings.titulo')}</h1>
+
+      <!-- ── 0. Idioma ── -->
+      <p class="seccion-titulo">${t('settings.section.language')}</p>
+      <div class="settings__seccion tarjeta">
+        <div class="settings__fila-info" style="margin-bottom:12px">
+          <div class="settings__fila-titulo">${t('settings.language.title')}</div>
+          <div class="settings__fila-descripcion">${t('settings.language.desc')}</div>
+        </div>
+        <div class="settings__idioma-selector" id="idioma-selector">
+          ${_btnIdioma('auto', t('settings.language.auto'))}
+          ${_btnIdioma('es',    'Español')}
+          ${_btnIdioma('en',    'English')}
+          ${_btnIdioma('pt_BR', 'Português')}
+        </div>
+      </div>
 
       <!-- ── 1. Contraseña Maestra ── -->
-      <p class="seccion-titulo">CONTRASEÑA MAESTRA</p>
+      <p class="seccion-titulo">${t('settings.section.master')}</p>
       <div class="settings__seccion tarjeta">
         <form id="form-cambiar-pass" novalidate>
           <div class="credform__campos">
             <div class="campo">
-              <label for="s-pass-actual">Contraseña actual</label>
+              <label for="s-pass-actual">${t('settings.master.label.current')}</label>
               <input type="password" id="s-pass-actual" class="input" autocomplete="current-password">
             </div>
             <div class="campo">
-              <label for="s-pass-nueva">Nueva contraseña</label>
+              <label for="s-pass-nueva">${t('settings.master.label.new')}</label>
               <input type="password" id="s-pass-nueva" class="input" autocomplete="new-password">
             </div>
             <div class="campo">
-              <label for="s-pass-confirmar">Confirmar nueva contraseña</label>
+              <label for="s-pass-confirmar">${t('settings.master.label.confirm')}</label>
               <input type="password" id="s-pass-confirmar" class="input" autocomplete="new-password">
             </div>
           </div>
           <div class="unlock__error oculto" id="pass-error" role="alert"></div>
-          <div class="unlock__error alerta--exito oculto" id="pass-exito"
-               role="status"></div>
-          <button type="submit" class="btn btn--primario" id="btn-cambiar-pass">Cambiar contraseña</button>
+          <div class="unlock__error alerta--exito oculto" id="pass-exito" role="status"></div>
+          <button type="submit" class="btn btn--primario" id="btn-cambiar-pass">${t('settings.master.btn.change')}</button>
         </form>
       </div>
 
       <!-- ── 2. Portapapeles ── -->
-      <p class="seccion-titulo">PORTAPAPELES</p>
+      <p class="seccion-titulo">${t('settings.section.clipboard')}</p>
       <div class="settings__seccion tarjeta">
         <div class="settings__fila">
           <div class="settings__fila-info">
-            <div class="settings__fila-titulo">Limpiar portapapeles</div>
-            <div class="settings__fila-descripcion">Borrar automáticamente el portapapeles tras copiar una contraseña</div>
+            <div class="settings__fila-titulo">${t('settings.clipboard.title')}</div>
+            <div class="settings__fila-descripcion">${t('settings.clipboard.desc')}</div>
           </div>
           <div class="settings__fila-accion">
             <label class="toggle">
-              <input type="checkbox" id="s-limpiar-clip" ${configActual.limpiarPortapapeles !== false ? 'checked' : ''} aria-label="Limpiar portapapeles">
+              <input type="checkbox" id="s-limpiar-clip"
+                     ${configActual.limpiarPortapapeles !== false ? 'checked' : ''}
+                     aria-label="${t('settings.clipboard.aria')}">
               <span class="toggle__slider"></span>
             </label>
           </div>
@@ -173,46 +192,46 @@ export async function montar(contenedor) {
       </div>
 
       <!-- ── 2b. Bloqueo automático (F5-A) ── -->
-      <p class="seccion-titulo">BLOQUEO AUTOMÁTICO</p>
+      <p class="seccion-titulo">${t('settings.section.autolock')}</p>
       <div class="settings__seccion tarjeta">
         <div class="settings__fila">
           <div class="settings__fila-info">
-            <div class="settings__fila-titulo">Bloquear vault por inactividad</div>
-            <div class="settings__fila-descripcion">Cierra la sesión automáticamente si no hay actividad</div>
+            <div class="settings__fila-titulo">${t('settings.autolock.title')}</div>
+            <div class="settings__fila-descripcion">${t('settings.autolock.desc')}</div>
           </div>
           <div class="settings__fila-accion">
             <select id="s-auto-lock" class="input">
-              <option value="1"  ${(configActual.autoLock ?? 5) === 1  ? 'selected' : ''}>1 min</option>
-              <option value="5"  ${(configActual.autoLock ?? 5) === 5  ? 'selected' : ''}>5 min</option>
-              <option value="15" ${(configActual.autoLock ?? 5) === 15 ? 'selected' : ''}>15 min</option>
-              <option value="30" ${(configActual.autoLock ?? 5) === 30 ? 'selected' : ''}>30 min</option>
-              <option value="60" ${(configActual.autoLock ?? 5) === 60 ? 'selected' : ''}>1 hora</option>
-              <option value="0"  ${(configActual.autoLock ?? 5) === 0  ? 'selected' : ''}>Nunca</option>
+              <option value="1"  ${(configActual.autoLock ?? 5) === 1  ? 'selected' : ''}>${t('settings.autolock.1m')}</option>
+              <option value="5"  ${(configActual.autoLock ?? 5) === 5  ? 'selected' : ''}>${t('settings.autolock.5m')}</option>
+              <option value="15" ${(configActual.autoLock ?? 5) === 15 ? 'selected' : ''}>${t('settings.autolock.15m')}</option>
+              <option value="30" ${(configActual.autoLock ?? 5) === 30 ? 'selected' : ''}>${t('settings.autolock.30m')}</option>
+              <option value="60" ${(configActual.autoLock ?? 5) === 60 ? 'selected' : ''}>${t('settings.autolock.1h')}</option>
+              <option value="0"  ${(configActual.autoLock ?? 5) === 0  ? 'selected' : ''}>${t('settings.autolock.never')}</option>
             </select>
           </div>
         </div>
       </div>
 
       <!-- ── 3. Backup ── -->
-      <p class="seccion-titulo">BACKUP</p>
+      <p class="seccion-titulo">${t('settings.section.backup')}</p>
       <div class="settings__seccion tarjeta">
         <div class="settings__fila">
           <div class="settings__fila-info">
-            <div class="settings__fila-titulo">Exportar backup</div>
-            <div class="settings__fila-descripcion">Descarga un archivo cifrado con tu vault completo</div>
+            <div class="settings__fila-titulo">${t('settings.backup.export.title')}</div>
+            <div class="settings__fila-descripcion">${t('settings.backup.export.desc')}</div>
           </div>
           <div class="settings__fila-accion">
-            <button class="btn btn--pequeño btn--secundario" id="btn-exportar" type="button">Exportar</button>
+            <button class="btn btn--pequeño btn--secundario" id="btn-exportar" type="button">${t('common.export')}</button>
           </div>
         </div>
         <div class="settings__fila">
           <div class="settings__fila-info">
-            <div class="settings__fila-titulo">Importar backup</div>
-            <div class="settings__fila-descripcion">Restaura un vault desde un archivo de backup</div>
+            <div class="settings__fila-titulo">${t('settings.backup.import.title')}</div>
+            <div class="settings__fila-descripcion">${t('settings.backup.import.desc')}</div>
           </div>
           <div class="settings__fila-accion">
             <label class="btn btn--pequeño btn--secundario">
-              Importar
+              ${t('common.import.btn')}
               <input type="file" id="input-importar" accept=".json" class="archivo-entrada-oculta">
             </label>
           </div>
@@ -221,61 +240,67 @@ export async function montar(contenedor) {
       </div>
 
       <!-- ── 3b. Exportar / Importar CSV ── -->
-      <p class="seccion-titulo">EXPORTAR / IMPORTAR CSV</p>
+      <p class="seccion-titulo">${t('settings.section.csv')}</p>
       <div class="settings__seccion tarjeta">
         <div class="settings__fila">
           <div class="settings__fila-info">
-            <div class="settings__fila-titulo">Exportar CSV</div>
-            <div class="settings__fila-descripcion">Descarga tus credenciales en formato compatible con otros gestores</div>
+            <div class="settings__fila-titulo">${t('settings.csv.export.title')}</div>
+            <div class="settings__fila-descripcion">${t('settings.csv.export.desc')}</div>
           </div>
           <div class="settings__fila-accion settings__fila-accion--multiple">
-            <button class="btn btn--pequeño btn--secundario" id="btn-exportar-csv-generico" type="button">Genérico</button>
-            <button class="btn btn--pequeño btn--secundario" id="btn-exportar-csv-bitwarden" type="button">Bitwarden</button>
+            <button class="btn btn--pequeño btn--secundario" id="btn-exportar-csv-generico" type="button">${t('settings.csv.btn.generic')}</button>
+            <button class="btn btn--pequeño btn--secundario" id="btn-exportar-csv-bitwarden" type="button">${t('settings.csv.btn.bitwarden')}</button>
           </div>
         </div>
         <div class="settings__fila">
           <div class="settings__fila-info">
-            <div class="settings__fila-titulo">Importar CSV</div>
-            <div class="settings__fila-descripcion">Importa desde Google PM, Bitwarden, LastPass, 1Password o CSV genérico</div>
+            <div class="settings__fila-titulo">${t('settings.csv.import.title')}</div>
+            <div class="settings__fila-descripcion">${t('settings.csv.import.desc')}</div>
           </div>
           <div class="settings__fila-accion">
-            <button class="btn btn--pequeño btn--secundario" id="btnAbrirImportarCSV" type="button">Importar</button>
+            <button class="btn btn--pequeño btn--secundario" id="btnAbrirImportarCSV" type="button">${t('common.import.btn')}</button>
           </div>
         </div>
         <!-- ── Wizard de importación CSV (oculto por defecto) ── -->
         <div id="panelImportarCSV" class="hidden">
           <div class="settings__csv-wizard">
             <label class="campo">
-              <span class="campo__etiqueta">Seleccionar archivo CSV</span>
+              <span class="campo__etiqueta">${t('settings.csv.file.label')}</span>
               <input type="file" id="inputArchivoCSV" accept=".csv" class="input">
             </label>
             <div id="grupoFormatoCSV" style="display:none">
               <div id="badgeFormatoCSV" class="import-format-badge"></div>
               <select id="selectFormatoCSV" class="input">
-                <option value="">-- Seleccionar formato --</option>
+                <option value="">${t('settings.csv.format.auto')}</option>
                 <option value="google">Google Password Manager</option>
                 <option value="bitwarden">Bitwarden</option>
                 <option value="lastpass">LastPass</option>
                 <option value="1password">1Password</option>
-                <option value="generico">CSV Genérico</option>
+                <option value="generico">${t('settings.csv.format.generic')}</option>
               </select>
             </div>
             <div id="errorImportarCSV" class="unlock__error oculto" role="alert"></div>
             <div id="grupoAccionesCSV" style="display:none" class="settings__csv-wizard-acciones">
-              <button class="btn btn--pequeño btn--primario"   id="btnPrevisualizarCSV"    type="button">Previsualizar importación</button>
-              <button class="btn btn--pequeño btn--secundario" id="btnCancelarImportarCSV" type="button">Cancelar</button>
+              <button class="btn btn--pequeño btn--primario"   id="btnPrevisualizarCSV"    type="button">${t('settings.csv.btn.preview')}</button>
+              <button class="btn btn--pequeño btn--secundario" id="btnCancelarImportarCSV" type="button">${t('common.cancel')}</button>
             </div>
             <div id="panelPreviewCSV" class="hidden">
               <div id="resumenPreviewCSV" class="csv-resumen"></div>
               <div class="csv-tabla-scroll">
                 <table class="csv-preview-table">
                   <thead>
-                    <tr><th>Sitio</th><th>URL</th><th>Usuario</th><th>Contraseña</th><th>Estado</th></tr>
+                    <tr>
+                      <th>${t('settings.csv.table.site')}</th>
+                      <th>${t('settings.csv.table.url')}</th>
+                      <th>${t('settings.csv.table.user')}</th>
+                      <th>${t('settings.csv.table.password')}</th>
+                      <th>${t('settings.csv.table.status')}</th>
+                    </tr>
                   </thead>
                   <tbody id="tbodyPreviewCSV"></tbody>
                 </table>
               </div>
-              <button class="btn btn--pequeño btn--primario" id="btnConfirmarImportarCSV" type="button" disabled>Importar</button>
+              <button class="btn btn--pequeño btn--primario" id="btnConfirmarImportarCSV" type="button" disabled>${t('common.import.btn')}</button>
             </div>
             <div id="successImportarCSV" class="unlock__error alerta--exito oculto" role="status"></div>
           </div>
@@ -284,37 +309,37 @@ export async function montar(contenedor) {
       </div>
 
       <!-- ── 4. Sincronización ── -->
-      <p class="seccion-titulo" id="seccion-sync">SINCRONIZACIÓN</p>
+      <p class="seccion-titulo" id="seccion-sync">${t('settings.section.sync')}</p>
       <div class="settings__seccion tarjeta">
         <!-- Google Drive -->
         <div class="settings__fila">
           <div class="settings__fila-info">
-            <div class="settings__fila-titulo">Google Drive</div>
+            <div class="settings__fila-titulo">${t('settings.sync.google.title')}</div>
             <div class="settings__fila-descripcion">
-              ${estaConectadoGoogle ? '✅ Conectado' : 'Sin conexión'}
+              ${estaConectadoGoogle ? t('settings.sync.connected') : t('settings.sync.disconnected')}
             </div>
           </div>
           <div class="settings__fila-accion settings__fila-accion--multiple">
             ${estaConectadoGoogle
-              ? `<button class="btn btn--pequeño btn--secundario" id="btn-sync-google" type="button">Sincronizar</button>
-                 <button class="btn btn--pequeño btn--peligro"   id="btn-desconectar-google" type="button">Desconectar</button>`
-              : `<button class="btn btn--pequeño btn--primario"  id="btn-conectar-google" type="button">Conectar</button>`
+              ? `<button class="btn btn--pequeño btn--secundario" id="btn-sync-google" type="button">${t('settings.sync.btn.sync')}</button>
+                 <button class="btn btn--pequeño btn--peligro"   id="btn-desconectar-google" type="button">${t('common.disconnect')}</button>`
+              : `<button class="btn btn--pequeño btn--primario"  id="btn-conectar-google" type="button">${t('common.connect')}</button>`
             }
           </div>
         </div>
         <!-- OneDrive -->
         <div class="settings__fila">
           <div class="settings__fila-info">
-            <div class="settings__fila-titulo">Microsoft OneDrive</div>
+            <div class="settings__fila-titulo">${t('settings.sync.onedrive.title')}</div>
             <div class="settings__fila-descripcion">
-              ${estaConectadoOneDrive ? '✅ Conectado' : 'Sin conexión'}
+              ${estaConectadoOneDrive ? t('settings.sync.connected') : t('settings.sync.disconnected')}
             </div>
           </div>
           <div class="settings__fila-accion settings__fila-accion--multiple">
             ${estaConectadoOneDrive
-              ? `<button class="btn btn--pequeño btn--secundario" id="btn-sync-onedrive" type="button">Sincronizar</button>
-                 <button class="btn btn--pequeño btn--peligro"   id="btn-desconectar-onedrive" type="button">Desconectar</button>`
-              : `<button class="btn btn--pequeño btn--primario"  id="btn-conectar-onedrive" type="button">Conectar</button>`
+              ? `<button class="btn btn--pequeño btn--secundario" id="btn-sync-onedrive" type="button">${t('settings.sync.btn.sync')}</button>
+                 <button class="btn btn--pequeño btn--peligro"   id="btn-desconectar-onedrive" type="button">${t('common.disconnect')}</button>`
+              : `<button class="btn btn--pequeño btn--primario"  id="btn-conectar-onedrive" type="button">${t('common.connect')}</button>`
             }
           </div>
         </div>
@@ -322,39 +347,41 @@ export async function montar(contenedor) {
       </div>
 
       <!-- ── 5. Almacenamiento (F4.5) ── -->
-      <p class="seccion-titulo">ALMACENAMIENTO</p>
+      <p class="seccion-titulo">${t('settings.section.storage')}</p>
       <div class="settings__seccion tarjeta">
         <div class="settings__estado-persistencia">
           ${persistencia.persistente
-            ? '✅ <strong>Almacenamiento protegido</strong> — tu vault no será borrado automáticamente'
+            ? t('settings.storage.protected')
             : persistencia.soportada
-              ? '⚠️ <strong>Almacenamiento evictable</strong> — <a href="#" id="link-activar-sync">activa la sincronización</a> para proteger tu vault en iOS'
-              : 'ℹ️ Estado de persistencia no disponible en este navegador'
+              ? t('settings.storage.evictable')
+              : t('settings.storage.unknown')
           }
         </div>
         ${persistencia.soportada ? `
         <p class="settings__uso-storage">
-          Almacenamiento: ${_formatearBytes(persistencia.usoBytes)} usados
-          de ${_formatearBytes(persistencia.cuotaBytes)} disponibles
+          ${t('settings.storage.usage', {
+            used:  _formatearBytes(persistencia.usoBytes),
+            quota: _formatearBytes(persistencia.cuotaBytes),
+          })}
         </p>` : ''}
       </div>
 
       <!-- ── Sesión ── -->
-      <p class="seccion-titulo">SESIÓN</p>
+      <p class="seccion-titulo">${t('settings.section.session')}</p>
       <div class="settings__seccion tarjeta">
         <div class="settings__fila">
           <div class="settings__fila-info">
-            <div class="settings__fila-titulo">Bloquear vault</div>
-            <div class="settings__fila-descripcion">Cerrar sesión y limpiar credenciales de la memoria</div>
+            <div class="settings__fila-titulo">${t('settings.session.lock.title')}</div>
+            <div class="settings__fila-descripcion">${t('settings.session.lock.desc')}</div>
           </div>
           <div class="settings__fila-accion">
-            <button class="btn btn--pequeño btn--peligro" id="btn-bloquear" type="button">Bloquear</button>
+            <button class="btn btn--pequeño btn--peligro" id="btn-bloquear" type="button">${t('settings.session.btn.lock')}</button>
           </div>
         </div>
       </div>
 
       <p class="settings__version-pie">
-        Dacmos Password Manager · Zero-Knowledge · v0.4.2
+        ${t('settings.version', { version: '0.4.3' })}
       </p>
     </div>`
 
@@ -370,37 +397,37 @@ export async function montar(contenedor) {
     exitoEl.classList.add('oculto')
 
     if (nueva.length < 8) {
-      errEl.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.'
+      errEl.textContent = t('settings.master.error.min')
       errEl.classList.remove('oculto'); return
     }
     if (nueva !== confirmar) {
-      errEl.textContent = 'Las contraseñas nuevas no coinciden.'
+      errEl.textContent = t('settings.master.error.mismatch')
       errEl.classList.remove('oculto'); return
     }
 
     const btn = contenedor.querySelector('#btn-cambiar-pass')
-    btn.disabled = true; btn.textContent = 'Cambiando...'
+    btn.disabled = true; btn.textContent = t('settings.master.btn.loading')
     try {
       const claveNueva = await cambiarMasterPassword(actual, nueva)
       establecerClave(claveNueva)
-      exitoEl.textContent = 'Contraseña cambiada exitosamente.'
+      exitoEl.textContent = t('settings.master.success')
       exitoEl.classList.remove('oculto')
       contenedor.querySelector('#s-pass-actual').value  = ''
       contenedor.querySelector('#s-pass-nueva').value   = ''
       contenedor.querySelector('#s-pass-confirmar').value = ''
     } catch (err) {
       errEl.textContent = err.message === 'PASSWORD_INCORRECTA'
-        ? 'Contraseña actual incorrecta.'
-        : 'Error al cambiar contraseña. Intenta de nuevo.'
+        ? t('settings.master.error.incorrect')
+        : t('settings.master.error.generic')
       errEl.classList.remove('oculto')
     } finally {
-      btn.disabled = false; btn.textContent = 'Cambiar contraseña'
+      btn.disabled = false; btn.textContent = t('settings.master.btn.change')
     }
   })
 
   // ── Exportar backup ──
   contenedor.querySelector('#btn-exportar')?.addEventListener('click', async () => {
-    const password = await _pedirContrasena('Ingresa tu contraseña maestra para exportar el backup:')
+    const password = await _pedirContrasena(t('settings.backup.pass.export.prompt'))
     if (!password) return
     const backupMsg = contenedor.querySelector('#backup-msg')
     try {
@@ -414,7 +441,7 @@ export async function montar(contenedor) {
       a.click()
       URL.revokeObjectURL(url)
     } catch (_) {
-      backupMsg.textContent = 'Error al exportar. Verifica tu contraseña.'
+      backupMsg.textContent = t('settings.backup.error.export')
       backupMsg.classList.remove('oculto')
     }
   })
@@ -425,43 +452,41 @@ export async function montar(contenedor) {
     const backupMsg = contenedor.querySelector('#backup-msg')
     if (!archivo) return
 
-    const password = await _pedirContrasena('Ingresa la contraseña maestra del backup:')
+    const password = await _pedirContrasena(t('settings.backup.pass.import.prompt'))
     if (!password) { e.target.value = ''; return }
 
-    // Bloquear el input mientras dura el import (evita doble submit)
     e.target.disabled = true
 
     try {
       const texto  = await archivo.text()
       const backup = JSON.parse(texto)
 
-      // Mostrar indicador de progreso antes de la primera derivación PBKDF2
       backupMsg.style.cssText = ''
-      backupMsg.textContent   = 'Importando... (1/3)'
+      backupMsg.textContent   = t('settings.backup.progress', { current: 1, total: 3 })
       backupMsg.classList.remove('oculto')
 
       const total = await importarVaultBackup(backup, password, {
         onProgreso: (paso, totalPasos) => {
-          backupMsg.textContent = `Importando... (${paso}/${totalPasos})`
+          backupMsg.textContent = t('settings.backup.progress', { current: paso, total: totalPasos })
         },
       })
 
       backupMsg.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
-      backupMsg.textContent   = `Backup importado: ${total} credenciales.`
+      backupMsg.textContent   = t('settings.backup.success', { count: total })
     } catch (err) {
       console.error('[IMPORT]', err)
       backupMsg.style.cssText = ''
       backupMsg.textContent   =
         err.message === 'PASSWORD_INCORRECTA'
-          ? 'Contraseña incorrecta para este backup.'
+          ? t('settings.backup.error.pass')
           : err.message === 'IMPORT_PASSWORD_MISMATCH'
-            ? 'La contraseña del backup no coincide con la contraseña actual del vault.'
+            ? t('settings.backup.error.mismatch')
             : err.message === 'BACKUP_INVALIDO'
-              ? 'El archivo seleccionado no es un backup válido de Dacmos PM.'
-              : 'Error al importar el backup.'
+              ? t('settings.backup.error.invalid')
+              : t('settings.backup.error.import')
       backupMsg.classList.remove('oculto')
     } finally {
-      e.target.value    = ''     // permite re-seleccionar el mismo archivo
+      e.target.value    = ''
       e.target.disabled = false
     }
   })
@@ -476,7 +501,7 @@ export async function montar(contenedor) {
       const csv = generarCSVGenerico(credenciales)
       _descargarArchivo(csv, 'text/csv', `dacmos-export-${new Date().toISOString().slice(0,10)}.csv`)
     } catch (_) {
-      csvMsg.textContent = 'Error al exportar. Intenta de nuevo.'
+      csvMsg.textContent = t('settings.csv.error.export')
       csvMsg.classList.remove('oculto')
     }
   })
@@ -490,7 +515,7 @@ export async function montar(contenedor) {
       const csv = generarCSVBitwarden(credenciales)
       _descargarArchivo(csv, 'text/csv', `dacmos-bitwarden-${new Date().toISOString().slice(0,10)}.csv`)
     } catch (_) {
-      csvMsg.textContent = 'Error al exportar. Intenta de nuevo.'
+      csvMsg.textContent = t('settings.csv.error.export')
       csvMsg.classList.remove('oculto')
     }
   })
@@ -504,13 +529,10 @@ export async function montar(contenedor) {
     try {
       await conectarGoogle()
       await idbStorage.set({ syncConfig: { ...syncConf, proveedor: 'google-drive' } })
-      // Sincronizar al conectar — proveedor gana en primera sync (D2).
-      // Si el sync falla (ej. master password distinta), se ignora aquí
-      // y el usuario puede reintentar desde el botón "Sincronizar".
       try { await sincronizar(new GoogleDriveAdapter()) } catch (_) { /* silencioso */ }
       await navegar('#/settings')
     } catch (err) {
-      msgEl.textContent = _mensajeErrorSync(err) ?? 'Error al conectar con Google Drive.'
+      msgEl.textContent = _mensajeErrorSync(err) ?? t('settings.sync.error.connect.google')
       msgEl.classList.remove('oculto')
     }
   })
@@ -519,19 +541,19 @@ export async function montar(contenedor) {
     const msgEl = contenedor.querySelector('#sync-msg')
     const btn   = contenedor.querySelector('#btn-sync-google')
     btn.disabled    = true
-    btn.textContent = 'Sincronizando...'
+    btn.textContent = t('settings.sync.btn.loading')
     try {
       const { resultado } = await sincronizar(new GoogleDriveAdapter())
       msgEl.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
-      msgEl.textContent   = _mensajeSyncOk(resultado, 'Google Drive')
+      msgEl.textContent   = _mensajeSyncOk(resultado, t('settings.sync.google.title'))
       msgEl.classList.remove('oculto')
     } catch (err) {
       msgEl.style.cssText = ''
-      msgEl.textContent   = _mensajeErrorSync(err) ?? 'Error al sincronizar con Google Drive.'
+      msgEl.textContent   = _mensajeErrorSync(err) ?? t('settings.sync.error.sync.google')
       msgEl.classList.remove('oculto')
     } finally {
       btn.disabled    = false
-      btn.textContent = 'Sincronizar'
+      btn.textContent = t('settings.sync.btn.sync')
     }
   })
 
@@ -546,11 +568,10 @@ export async function montar(contenedor) {
     const msgEl = contenedor.querySelector('#sync-msg')
     try {
       await conectarMicrosoft()
-      // Sincronizar al conectar — proveedor gana en primera sync (D2).
       try { await sincronizar(new OneDriveAdapter()) } catch (_) { /* silencioso */ }
       await navegar('#/settings')
     } catch (err) {
-      msgEl.textContent = _mensajeErrorSync(err) ?? 'Error al conectar con OneDrive.'
+      msgEl.textContent = _mensajeErrorSync(err) ?? t('settings.sync.error.connect.ms')
       msgEl.classList.remove('oculto')
     }
   })
@@ -559,19 +580,19 @@ export async function montar(contenedor) {
     const msgEl = contenedor.querySelector('#sync-msg')
     const btn   = contenedor.querySelector('#btn-sync-onedrive')
     btn.disabled    = true
-    btn.textContent = 'Sincronizando...'
+    btn.textContent = t('settings.sync.btn.loading')
     try {
       const { resultado } = await sincronizar(new OneDriveAdapter())
       msgEl.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
-      msgEl.textContent   = _mensajeSyncOk(resultado, 'OneDrive')
+      msgEl.textContent   = _mensajeSyncOk(resultado, t('settings.sync.onedrive.title'))
       msgEl.classList.remove('oculto')
     } catch (err) {
       msgEl.style.cssText = ''
-      msgEl.textContent   = _mensajeErrorSync(err) ?? 'Error al sincronizar con OneDrive.'
+      msgEl.textContent   = _mensajeErrorSync(err) ?? t('settings.sync.error.sync.ms')
       msgEl.classList.remove('oculto')
     } finally {
       btn.disabled    = false
-      btn.textContent = 'Sincronizar'
+      btn.textContent = t('settings.sync.btn.sync')
     }
   })
 
@@ -610,6 +631,25 @@ export async function montar(contenedor) {
     limpiarSesion()
     navegar('#/unlock')
   })
+
+  // ── Selector de idioma (F5-B) ──
+  contenedor.querySelector('#idioma-selector').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-idioma]')
+    if (!btn) return
+
+    const idioma = btn.dataset.idioma
+
+    if (idioma === 'auto') {
+      // Eliminar config.idioma — vuelve a navigator.language
+      const { idioma: _omit, ...configSinIdioma } = configActual
+      await idbStorage.set({ config: configSinIdioma })
+    } else {
+      await idbStorage.set({ config: { ...configActual, idioma } })
+    }
+
+    await initI18n()
+    window.location.reload()
+  })
 }
 
 /** Descarga un string como archivo en el navegador sin chrome.downloads */
@@ -632,42 +672,17 @@ function _formatearBytes(bytes) {
   return `${Math.round(kb)} KB`
 }
 
-/**
- * Retorna el mensaje de éxito diferenciado según la operación que ocurrió.
- * Garantiza que el usuario sepa exactamente qué pasó — nunca un mensaje
- * genérico que confirme una operación que no ocurrió.
- *
- * @param {'descargado'|'subido'|'sin_cambios'} resultado
- * @param {string} proveedor — nombre del proveedor (ej. 'Google Drive')
- */
 function _mensajeSyncOk(resultado, proveedor) {
-  if (resultado === 'descargado')
-    return `Vault descargado desde ${proveedor}. Credenciales actualizadas — ve al vault para verlas.`
-  if (resultado === 'subido')
-    return `Vault subido a ${proveedor}.`
-  return 'Sin cambios — el vault ya estaba sincronizado.'
+  if (resultado === 'descargado') return t('settings.sync.ok.downloaded', { provider: proveedor })
+  if (resultado === 'subido')     return t('settings.sync.ok.uploaded',   { provider: proveedor })
+  return t('settings.sync.ok.no.changes')
 }
 
-/**
- * Traduce errores conocidos a mensajes legibles para el usuario.
- * Retorna null si el error no es un código conocido — el caller usa su
- * mensaje por defecto (ej. 'Error al sincronizar con Google Drive.').
- *
- * Códigos manejados:
- *   GOOGLE_GIS_TIMEOUT                — GIS no cargó en 10s
- *   GOOGLE_AUTH_ERROR:popup_blocked*  — popup de Google bloqueado
- *   MICROSOFT_POPUP_BLOQUEADO         — popup de Microsoft bloqueado
- *   SYNC_MASTER_PASSWORD_MISMATCH     — vault del proveedor usa otra contraseña
- */
 function _mensajeErrorSync(err) {
   const msg = err?.message ?? ''
-  if (msg === 'GOOGLE_GIS_TIMEOUT')
-    return 'Google Auth no disponible. Comprueba tu conexión a internet.'
-  if (msg.includes('popup_blocked'))
-    return 'Popup bloqueado por el navegador. Desconecta y vuelve a conectar para autenticarte.'
-  if (msg === 'MICROSOFT_POPUP_BLOQUEADO')
-    return 'Popup bloqueado por el navegador. Desconecta y vuelve a conectar para autenticarte.'
-  if (msg === 'SYNC_MASTER_PASSWORD_MISMATCH')
-    return 'El vault en el proveedor fue creado con una contraseña diferente. No es posible sincronizar.'
+  if (msg === 'GOOGLE_GIS_TIMEOUT')    return t('settings.sync.error.gis')
+  if (msg.includes('popup_blocked'))   return t('settings.sync.error.popup')
+  if (msg === 'MICROSOFT_POPUP_BLOQUEADO') return t('settings.sync.error.popup')
+  if (msg === 'SYNC_MASTER_PASSWORD_MISMATCH') return t('settings.sync.error.mismatch')
   return null
 }

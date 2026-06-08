@@ -31,6 +31,7 @@ import { conectar as conectarMicrosoft }           from '../../auth/microsoft-au
 import { GoogleDriveAdapter }   from '../../sync/google-drive-adapter.js'
 import { OneDriveAdapter }      from '../../sync/onedrive-adapter.js'
 import { sincronizar }          from '../../sync/sync-manager.js'
+import { t }                    from '../../i18n/i18n.js'
 
 /** Monta la vista de setup en el contenedor dado */
 export async function montar(contenedor) {
@@ -44,26 +45,24 @@ function _montarEleccion(contenedor) {
     <div class="vista--centrada">
       <div class="tarjeta tarjeta--setup">
         <div class="setup__logo">🔐</div>
-        <h1 class="setup__titulo">Dacmos Password Manager</h1>
-        <p class="setup__subtitulo">¿Cómo quieres comenzar?</p>
+        <h1 class="setup__titulo">${t('auth.unlock.title')}</h1>
+        <p class="setup__subtitulo">${t('auth.setup.choose.subtitle')}</p>
 
         <div class="setup__opciones">
           <button class="btn btn--primario btn--completo" id="btn-crear-nuevo">
-            Crear vault nuevo
+            ${t('auth.setup.btn.create')}
           </button>
 
           <div class="setup__divisor">
-            <span>¿Ya tienes un vault en otro dispositivo?</span>
+            <span>${t('auth.setup.restore.hint')}</span>
           </div>
 
           <button class="btn btn--secundario btn--completo" id="btn-restaurar">
-            Restaurar desde tu nube
+            ${t('auth.setup.btn.restore')}
           </button>
         </div>
 
-        <p class="auth__nota-pie">
-          Zero-Knowledge · AES-256-GCM · Local-first
-        </p>
+        <p class="auth__nota-pie">${t('common.zk.footer')}</p>
       </div>
     </div>`
 
@@ -83,21 +82,22 @@ function _montarCrear(contenedor) {
     <div class="vista--centrada">
       <div class="tarjeta tarjeta--setup">
         <div class="setup__logo">🔐</div>
-        <h1 class="setup__titulo">Dacmos Password Manager</h1>
-        <p class="setup__subtitulo">Crea tu contraseña maestra para proteger tu vault</p>
+        <h1 class="setup__titulo">${t('auth.unlock.title')}</h1>
+        <p class="setup__subtitulo">${t('auth.setup.create.subtitle')}</p>
 
         <form class="setup__form" id="form-setup" novalidate>
           <div class="campo">
-            <label for="setup-password">Contraseña maestra</label>
+            <label for="setup-password">${t('auth.setup.create.label.pass')}</label>
             <div class="campo__wrapper">
               <input type="password"
                      id="setup-password"
                      class="input"
-                     placeholder="Mínimo 8 caracteres"
+                     placeholder="${t('auth.setup.create.placeholder.pass')}"
                      autocomplete="new-password"
                      autofocus
                      minlength="8">
-              <button type="button" class="campo__toggle" id="toggle-pass1" aria-label="Mostrar contraseña">👁️</button>
+              <button type="button" class="campo__toggle" id="toggle-pass1"
+                      aria-label="${t('auth.setup.create.aria.toggle.pass')}">👁️</button>
             </div>
             <div class="fuerza-password" id="fuerza-container">
               <div class="fuerza-password__barra">
@@ -108,31 +108,30 @@ function _montarCrear(contenedor) {
           </div>
 
           <div class="campo">
-            <label for="setup-confirmar">Confirmar contraseña</label>
+            <label for="setup-confirmar">${t('auth.setup.create.label.confirm')}</label>
             <div class="campo__wrapper">
               <input type="password"
                      id="setup-confirmar"
                      class="input"
-                     placeholder="Repite la contraseña"
+                     placeholder="${t('auth.setup.create.placeholder.confirm')}"
                      autocomplete="new-password">
-              <button type="button" class="campo__toggle" id="toggle-pass2" aria-label="Mostrar confirmación">👁️</button>
+              <button type="button" class="campo__toggle" id="toggle-pass2"
+                      aria-label="${t('auth.setup.create.aria.toggle.confirm')}">👁️</button>
             </div>
           </div>
 
           <div class="unlock__error oculto" id="setup-error" role="alert"></div>
 
           <button type="submit" class="btn btn--primario btn--completo" id="btn-crear">
-            Crear vault
+            ${t('auth.setup.create.btn')}
           </button>
         </form>
 
         <button class="btn btn--ghost btn--completo" id="btn-volver" style="margin-top:8px">
-          ← Volver
+          ${t('auth.setup.btn.back')}
         </button>
 
-        <p class="auth__nota-pie">
-          Zero-Knowledge · AES-256-GCM · Local-first
-        </p>
+        <p class="auth__nota-pie">${t('common.zk.footer')}</p>
       </div>
     </div>`
 
@@ -166,16 +165,16 @@ function _montarCrear(contenedor) {
     const confirmar = inputConf.value
 
     if (password.length < 8) {
-      _mostrarError(errorEl, 'La contraseña debe tener al menos 8 caracteres.')
+      _mostrarError(errorEl, t('auth.setup.create.error.min'))
       return
     }
     if (password !== confirmar) {
-      _mostrarError(errorEl, 'Las contraseñas no coinciden.')
+      _mostrarError(errorEl, t('auth.setup.create.error.mismatch'))
       return
     }
 
     btnCrear.disabled    = true
-    btnCrear.textContent = 'Creando vault...'
+    btnCrear.textContent = t('auth.setup.create.btn.loading')
 
     try {
       const clave = await configurarVault(password)
@@ -192,9 +191,9 @@ function _montarCrear(contenedor) {
 
     } catch (error) {
       console.error('Error al crear vault:', error)
-      _mostrarError(errorEl, 'Error al crear el vault. Intenta de nuevo.')
+      _mostrarError(errorEl, t('auth.setup.create.error.generic'))
       btnCrear.disabled    = false
-      btnCrear.textContent = 'Crear vault'
+      btnCrear.textContent = t('auth.setup.create.btn')
     }
   })
 }
@@ -206,21 +205,20 @@ function _montarRestaurar(contenedor) {
     <div class="vista--centrada">
       <div class="tarjeta tarjeta--setup">
         <div class="setup__logo">☁️</div>
-        <h1 class="setup__titulo">Restaurar desde tu nube</h1>
+        <h1 class="setup__titulo">${t('auth.setup.restore.title')}</h1>
 
         <div class="setup__aviso" id="aviso-sync">
-          <p>⚠️ <strong>Antes de continuar:</strong> sincroniza tu vault en tu dispositivo
-          principal para asegurarte de tener la versión más reciente.</p>
+          <p>${t('auth.setup.restore.warning')}</p>
         </div>
 
-        <p class="setup__subtitulo">Selecciona el proveedor donde tienes tu vault:</p>
+        <p class="setup__subtitulo">${t('auth.setup.restore.provider.subtitle')}</p>
 
         <div class="setup__opciones">
           <button class="btn btn--primario btn--completo" id="btn-restore-google">
-            Google Drive
+            ${t('settings.sync.google.title')}
           </button>
           <button class="btn btn--secundario btn--completo" id="btn-restore-onedrive">
-            OneDrive
+            ${t('settings.sync.onedrive.title')}
           </button>
         </div>
 
@@ -228,12 +226,10 @@ function _montarRestaurar(contenedor) {
         <div class="setup__estado oculto" id="restore-estado"></div>
 
         <button class="btn btn--ghost btn--completo" id="btn-volver-restaurar" style="margin-top:8px">
-          ← Volver
+          ${t('auth.setup.btn.back')}
         </button>
 
-        <p class="auth__nota-pie">
-          Zero-Knowledge · AES-256-GCM · Local-first
-        </p>
+        <p class="auth__nota-pie">${t('common.zk.footer')}</p>
       </div>
     </div>`
 
@@ -267,7 +263,7 @@ async function _ejecutarRestore(contenedor, proveedor) {
   _bloquear()
   _ocultarError(errorEl)
   estadoEl.classList.remove('oculto')
-  estadoEl.textContent = 'Conectando...'
+  estadoEl.textContent = t('auth.setup.restore.connecting')
 
   try {
     let adapter
@@ -280,15 +276,13 @@ async function _ejecutarRestore(contenedor, proveedor) {
       adapter = new OneDriveAdapter()
     }
 
-    estadoEl.textContent = 'Verificando vault en la nube...'
+    estadoEl.textContent = t('auth.setup.restore.verifying')
 
     const modRemoto = await adapter.ultimaModificacion()
     if (modRemoto === null) {
       _desbloquear()
       estadoEl.classList.add('oculto')
-      _mostrarError(errorEl,
-        'No se encontró vault en este proveedor. Sincroniza primero desde tu dispositivo principal.'
-      )
+      _mostrarError(errorEl, t('auth.setup.restore.error.not.found'))
       return
     }
 
@@ -296,7 +290,7 @@ async function _ejecutarRestore(contenedor, proveedor) {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     })
-    estadoEl.textContent = `Vault encontrado · Última modificación: ${fechaSync}. Descargando...`
+    estadoEl.textContent = t('auth.setup.restore.found', { fecha: fechaSync })
 
     await sincronizar(adapter)
 
@@ -307,7 +301,7 @@ async function _ejecutarRestore(contenedor, proveedor) {
       syncConfig: { ...(datosActuales.syncConfig ?? {}), proveedor },
     })
 
-    estadoEl.textContent = '✅ Vault restaurado. Ingresa tu contraseña maestra para continuar.'
+    estadoEl.textContent = t('auth.setup.restore.success')
     await navegar('#/unlock')
 
   } catch (err) {
@@ -317,13 +311,13 @@ async function _ejecutarRestore(contenedor, proveedor) {
 
     const msg = err?.message ?? ''
     if (msg.includes('GOOGLE_AUTH_ERROR') || msg.includes('popup_closed'))
-      _mostrarError(errorEl, 'Autenticación cancelada. Intenta de nuevo.')
+      _mostrarError(errorEl, t('auth.setup.restore.error.cancelled'))
     else if (msg.includes('SYNC_MASTER_PASSWORD_MISMATCH'))
-      _mostrarError(errorEl, 'El vault en la nube usa una contraseña diferente.')
+      _mostrarError(errorEl, t('auth.setup.restore.error.mismatch'))
     else if (msg.includes('MICROSOFT_POPUP_BLOQUEADO'))
-      _mostrarError(errorEl, 'Popup bloqueado. Permite popups para esta página e intenta de nuevo.')
+      _mostrarError(errorEl, t('auth.setup.restore.error.popup'))
     else
-      _mostrarError(errorEl, 'Error al restaurar. Verifica tu conexión e intenta de nuevo.')
+      _mostrarError(errorEl, t('auth.setup.restore.error.generic'))
   }
 }
 
@@ -344,15 +338,15 @@ function _actualizarFuerza(bits, barra, etiqueta) {
   if (bits === 0) {
     porcentaje = 0; color = 'var(--color-border)'; texto = ''
   } else if (bits < 40) {
-    porcentaje = 20; color = 'var(--color-danger)';  texto = 'Muy débil'
+    porcentaje = 20; color = 'var(--color-danger)';  texto = t('common.strength.very.weak')
   } else if (bits < 60) {
-    porcentaje = 40; color = 'var(--color-warning)'; texto = 'Débil'
+    porcentaje = 40; color = 'var(--color-warning)'; texto = t('common.strength.weak')
   } else if (bits < 80) {
-    porcentaje = 65; color = 'var(--color-warning)'; texto = 'Moderada'
+    porcentaje = 65; color = 'var(--color-warning)'; texto = t('common.strength.fair')
   } else if (bits < 100) {
-    porcentaje = 85; color = 'var(--color-success)'; texto = 'Fuerte'
+    porcentaje = 85; color = 'var(--color-success)'; texto = t('common.strength.strong')
   } else {
-    porcentaje = 100; color = 'var(--color-success)'; texto = 'Muy fuerte'
+    porcentaje = 100; color = 'var(--color-success)'; texto = t('common.strength.very.strong')
   }
 
   barra.style.width      = `${porcentaje}%`

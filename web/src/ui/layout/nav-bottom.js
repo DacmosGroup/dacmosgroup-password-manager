@@ -16,14 +16,7 @@
  */
 
 import { navegar, rutaActual } from '../router.js'
-
-// Definición de los ítems de navegación
-const ITEMS = [
-  { ruta: '#/vault',     icono: '🗄️',  etiqueta: 'Vault'      },
-  { ruta: '#/health',    icono: '🛡️',  etiqueta: 'Salud'      },
-  { ruta: '#/generator', icono: '⚡',   etiqueta: 'Generador'  },
-  { ruta: '#/settings',  icono: '⚙️',  etiqueta: 'Config'     },
-]
+import { t } from '../../i18n/i18n.js'
 
 // Rutas donde la nav NO debe mostrarse (setup, unlock, form de credencial)
 const RUTAS_SIN_NAV = new Set(['#/setup', '#/unlock', '#/credential-form'])
@@ -34,18 +27,26 @@ let _contenedor = null
 /**
  * Monta el componente de navegación en el DOM.
  * Crea el elemento #nav-contenedor y lo añade al body.
- * Debe llamarse una vez desde app.js.
+ * Debe llamarse una vez desde app.js, después de initI18n().
  */
 export function montarNavBottom() {
   // Evitar duplicados si se llama más de una vez
   if (document.getElementById('nav-contenedor')) return
+
+  // Items de navegación — se evalúan después de initI18n() para usar el idioma correcto
+  const ITEMS = [
+    { ruta: '#/vault',     icono: '🗄️',  etiqueta: t('nav.vault')     },
+    { ruta: '#/health',    icono: '🛡️',  etiqueta: t('nav.health')    },
+    { ruta: '#/generator', icono: '⚡',   etiqueta: t('nav.generator') },
+    { ruta: '#/settings',  icono: '⚙️',  etiqueta: t('nav.settings')  },
+  ]
 
   _contenedor = document.createElement('div')
   _contenedor.id = 'nav-contenedor'
 
   const nav = document.createElement('nav')
   nav.className   = 'nav-bottom'
-  nav.setAttribute('aria-label', 'Navegación principal')
+  nav.setAttribute('aria-label', t('nav.aria.label'))
 
   ITEMS.forEach(({ ruta, icono, etiqueta }) => {
     const btn = document.createElement('button')

@@ -19,6 +19,7 @@ import {
 } from '../../storage/session.js'
 import { navegar, atras, obtenerEstado } from '../router.js'
 import { escapeHtml }           from '../../utils/escape.js'
+import { t }                    from '../../i18n/i18n.js'
 
 // ── Generador de contraseñas inline ──
 // Sin dependencias externas. Rejection sampling para eliminar sesgo estadístico.
@@ -77,13 +78,14 @@ export async function montar(contenedor) {
   const estado     = obtenerEstado()
   const esEdicion  = estado?.credencial != null
   const credencial = estado?.credencial ?? {}
-  const titulo     = esEdicion ? 'Editar credencial' : 'Nueva credencial'
 
   contenedor.innerHTML = `
     <div class="vista">
       <div class="credform__header">
-        <button class="btn btn--pequeño btn--secundario" id="btn-cancelar" type="button">← Volver</button>
-        <h1 class="credform__titulo">${titulo}</h1>
+        <button class="btn btn--pequeño btn--secundario" id="btn-cancelar" type="button">
+          ${t('credform.btn.back')}
+        </button>
+        <h1 class="credform__titulo">${esEdicion ? t('credform.title.edit') : t('credform.title.new')}</h1>
       </div>
 
       <!-- Tabs: Login activo, Tarjeta e Identidad como placeholders -->
@@ -92,93 +94,93 @@ export async function montar(contenedor) {
                 id="tab-login"
                 role="tab"
                 aria-selected="true"
-                type="button">Login</button>
+                type="button">${t('credform.tab.login')}</button>
         <button class="credform__tab"
                 id="tab-tarjeta"
                 role="tab"
                 aria-selected="false"
-                title="Disponible en versión futura"
-                type="button">Tarjeta</button>
+                title="${t('credform.tab.future')}"
+                type="button">${t('credform.tab.card')}</button>
         <button class="credform__tab"
                 id="tab-identidad"
                 role="tab"
                 aria-selected="false"
-                title="Disponible en versión futura"
-                type="button">Identidad</button>
+                title="${t('credform.tab.future')}"
+                type="button">${t('credform.tab.identity')}</button>
       </div>
 
       <form id="form-credencial" novalidate>
         <!-- Panel Login (funcional) -->
         <div id="panel-login" class="credform__campos">
           <div class="campo">
-            <label for="cf-sitio">Nombre del sitio *</label>
+            <label for="cf-sitio">${t('credform.label.site')}</label>
             <input type="text"
                    id="cf-sitio"
                    class="input"
-                   placeholder="Ej: Gmail, GitHub, Netflix"
+                   placeholder="${t('credform.placeholder.site')}"
                    value="${escapeHtml(credencial.sitio ?? '')}"
                    autocomplete="off"
                    autofocus>
           </div>
 
           <div class="campo">
-            <label for="cf-url">URL</label>
+            <label for="cf-url">${t('credform.label.url')}</label>
             <input type="url"
                    id="cf-url"
                    class="input"
-                   placeholder="https://ejemplo.com"
+                   placeholder="${t('credform.placeholder.url')}"
                    value="${escapeHtml(credencial.url ?? '')}"
                    autocomplete="off">
           </div>
 
           <div class="campo">
-            <label for="cf-usuario">Usuario / Email</label>
+            <label for="cf-usuario">${t('credform.label.user')}</label>
             <input type="text"
                    id="cf-usuario"
                    class="input"
-                   placeholder="usuario@ejemplo.com"
+                   placeholder="${t('credform.placeholder.user')}"
                    value="${escapeHtml(credencial.usuario ?? '')}"
                    autocomplete="off">
           </div>
 
           <div class="campo">
-            <label for="cf-password">Contraseña</label>
+            <label for="cf-password">${t('credform.label.password')}</label>
             <div class="campo__wrapper">
               <input type="password"
                      id="cf-password"
                      class="input"
-                     placeholder="Contraseña"
+                     placeholder="${t('credform.placeholder.password')}"
                      value="${escapeHtml(credencial.password ?? '')}"
                      autocomplete="new-password">
               <button type="button"
                       class="campo__toggle"
                       id="toggle-cf-pass"
-                      aria-label="Mostrar contraseña">👁️</button>
+                      aria-label="${t('credform.aria.toggle.pass')}">👁️</button>
               <!-- Botón generar contraseña inline (⚡) -->
               <button type="button"
                       class="credform__generar credform__generar--con-toggle"
                       id="btn-generar"
-                      title="Generar contraseña segura"
-                      aria-label="Generar contraseña">⚡</button>
+                      title="${t('credform.btn.generate.title')}"
+                      aria-label="${t('credform.btn.generate.aria')}">⚡</button>
             </div>
           </div>
 
           <div class="campo">
-            <label for="cf-totp">Clave TOTP (opcional)</label>
+            <label for="cf-totp">${t('credform.label.totp')}</label>
             <input type="text"
                    id="cf-totp"
                    class="input"
-                   placeholder="Clave secreta Base32 (opcional)"
+                   placeholder="${t('credform.placeholder.totp')}"
                    value="${escapeHtml(credencial.totp ?? '')}"
                    autocomplete="off"
                    spellcheck="false">
           </div>
 
           <div class="campo">
-            <label for="cf-notas">Notas</label>
+            <label for="cf-notas">${t('credform.label.notes')}</label>
             <textarea id="cf-notas"
                       class="input"
-                      placeholder="Notas adicionales (no se muestran en autofill)"
+                      placeholder="${t('credform.placeholder.notes')}"
                       rows="3">${escapeHtml(credencial.notas ?? '')}</textarea>
           </div>
         </div>
@@ -187,13 +189,13 @@ export async function montar(contenedor) {
         <div id="panel-tarjeta" class="credform__campos oculto">
           <div class="lista-vacia">
             <div class="lista-vacia__icono">💳</div>
-            <p class="lista-vacia__texto">Tipo "Tarjeta" disponible en versión futura.</p>
+            <p class="lista-vacia__texto">${t('credform.placeholder.card')}</p>
           </div>
         </div>
         <div id="panel-identidad" class="credform__campos oculto">
           <div class="lista-vacia">
             <div class="lista-vacia__icono">🪪</div>
-            <p class="lista-vacia__texto">Tipo "Identidad" disponible en versión futura.</p>
+            <p class="lista-vacia__texto">${t('credform.placeholder.identity')}</p>
           </div>
         </div>
 
@@ -201,10 +203,10 @@ export async function montar(contenedor) {
 
         <div class="credform__acciones">
           <button type="submit" class="btn btn--primario" id="btn-guardar">
-            ${esEdicion ? 'Guardar cambios' : 'Añadir credencial'}
+            ${esEdicion ? t('credform.btn.save.edit') : t('credform.btn.save.new')}
           </button>
           <button type="button" class="btn btn--secundario" id="btn-cancelar2">
-            Cancelar
+            ${t('credform.btn.cancel')}
           </button>
         </div>
       </form>
@@ -233,13 +235,13 @@ export async function montar(contenedor) {
   })
 
   // ── Tabs ──
-  const tabs = ['login', 'tarjeta', 'identidad']
-  tabs.forEach(nombre => {
+  const tabNames = ['login', 'tarjeta', 'identidad']
+  tabNames.forEach(nombre => {
     contenedor.querySelector(`#tab-${nombre}`).addEventListener('click', () => {
-      tabs.forEach(t => {
-        const tab   = contenedor.querySelector(`#tab-${t}`)
-        const panel = contenedor.querySelector(`#panel-${t}`)
-        const activo = t === nombre
+      tabNames.forEach(n => {
+        const tab   = contenedor.querySelector(`#tab-${n}`)
+        const panel = contenedor.querySelector(`#panel-${n}`)
+        const activo = n === nombre
         tab.classList.toggle('credform__tab--activo', activo)
         tab.setAttribute('aria-selected', String(activo))
         panel.classList.toggle('oculto', !activo)
@@ -259,7 +261,7 @@ export async function montar(contenedor) {
 
     const sitio = inputSitio.value.trim()
     if (!sitio) {
-      errorEl.textContent = 'El nombre del sitio es obligatorio.'
+      errorEl.textContent = t('credform.error.no.site')
       errorEl.classList.remove('oculto')
       inputSitio.focus()
       return
@@ -272,7 +274,7 @@ export async function montar(contenedor) {
     }
 
     btnGuardar.disabled    = true
-    btnGuardar.textContent = 'Guardando...'
+    btnGuardar.textContent = t('credform.btn.save.loading')
 
     try {
       const ahora      = new Date().toISOString()
@@ -319,11 +321,10 @@ export async function montar(contenedor) {
 
     } catch (error) {
       console.error('Error al guardar credencial:', error)
-      errorEl.textContent = 'Error al guardar. Intenta de nuevo.'
+      errorEl.textContent = t('credform.error.save')
       errorEl.classList.remove('oculto')
       btnGuardar.disabled    = false
-      btnGuardar.textContent = esEdicion ? 'Guardar cambios' : 'Añadir credencial'
+      btnGuardar.textContent = esEdicion ? t('credform.btn.save.edit') : t('credform.btn.save.new')
     }
   })
 }
-

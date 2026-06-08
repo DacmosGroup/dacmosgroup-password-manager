@@ -5,9 +5,10 @@
  *  1. Registrar el Service Worker
  *  2. Inicializar MSAL.js v3 (F4.3 — requerido antes del primer uso de OneDrive)
  *  3. Capturar beforeinstallprompt temprano (F4.4 — antes de cualquier interacción)
- *  4. Montar la barra de navegación (nav-bottom / sidebar)
- *  5. Determinar la vista inicial según el estado del vault y la sesión
- *  6. Montar la vista inicial
+ *  4. Inicializar el idioma activo (F5-B)
+ *  5. Montar la barra de navegación (nav-bottom / sidebar)
+ *  6. Determinar la vista inicial según el estado del vault y la sesión
+ *  7. Montar la vista inicial
  */
 
 import { inicializar as inicializarMsal } from './auth/microsoft-auth.js'
@@ -15,6 +16,7 @@ import { idbStorage }                     from './storage/indexeddb-adapter.js'
 import { montarNavBottom }                from './ui/layout/nav-bottom.js'
 import { inicializarPwaInstall }          from './ui/onboarding/pwa-install.js'
 import { montarVistaInicial }             from './ui/router.js'
+import { initI18n, t }                   from './i18n/i18n.js'
 
 /* ── Registro del Service Worker ──────────────────────────────────────
    Solo se intenta si el navegador lo soporta (todos los modernos sí).
@@ -38,6 +40,9 @@ if ('serviceWorker' in navigator) {
 
     // ── F4.3: inicializar MSAL en paralelo con el SW ──
     await inicializarMsal()
+
+    // ── F5-B: inicializar idioma antes de montar cualquier vista ──
+    await initI18n()
 
     // ── F4.4: capturar beforeinstallprompt antes de la primera interacción ──
     inicializarPwaInstall()
@@ -138,12 +143,12 @@ function _mostrarBannerActualizacion(swEsperando) {
 
   const texto = document.createElement('span')
   texto.className = 'sw-update-banner__texto'
-  texto.textContent = 'Nueva versión disponible.'
+  texto.textContent = t('pwa.update.text')
 
   const btn = document.createElement('button')
   btn.className = 'sw-update-banner__btn'
   btn.type = 'button'
-  btn.textContent = 'Actualizar ahora'
+  btn.textContent = t('pwa.update.btn')
 
   btn.addEventListener('click', () => {
     // Escuchar controllerchange ANTES de enviar el mensaje para no perder

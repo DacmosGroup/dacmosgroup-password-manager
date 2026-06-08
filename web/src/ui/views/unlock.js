@@ -13,6 +13,7 @@ import { establecerClave, establecerCredenciales, limpiarSesion } from '../../st
 import { navegar } from '../router.js'
 import { idbStorage } from '../../storage/indexeddb-adapter.js'
 import * as autoLock from '../../auto-lock/auto-lock-manager.js'
+import { t } from '../../i18n/i18n.js'
 
 /** Monta la vista de desbloqueo en el contenedor dado */
 export async function montar(contenedor) {
@@ -20,47 +21,42 @@ export async function montar(contenedor) {
     <div class="vista--centrada">
       <div class="tarjeta tarjeta--unlock">
         <div class="unlock__logo">🔐</div>
-        <h1 class="unlock__titulo">Dacmos Password Manager</h1>
-        <p class="unlock__subtitulo">Ingresa tu contraseña maestra para acceder al vault</p>
+        <h1 class="unlock__titulo">${t('auth.unlock.title')}</h1>
+        <p class="unlock__subtitulo">${t('auth.unlock.subtitle')}</p>
 
         <form class="unlock__form" id="form-unlock" novalidate>
           <div class="campo">
-            <label for="unlock-password">Contraseña maestra</label>
+            <label for="unlock-password">${t('auth.unlock.placeholder')}</label>
             <div class="campo__wrapper">
               <input type="password"
                      id="unlock-password"
                      class="input"
-                     placeholder="Tu contraseña maestra"
+                     placeholder="${t('auth.unlock.placeholder.full')}"
                      autocomplete="current-password"
                      autofocus>
-              <button type="button" class="campo__toggle" id="toggle-pass" aria-label="Mostrar contraseña">👁️</button>
+              <button type="button" class="campo__toggle" id="toggle-pass"
+                      aria-label="${t('auth.unlock.aria.toggle')}">👁️</button>
             </div>
           </div>
 
           <div class="unlock__error oculto" id="unlock-error" role="alert"></div>
 
           <button type="submit" class="btn btn--primario btn--completo" id="btn-desbloquear">
-            Desbloquear
+            ${t('auth.unlock.btn')}
           </button>
         </form>
 
-        <p class="unlock__olvide-link" id="link-olvide">¿Olvidaste tu contraseña?</p>
+        <p class="unlock__olvide-link" id="link-olvide">${t('auth.forgot.link')}</p>
 
         <div class="unlock__olvide-panel oculto" id="panel-olvide">
-          <p class="unlock__olvide-aviso">
-            ⚠️ Crear un vault nuevo eliminará permanentemente todas tus credenciales.
-            Tu backup local y vault en la nube también quedarán inaccesibles.
-            Esta acción no se puede deshacer.
-          </p>
+          <p class="unlock__olvide-aviso">${t('auth.forgot.warning')}</p>
           <div class="unlock__olvide-acciones">
-            <button class="btn btn--secundario btn--sm" id="btn-olvide-cancelar">Cancelar</button>
-            <button class="btn btn--peligro btn--sm" id="btn-olvide-confirmar">Crear vault nuevo</button>
+            <button class="btn btn--secundario btn--sm" id="btn-olvide-cancelar">${t('common.cancel')}</button>
+            <button class="btn btn--peligro btn--sm" id="btn-olvide-confirmar">${t('auth.forgot.btn.confirm')}</button>
           </div>
         </div>
 
-        <p class="auth__nota-pie">
-          Zero-Knowledge · AES-256-GCM · Local-first
-        </p>
+        <p class="auth__nota-pie">${t('common.zk.footer')}</p>
       </div>
     </div>`
 
@@ -101,18 +97,17 @@ export async function montar(contenedor) {
 
     // Bloquear durante PBKDF2 (~1 segundo)
     btnDesbloq.disabled    = true
-    btnDesbloq.textContent = 'Verificando...'
+    btnDesbloq.textContent = t('auth.unlock.btn.loading')
 
     try {
       const clave = await desbloquearVault(password)
 
       if (!clave) {
-        // Contraseña incorrecta — AES-GCM rechazó el descifrado
-        _mostrarError(errorEl, 'Contraseña incorrecta. Intenta de nuevo.')
+        _mostrarError(errorEl, t('auth.unlock.error.incorrect'))
         inputPass.value        = ''
         inputPass.focus()
         btnDesbloq.disabled    = false
-        btnDesbloq.textContent = 'Desbloquear'
+        btnDesbloq.textContent = t('auth.unlock.btn')
         return
       }
 
@@ -132,16 +127,13 @@ export async function montar(contenedor) {
 
     } catch (error) {
       if (error.message?.startsWith('VAULT_VERSION_INCOMPATIBLE')) {
-        // El vault fue creado con una versión más nueva — necesita actualización
-        _mostrarError(errorEl,
-          'Este vault fue creado con una versión más reciente de Dacmos PM. ' +
-          'Actualiza la aplicación para abrirlo.')
+        _mostrarError(errorEl, t('auth.unlock.error.version'))
       } else {
         console.error('Error al desbloquear:', error)
-        _mostrarError(errorEl, 'Error al desbloquear. Recarga la página e intenta de nuevo.')
+        _mostrarError(errorEl, t('auth.unlock.error.generic'))
       }
       btnDesbloq.disabled    = false
-      btnDesbloq.textContent = 'Desbloquear'
+      btnDesbloq.textContent = t('auth.unlock.btn')
     }
   })
 }
