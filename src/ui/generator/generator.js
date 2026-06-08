@@ -6,6 +6,8 @@
 // seguros — nunca usar Math.random() para passwords
 // ================================================
 
+import { t, walkI18n } from '../../i18n/t.js'
+
 // ── Conjuntos de caracteres ──
 const CHARS = {
   mayusculas: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -28,6 +30,8 @@ const longitudSlider  = document.getElementById('longitudSlider');
 const longitudValue   = document.getElementById('longitudValue');
 const historyList     = document.getElementById('historyList');
 
+walkI18n();
+
 // ── Generador principal ──
 // DECISIÓN DE SEGURIDAD: Usamos el método de rechazo (rejection sampling)
 // para evitar sesgo estadístico al mapear bytes aleatorios a caracteres.
@@ -43,7 +47,7 @@ function generarPassword() {
 
   // Validar que al menos un tipo esté seleccionado
   if (!usaMayusculas && !usaMinusculas && !usaNumeros && !usaSimbolos) {
-    alert('Selecciona al menos un tipo de caracteres');
+    alert(t('generator.error_no_charset'));
     return;
   }
 
@@ -158,12 +162,12 @@ function calcularFortaleza(password, tamanoAlfabeto) {
 
 function mostrarFortaleza(puntos, entropia) {
   const niveles = [
-    { label: 'Muy débil',  color: '#e74c3c', ancho: '20%'  },
-    { label: 'Débil',      color: '#e67e22', ancho: '30%'  },
-    { label: 'Regular',    color: '#f39c12', ancho: '50%'  },
-    { label: 'Fuerte',     color: '#2ecc71', ancho: '75%'  },
-    { label: 'Muy fuerte', color: '#00d4ff', ancho: '90%'  },
-    { label: 'Excelente',  color: '#00d4ff', ancho: '100%' },
+    { label: t('common.strength_very_weak'),   color: '#e74c3c', ancho: '20%'  },
+    { label: t('common.strength_weak'),         color: '#e67e22', ancho: '30%'  },
+    { label: t('common.strength_fair'),         color: '#f39c12', ancho: '50%'  },
+    { label: t('common.strength_strong'),       color: '#2ecc71', ancho: '75%'  },
+    { label: t('common.strength_very_strong'),  color: '#00d4ff', ancho: '90%'  },
+    { label: t('generator.strength_extra_strong'), color: '#00d4ff', ancho: '100%' },
   ];
 
   const nivel = niveles[puntos] || niveles[0];
@@ -171,7 +175,7 @@ function mostrarFortaleza(puntos, entropia) {
   strengthFill.style.backgroundColor = nivel.color;
   strengthLabel.textContent          = nivel.label;
   strengthLabel.style.color          = nivel.color;
-  entropyLabel.textContent           = `${entropia} bits de entropía`;
+  entropyLabel.textContent           = t('generator.entropy_label', { bits: entropia });
 }
 
 // ── Historial ──
@@ -191,7 +195,7 @@ function renderizarHistorial() {
   historyList.innerHTML = '';
 
   if (historial.length === 0) {
-    historyList.innerHTML = '<li class="history-empty">Aún no has generado contraseñas</li>';
+    historyList.innerHTML = `<li class="history-empty">${t('generator.history_empty')}</li>`;
     return;
   }
 
@@ -201,7 +205,7 @@ function renderizarHistorial() {
     li.innerHTML = `
       <span class="history-password">${item.password}</span>
       <span class="history-meta">${item.hora}</span>
-      <button class="btn-icon btn-copiar-hist" data-idx="${idx}" title="Copiar">📋</button>
+      <button class="btn-icon btn-copiar-hist" data-idx="${idx}" title="${t('common.copy_title')}">📋</button>
     `;
     li.querySelector('.btn-copiar-hist').addEventListener('click', () => {
       copiarPassword(item.password, li.querySelector('.btn-copiar-hist'));

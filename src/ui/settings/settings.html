@@ -14,33 +14,33 @@
       <span class="logo-icon">🔐</span>
       <div class="logo-text">
         <span class="logo-title">DacmosGroup</span>
-        <span class="logo-subtitle">Configuración</span>
+        <span class="logo-subtitle" data-i18n="settings.header_subtitle">Configuración</span>
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn btn-inicio" id="btnInicio">← Inicio</button>
+      <button class="btn btn-inicio" id="btnInicio" data-i18n="common.back">← Inicio</button>
     </div>
   </header>
 
   <main class="settings-content">
 
     <!-- Sección: Contraseña Maestra -->
-    <!-- Sección: Contraseña Maestra -->
     <section class="settings-section">
-      <h2 class="section-title">🔑 Contraseña Maestra</h2>
+      <h2 class="section-title" data-i18n="settings.master_section_title">🔑 Contraseña Maestra</h2>
 
       <!-- Panel: Configurar por primera vez -->
       <div id="panelConfigurar">
-        <p class="section-desc">
+        <p class="section-desc" data-i18n="settings.master_setup_desc">
           La contraseña maestra protege todo tu vault con cifrado AES-256-GCM.
-          <strong>No puede recuperarse si la olvidas.</strong>
+          No puede recuperarse si la olvidas.
         </p>
         <div class="form-group">
-          <label class="form-label">Nueva contraseña maestra</label>
+          <label class="form-label" data-i18n="settings.master_label_new">Nueva contraseña maestra</label>
           <div class="input-group">
             <input type="password" id="inputNuevaMaster" class="input"
+              data-i18n-placeholder="settings.master_placeholder_new"
               placeholder="Mínimo 12 caracteres" autocomplete="off"/>
-            <button class="btn-icon" id="btnToggleNueva">👁</button>
+            <button class="btn-icon" id="btnToggleNueva" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
           <div class="strength-bar">
             <div class="strength-fill" id="strengthFill"></div>
@@ -48,16 +48,17 @@
           <span class="strength-label" id="strengthLabel"></span>
         </div>
         <div class="form-group">
-          <label class="form-label">Confirmar contraseña maestra</label>
+          <label class="form-label" data-i18n="settings.master_label_confirm">Confirmar contraseña maestra</label>
           <div class="input-group">
             <input type="password" id="inputConfirmarMaster" class="input"
+              data-i18n-placeholder="settings.master_placeholder_confirm"
               placeholder="Repite la contraseña" autocomplete="off"/>
-            <button class="btn-icon" id="btnToggleConfirmar">👁</button>
+            <button class="btn-icon" id="btnToggleConfirmar" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
         </div>
         <p class="error-msg hidden" id="errorMaster"></p>
         <p class="success-msg hidden" id="successMaster"></p>
-        <button class="btn btn-primary" id="btnGuardarMaster">
+        <button class="btn btn-primary" id="btnGuardarMaster" data-i18n="settings.master_btn_save">
           Guardar contraseña maestra
         </button>
       </div>
@@ -66,22 +67,24 @@
       <div id="panelCambiar" class="hidden">
         <div class="vault-status">
           <span class="status-icon">✅</span>
-          <span class="status-text">Vault protegido con AES-256-GCM</span>
+          <span class="status-text" data-i18n="settings.master_vault_protected">Vault protegido con AES-256-GCM</span>
         </div>
         <div class="form-group">
-          <label class="form-label">Contraseña actual</label>
+          <label class="form-label" data-i18n="settings.master_label_current">Contraseña actual</label>
           <div class="input-group">
             <input type="password" id="inputActualMaster" class="input"
+              data-i18n-placeholder="settings.master_placeholder_current"
               placeholder="Contraseña actual" autocomplete="off"/>
-            <button class="btn-icon" id="btnToggleActual">👁</button>
+            <button class="btn-icon" id="btnToggleActual" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Nueva contraseña</label>
+          <label class="form-label" data-i18n="settings.master_label_new_chg">Nueva contraseña</label>
           <div class="input-group">
             <input type="password" id="inputNuevaCambio" class="input"
+              data-i18n-placeholder="settings.master_placeholder_new_chg"
               placeholder="Mínimo 12 caracteres" autocomplete="off"/>
-            <button class="btn-icon" id="btnToggleNuevaCambio">👁</button>
+            <button class="btn-icon" id="btnToggleNuevaCambio" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
           <div class="strength-bar">
             <div class="strength-fill" id="strengthFillCambio"></div>
@@ -89,16 +92,17 @@
           <span class="strength-label" id="strengthLabelCambio"></span>
         </div>
         <div class="form-group">
-          <label class="form-label">Confirmar nueva contraseña</label>
+          <label class="form-label" data-i18n="settings.master_label_confirm_chg">Confirmar nueva contraseña</label>
           <div class="input-group">
             <input type="password" id="inputConfirmarCambio" class="input"
+              data-i18n-placeholder="settings.master_placeholder_cnf_chg"
               placeholder="Repite la nueva contraseña" autocomplete="off"/>
-            <button class="btn-icon" id="btnToggleConfirmarCambio">👁</button>
+            <button class="btn-icon" id="btnToggleConfirmarCambio" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
         </div>
         <p class="error-msg hidden" id="errorCambio"></p>
         <p class="success-msg hidden" id="successCambio"></p>
-        <button class="btn btn-primary" id="btnCambiarMaster">
+        <button class="btn btn-primary" id="btnCambiarMaster" data-i18n="settings.master_btn_change">
           Cambiar contraseña maestra
         </button>
       </div>
@@ -107,67 +111,68 @@
 
     <!-- Sección: Seguridad -->
     <section class="settings-section">
-      <h2 class="section-title">🛡️ Seguridad</h2>
+      <h2 class="section-title" data-i18n="settings.security_section_title">🛡️ Seguridad</h2>
 
       <div class="setting-row">
         <div class="setting-info">
-          <span class="setting-name">Bloqueo automático</span>
-          <span class="setting-desc">Bloquear el vault tras inactividad</span>
+          <span class="setting-name" data-i18n="settings.security_autolock_name">Bloqueo automático</span>
+          <span class="setting-desc" data-i18n="settings.security_autolock_desc">Bloquear el vault tras inactividad</span>
         </div>
         <select class="select" id="selectAutoLock">
-          <option value="1">1 minuto</option>
-          <option value="5" selected>5 minutos</option>
-          <option value="15">15 minutos</option>
-          <option value="30">30 minutos</option>
-          <option value="0">Nunca</option>
+          <option value="1" data-i18n="settings.security_autolock_1m">1 minuto</option>
+          <option value="5" selected data-i18n="settings.security_autolock_5m">5 minutos</option>
+          <option value="15" data-i18n="settings.security_autolock_15m">15 minutos</option>
+          <option value="30" data-i18n="settings.security_autolock_30m">30 minutos</option>
+          <option value="60" data-i18n="settings.security_autolock_1h">1 hora</option>
+          <option value="0" data-i18n="settings.security_autolock_never">Nunca</option>
         </select>
       </div>
 
       <div class="setting-row">
         <div class="setting-info">
-          <span class="setting-name">Limpiar portapapeles</span>
-          <span class="setting-desc">Borrar contraseña copiada automáticamente</span>
+          <span class="setting-name" data-i18n="settings.security_clipboard_name">Limpiar portapapeles</span>
+          <span class="setting-desc" data-i18n="settings.security_clipboard_desc">Borrar contraseña copiada automáticamente</span>
         </div>
         <select class="select" id="selectClipboard">
-          <option value="15">15 segundos</option>
-          <option value="30" selected>30 segundos</option>
-          <option value="60">1 minuto</option>
-          <option value="0">Nunca</option>
+          <option value="15" data-i18n="settings.security_clipboard_15s">15 segundos</option>
+          <option value="30" selected data-i18n="settings.security_clipboard_30s">30 segundos</option>
+          <option value="60" data-i18n="settings.security_clipboard_1m">1 minuto</option>
+          <option value="0" data-i18n="settings.security_clipboard_never">Nunca</option>
         </select>
       </div>
 
-      <button class="btn btn-primary" id="btnGuardarSeguridad">
+      <button class="btn btn-primary" id="btnGuardarSeguridad" data-i18n="settings.security_btn_save">
         Guardar configuración
       </button>
-      <p class="success-msg hidden" id="successSeguridad">✅ Guardado</p>
+      <p class="success-msg hidden" id="successSeguridad" data-i18n="settings.security_saved">✅ Guardado</p>
     </section>
 
     <!-- Sección: Modelo de seguridad -->
     <section class="settings-section info-section">
-      <h2 class="section-title">ℹ️ Modelo de Seguridad</h2>
+      <h2 class="section-title" data-i18n="settings.security_model_section_title">ℹ️ Modelo de Seguridad</h2>
       <div class="info-grid">
         <div class="info-item">
-          <span class="info-label">Cifrado</span>
+          <span class="info-label" data-i18n="settings.security_model_encryption">Cifrado</span>
           <span class="info-value accent">AES-256-GCM</span>
         </div>
         <div class="info-item">
-          <span class="info-label">Derivación de clave</span>
+          <span class="info-label" data-i18n="settings.security_model_kdf">Derivación de clave</span>
           <span class="info-value accent">PBKDF2-SHA256</span>
         </div>
         <div class="info-item">
-          <span class="info-label">Iteraciones</span>
-          <span class="info-value">600,000 (OWASP 2024)</span>
+          <span class="info-label" data-i18n="settings.security_model_iterations">Iteraciones</span>
+          <span class="info-value" data-i18n="settings.security_model_iterations_val">600,000 (OWASP 2024)</span>
         </div>
         <div class="info-item">
-          <span class="info-label">Modelo</span>
-          <span class="info-value">Zero-Knowledge local-first</span>
+          <span class="info-label" data-i18n="settings.security_model_model">Modelo</span>
+          <span class="info-value" data-i18n="settings.security_model_model_val">Zero-Knowledge local-first</span>
         </div>
         <div class="info-item">
-          <span class="info-label">Motor crypto</span>
-          <span class="info-value">Web Crypto API nativa</span>
+          <span class="info-label" data-i18n="settings.security_model_engine">Motor crypto</span>
+          <span class="info-value" data-i18n="settings.security_model_engine_val">Web Crypto API nativa</span>
         </div>
         <div class="info-item">
-          <span class="info-label">Versión</span>
+          <span class="info-label" data-i18n="settings.security_model_version">Versión</span>
           <span class="info-value" id="versionActual"></span>
         </div>
       </div>
@@ -176,48 +181,49 @@
 
     <!-- Sección: Backup (F1.4: exportación en múltiples formatos) -->
     <section class="settings-section">
-      <h2 class="section-title">💾 Backup del Vault</h2>
+      <h2 class="section-title" data-i18n="settings.backup_section_title">💾 Backup del Vault</h2>
 
-      <!-- ── Exportar JSON cifrado (comportamiento original) ── -->
+      <!-- ── Exportar JSON cifrado ── -->
       <div class="backup-row">
         <div class="setting-info">
-          <span class="setting-name">Exportar JSON cifrado</span>
-          <span class="setting-desc">Backup AES-256-GCM — seguro para guardar en cualquier lugar</span>
+          <span class="setting-name" data-i18n="settings.backup_export_json_name">Exportar JSON cifrado</span>
+          <span class="setting-desc" data-i18n="settings.backup_export_json_desc">Backup AES-256-GCM — seguro para guardar en cualquier lugar</span>
         </div>
-        <button class="btn btn-secondary" id="btnExportar">Exportar</button>
+        <button class="btn btn-secondary" id="btnExportar" data-i18n="settings.backup_export_btn">Exportar</button>
       </div>
 
       <div class="backup-form hidden" id="formExportar">
         <div class="form-group">
-          <label class="form-label">Confirma tu contraseña maestra</label>
+          <label class="form-label" data-i18n="settings.backup_confirm_pass_label">Confirma tu contraseña maestra</label>
           <div class="input-group">
             <input type="password" id="inputExportarPass" class="input"
+              data-i18n-placeholder="settings.backup_placeholder_password"
               placeholder="Contraseña maestra" autocomplete="off"/>
-            <button class="btn-icon" id="btnToggleExportarPass">👁</button>
+            <button class="btn-icon" id="btnToggleExportarPass" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
         </div>
         <p class="error-msg hidden" id="errorExportar"></p>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-secondary" id="btnCancelarExportar">Cancelar</button>
-          <button class="btn btn-primary" id="btnConfirmarExportar">Descargar backup</button>
+          <button class="btn btn-secondary" id="btnCancelarExportar" data-i18n="common.cancel">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmarExportar" data-i18n="settings.backup_btn_download">Descargar backup</button>
         </div>
       </div>
 
       <!-- ── Exportar CSV genérico ── -->
       <div class="backup-row">
         <div class="setting-info">
-          <span class="setting-name">Exportar CSV genérico</span>
-          <span class="setting-desc">Texto plano — compatible con cualquier gestor de contraseñas</span>
+          <span class="setting-name" data-i18n="settings.backup_export_csv_name">Exportar CSV genérico</span>
+          <span class="setting-desc" data-i18n="settings.backup_export_csv_desc">Texto plano — compatible con cualquier gestor de contraseñas</span>
         </div>
-        <button class="btn btn-secondary" id="btnExportarCSVGenerico">Exportar</button>
+        <button class="btn btn-secondary" id="btnExportarCSVGenerico" data-i18n="settings.backup_export_btn">Exportar</button>
       </div>
 
       <div class="backup-form hidden" id="formExportarCSVGenerico">
         <!-- Advertencia de seguridad — visible e ineludible -->
         <div class="import-warning">
-          <strong>⚠️ Advertencia de seguridad — Archivo en texto plano</strong>
-          <p>
-            Este archivo contendrá <strong>todas tus contraseñas sin ningún cifrado</strong>.
+          <strong data-i18n="settings.backup_csv_warning_title">⚠️ Advertencia de seguridad — Archivo en texto plano</strong>
+          <p data-i18n="settings.backup_csv_warning_body">
+            Este archivo contendrá todas tus contraseñas sin ningún cifrado.
             Cualquier persona con acceso al archivo podrá leer tus credenciales.
             Elimínalo del disco inmediatamente después de usarlo. No lo almacenes
             en servicios de nube ni lo compartas por ningún medio.
@@ -227,41 +233,42 @@
         <!-- Checkbox de confirmación — requerido para continuar -->
         <label class="export-ack">
           <input type="checkbox" id="ackCSVGenerico"/>
-          <span>Entiendo que el archivo no estará cifrado y asumo la responsabilidad de protegerlo</span>
+          <span data-i18n="settings.backup_csv_ack_label">Entiendo que el archivo no estará cifrado y asumo la responsabilidad de protegerlo</span>
         </label>
 
         <!-- Campo de contraseña — aparece solo tras marcar el checkbox -->
         <div class="form-group" id="grupoPassCSVGenerico" style="display:none;">
-          <label class="form-label">Confirma tu contraseña maestra</label>
+          <label class="form-label" data-i18n="settings.backup_confirm_pass_label">Confirma tu contraseña maestra</label>
           <div class="input-group">
             <input type="password" id="inputPassCSVGenerico" class="input"
+              data-i18n-placeholder="settings.backup_placeholder_password"
               placeholder="Contraseña maestra" autocomplete="off"/>
-            <button class="btn-icon" id="btnTogglePassCSVGenerico">👁</button>
+            <button class="btn-icon" id="btnTogglePassCSVGenerico" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
         </div>
 
         <p class="error-msg hidden" id="errorCSVGenerico"></p>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-secondary" id="btnCancelarCSVGenerico">Cancelar</button>
-          <button class="btn btn-primary" id="btnConfirmarCSVGenerico" disabled>Descargar CSV</button>
+          <button class="btn btn-secondary" id="btnCancelarCSVGenerico" data-i18n="common.cancel">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmarCSVGenerico" disabled data-i18n="settings.backup_btn_download_csv">Descargar CSV</button>
         </div>
       </div>
 
       <!-- ── Exportar CSV Bitwarden ── -->
       <div class="backup-row">
         <div class="setting-info">
-          <span class="setting-name">Exportar CSV Bitwarden</span>
-          <span class="setting-desc">Texto plano — para migrar a Bitwarden u otros gestores compatibles</span>
+          <span class="setting-name" data-i18n="settings.backup_export_bw_name">Exportar CSV Bitwarden</span>
+          <span class="setting-desc" data-i18n="settings.backup_export_bw_desc">Texto plano — para migrar a Bitwarden u otros gestores compatibles</span>
         </div>
-        <button class="btn btn-secondary" id="btnExportarCSVBitwarden">Exportar</button>
+        <button class="btn btn-secondary" id="btnExportarCSVBitwarden" data-i18n="settings.backup_export_btn">Exportar</button>
       </div>
 
       <div class="backup-form hidden" id="formExportarCSVBitwarden">
         <!-- Advertencia de seguridad — visible e ineludible -->
         <div class="import-warning">
-          <strong>⚠️ Advertencia de seguridad — Archivo en texto plano</strong>
-          <p>
-            Este archivo contendrá <strong>todas tus contraseñas sin ningún cifrado</strong>
+          <strong data-i18n="settings.backup_csv_warning_title">⚠️ Advertencia de seguridad — Archivo en texto plano</strong>
+          <p data-i18n="settings.backup_bw_warning_body">
+            Este archivo contendrá todas tus contraseñas sin ningún cifrado
             en formato compatible con Bitwarden.
             Úsalo únicamente para migrar a otro gestor y elimínalo del disco inmediatamente.
             No lo almacenes en servicios de nube ni lo compartas por ningún medio.
@@ -271,54 +278,56 @@
         <!-- Checkbox de confirmación — requerido para continuar -->
         <label class="export-ack">
           <input type="checkbox" id="ackCSVBitwarden"/>
-          <span>Entiendo que el archivo no estará cifrado y asumo la responsabilidad de protegerlo</span>
+          <span data-i18n="settings.backup_csv_ack_label">Entiendo que el archivo no estará cifrado y asumo la responsabilidad de protegerlo</span>
         </label>
 
         <!-- Campo de contraseña — aparece solo tras marcar el checkbox -->
         <div class="form-group" id="grupoPassCSVBitwarden" style="display:none;">
-          <label class="form-label">Confirma tu contraseña maestra</label>
+          <label class="form-label" data-i18n="settings.backup_confirm_pass_label">Confirma tu contraseña maestra</label>
           <div class="input-group">
             <input type="password" id="inputPassCSVBitwarden" class="input"
+              data-i18n-placeholder="settings.backup_placeholder_password"
               placeholder="Contraseña maestra" autocomplete="off"/>
-            <button class="btn-icon" id="btnTogglePassCSVBitwarden">👁</button>
+            <button class="btn-icon" id="btnTogglePassCSVBitwarden" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
         </div>
 
         <p class="error-msg hidden" id="errorCSVBitwarden"></p>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-secondary" id="btnCancelarCSVBitwarden">Cancelar</button>
-          <button class="btn btn-primary" id="btnConfirmarCSVBitwarden" disabled>Descargar CSV</button>
+          <button class="btn btn-secondary" id="btnCancelarCSVBitwarden" data-i18n="common.cancel">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmarCSVBitwarden" disabled data-i18n="settings.backup_btn_download_csv">Descargar CSV</button>
         </div>
       </div>
 
-      <!-- ── Importar vault (sin cambios) ── -->
+      <!-- ── Importar vault ── -->
       <div class="backup-row">
         <div class="setting-info">
-          <span class="setting-name">Importar vault</span>
-          <span class="setting-desc">Restaura credenciales desde un backup cifrado</span>
+          <span class="setting-name" data-i18n="settings.backup_import_name">Importar vault</span>
+          <span class="setting-desc" data-i18n="settings.backup_import_desc">Restaura credenciales desde un backup cifrado</span>
         </div>
-        <button class="btn btn-secondary" id="btnImportar">Importar</button>
+        <button class="btn btn-secondary" id="btnImportar" data-i18n="settings.backup_import_btn">Importar</button>
       </div>
 
       <div class="backup-form hidden" id="formImportar">
         <div class="form-group">
-          <label class="form-label">Archivo de backup (.json)</label>
+          <label class="form-label" data-i18n="settings.backup_import_file_label">Archivo de backup (.json)</label>
           <input type="file" id="inputArchivoBackup" class="input"
             accept=".json" style="padding: 8px;"/>
         </div>
         <div class="form-group">
-          <label class="form-label">Contraseña maestra del backup</label>
+          <label class="form-label" data-i18n="settings.backup_import_pass_label">Contraseña maestra del backup</label>
           <div class="input-group">
             <input type="password" id="inputImportarPass" class="input"
+              data-i18n-placeholder="settings.backup_placeholder_password"
               placeholder="Contraseña maestra" autocomplete="off"/>
-            <button class="btn-icon" id="btnToggleImportarPass">👁</button>
+            <button class="btn-icon" id="btnToggleImportarPass" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
         </div>
         <p class="error-msg hidden" id="errorImportar"></p>
         <p class="success-msg hidden" id="successImportar"></p>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-secondary" id="btnCancelarImportar">Cancelar</button>
-          <button class="btn btn-primary" id="btnConfirmarImportar">Importar credenciales</button>
+          <button class="btn btn-secondary" id="btnCancelarImportar" data-i18n="common.cancel">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmarImportar" data-i18n="settings.backup_btn_import">Importar credenciales</button>
         </div>
       </div>
 
@@ -326,15 +335,15 @@
 
     <!-- Sección: Importar desde gestor externo (F1.1) -->
     <section class="settings-section">
-      <h2 class="section-title">📥 Importar desde gestor externo</h2>
+      <h2 class="section-title" data-i18n="settings.import_section_title">📥 Importar desde gestor externo</h2>
 
       <!-- Disparador del wizard -->
       <div class="backup-row">
         <div class="setting-info">
-          <span class="setting-name">Importar credenciales CSV</span>
-          <span class="setting-desc">Soporta Google, Bitwarden, LastPass, 1Password y CSV genérico</span>
+          <span class="setting-name" data-i18n="settings.import_name">Importar credenciales CSV</span>
+          <span class="setting-desc" data-i18n="settings.import_desc">Soporta Google, Bitwarden, LastPass, 1Password y CSV genérico</span>
         </div>
-        <button class="btn btn-secondary" id="btnAbrirImportarCSV">Importar</button>
+        <button class="btn btn-secondary" id="btnAbrirImportarCSV" data-i18n="settings.backup_import_btn">Importar</button>
       </div>
 
       <!-- Panel del wizard (colapsable) -->
@@ -342,10 +351,10 @@
 
         <!-- Advertencia de seguridad — siempre visible al abrir -->
         <div class="import-warning">
-          <strong>⚠️ Advertencia de seguridad</strong>
-          <p>
+          <strong data-i18n="settings.import_warning_title">⚠️ Advertencia de seguridad</strong>
+          <p data-i18n="settings.import_warning_body">
             Los archivos CSV de exportación contienen tus contraseñas en
-            <strong>texto plano sin cifrar</strong>.
+            texto plano sin cifrar.
             Elimina el archivo del disco inmediatamente después de importar.
             No lo almacenes en servicios de nube ni lo compartas por ningún medio.
           </p>
@@ -353,37 +362,38 @@
 
         <!-- Paso 1: Selección del archivo -->
         <div class="form-group">
-          <label class="form-label">Selecciona el archivo CSV exportado</label>
+          <label class="form-label" data-i18n="settings.import_file_label">Selecciona el archivo CSV exportado</label>
           <input type="file" id="inputArchivoCSV" class="input" accept=".csv"
             style="padding: 8px;"/>
         </div>
 
         <!-- Formato detectado / selector manual (aparece tras seleccionar archivo) -->
         <div class="form-group" id="grupoFormatoCSV" style="display:none;">
-          <label class="form-label">Formato</label>
+          <label class="form-label" data-i18n="settings.import_format_label">Formato</label>
           <div class="import-format-row">
             <span class="import-format-badge" id="badgeFormatoCSV"></span>
             <select class="select" id="selectFormatoCSV">
-              <option value="">— Seleccionar manualmente —</option>
-              <option value="google">Google Password Manager</option>
-              <option value="bitwarden">Bitwarden</option>
-              <option value="lastpass">LastPass</option>
-              <option value="1password">1Password</option>
-              <option value="generico">CSV genérico</option>
+              <option value="" data-i18n="settings.import_format_auto">— Seleccionar manualmente —</option>
+              <option value="google" data-i18n="settings.import_format_google">Google Password Manager</option>
+              <option value="bitwarden" data-i18n="settings.import_format_bw">Bitwarden</option>
+              <option value="lastpass" data-i18n="settings.import_format_lastpass">LastPass</option>
+              <option value="1password" data-i18n="settings.import_format_1pass">1Password</option>
+              <option value="generico" data-i18n="settings.import_format_generic">CSV genérico</option>
             </select>
           </div>
         </div>
 
         <!-- Paso 2: Contraseña maestra + botón previsualizar -->
         <div class="form-group" id="grupoPasswordImportCSV" style="display:none;">
-          <label class="form-label">Confirma tu contraseña maestra</label>
+          <label class="form-label" data-i18n="settings.import_pass_label">Confirma tu contraseña maestra</label>
           <div class="input-group">
             <input type="password" id="inputPasswordImportCSV" class="input"
+              data-i18n-placeholder="settings.backup_placeholder_password"
               placeholder="Contraseña maestra" autocomplete="off"/>
-            <button class="btn-icon" id="btnTogglePasswordImportCSV">👁</button>
+            <button class="btn-icon" id="btnTogglePasswordImportCSV" data-i18n-aria="common.aria_toggle_pass">👁</button>
           </div>
           <button class="btn btn-primary" id="btnPrevisualizarCSV"
-            style="margin-top: 10px;">
+            style="margin-top: 10px;" data-i18n="settings.import_btn_preview">
             Previsualizar importación
           </button>
         </div>
@@ -399,11 +409,11 @@
             <table class="import-table">
               <thead>
                 <tr>
-                  <th>Sitio</th>
-                  <th>URL</th>
-                  <th>Usuario</th>
-                  <th>Contraseña</th>
-                  <th>Estado</th>
+                  <th data-i18n="settings.import_table_site">Sitio</th>
+                  <th data-i18n="settings.import_table_url">URL</th>
+                  <th data-i18n="settings.import_table_user">Usuario</th>
+                  <th data-i18n="settings.import_table_password">Contraseña</th>
+                  <th data-i18n="settings.import_table_status">Estado</th>
                 </tr>
               </thead>
               <tbody id="tbodyPreviewCSV"></tbody>
@@ -411,8 +421,8 @@
           </div>
 
           <div style="display:flex; gap:10px; margin-top:14px;">
-            <button class="btn btn-secondary" id="btnCancelarImportarCSV">Cancelar</button>
-            <button class="btn btn-primary"   id="btnConfirmarImportarCSV">Importar</button>
+            <button class="btn btn-secondary" id="btnCancelarImportarCSV" data-i18n="common.cancel">Cancelar</button>
+            <button class="btn btn-primary"   id="btnConfirmarImportarCSV" data-i18n="settings.import_btn_confirm">Importar</button>
           </div>
         </div>
 
@@ -424,8 +434,8 @@
 
     <!-- Sección: Sincronización (F2.1 — F2.3) -->
     <section class="settings-section">
-      <h2 class="section-title">🔄 Sincronización multi-dispositivo</h2>
-      <p class="section-desc">
+      <h2 class="section-title" data-i18n="settings.sync_section_title">🔄 Sincronización multi-dispositivo</h2>
+      <p class="section-desc" data-i18n="settings.sync_section_desc">
         Tu vault siempre viaja cifrado (AES-256-GCM). El proveedor cloud
         nunca recibe la clave — solo almacena bytes opacos.
       </p>
@@ -436,11 +446,11 @@
           <div class="sync-provider-info">
             <span class="sync-provider-icon">☁️</span>
             <div class="sync-provider-text">
-              <span class="sync-provider-name">Google Drive</span>
-              <span class="sync-provider-desc">15 GB gratis · Carpeta privada (AppData)</span>
+              <span class="sync-provider-name" data-i18n="settings.sync_google_name">Google Drive</span>
+              <span class="sync-provider-desc" data-i18n="settings.sync_google_storage">15 GB gratis · Carpeta privada (AppData)</span>
             </div>
           </div>
-          <span class="sync-badge sync-badge-off" id="syncBadgeGoogle">Desconectado</span>
+          <span class="sync-badge sync-badge-off" id="syncBadgeGoogle" data-i18n="sync.badge_disconnected">Desconectado</span>
         </div>
 
         <div class="sync-card-body" id="syncBodyGoogle">
@@ -448,13 +458,13 @@
         </div>
 
         <div class="sync-card-actions">
-          <button class="btn btn-secondary btn-sm hidden" id="btnSyncAhora">
+          <button class="btn btn-secondary btn-sm hidden" id="btnSyncAhora" data-i18n="settings.sync_btn_sync_now">
             Sincronizar ahora
           </button>
-          <button class="btn btn-danger btn-sm hidden" id="btnDesconectarGoogle">
+          <button class="btn btn-danger btn-sm hidden" id="btnDesconectarGoogle" data-i18n="settings.sync_btn_disconnect">
             Desconectar
           </button>
-          <button class="btn btn-primary btn-sm" id="btnConectarGoogle">
+          <button class="btn btn-primary btn-sm" id="btnConectarGoogle" data-i18n="settings.sync_btn_connect_google">
             Conectar con Google
           </button>
         </div>
@@ -466,11 +476,11 @@
           <div class="sync-provider-info">
             <span class="sync-provider-icon">☁️</span>
             <div class="sync-provider-text">
-              <span class="sync-provider-name">OneDrive</span>
-              <span class="sync-provider-desc">5 GB gratis · Carpeta privada (AppData)</span>
+              <span class="sync-provider-name" data-i18n="settings.sync_onedrive_name">OneDrive</span>
+              <span class="sync-provider-desc" data-i18n="settings.sync_onedrive_storage">5 GB gratis · Carpeta privada (AppData)</span>
             </div>
           </div>
-          <span class="sync-badge sync-badge-off" id="syncBadgeOneDrive">Desconectado</span>
+          <span class="sync-badge sync-badge-off" id="syncBadgeOneDrive" data-i18n="sync.badge_disconnected">Desconectado</span>
         </div>
 
         <div class="sync-card-body" id="syncBodyOneDrive">
@@ -478,13 +488,13 @@
         </div>
 
         <div class="sync-card-actions">
-          <button class="btn btn-secondary btn-sm hidden" id="btnSyncAhoraOneDrive">
+          <button class="btn btn-secondary btn-sm hidden" id="btnSyncAhoraOneDrive" data-i18n="settings.sync_btn_sync_now">
             Sincronizar ahora
           </button>
-          <button class="btn btn-danger btn-sm hidden" id="btnDesconectarOneDrive">
+          <button class="btn btn-danger btn-sm hidden" id="btnDesconectarOneDrive" data-i18n="settings.sync_btn_disconnect">
             Desconectar
           </button>
-          <button class="btn btn-primary btn-sm" id="btn-conectar-onedrive">
+          <button class="btn btn-primary btn-sm" id="btn-conectar-onedrive" data-i18n="settings.sync_btn_connect_ms">
             Conectar con Microsoft
           </button>
         </div>
@@ -496,13 +506,13 @@
 
     <!-- Sección: Zona de Peligro -->
     <section class="settings-section danger-section">
-      <h2 class="section-title">⚠️ Zona de Peligro</h2>
+      <h2 class="section-title" data-i18n="settings.danger_section_title">⚠️ Zona de Peligro</h2>
       <div class="danger-row">
         <div class="setting-info">
-          <span class="setting-name">Borrar todo</span>
-          <span class="setting-desc">Elimina permanentemente todas las credenciales</span>
+          <span class="setting-name" data-i18n="settings.danger_delete_name">Borrar todo</span>
+          <span class="setting-desc" data-i18n="settings.danger_delete_desc">Elimina permanentemente todas las credenciales</span>
         </div>
-        <button class="btn btn-danger" id="btnBorrarTodo">Borrar todo</button>
+        <button class="btn btn-danger" id="btnBorrarTodo" data-i18n="settings.danger_btn_delete">Borrar todo</button>
       </div>
     </section>
 
@@ -510,7 +520,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <span>DacmosGroup.com · Zero-Knowledge · AES-256-GCM</span>
+    <span data-i18n="settings.footer_ext">DacmosGroup.co · Zero-Knowledge · AES-256-GCM</span>
   </footer>
 
   <script src="settings.js" type="module"></script>

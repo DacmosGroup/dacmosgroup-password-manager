@@ -20,20 +20,20 @@
     <!-- Indicador de estado: bloqueado/desbloqueado -->
     <div class="status-badge" id="statusBadge">
       <span class="status-dot locked"></span>
-      <span class="status-label">Bloqueado</span>
+      <span class="status-label" data-i18n="popup.status_locked">Bloqueado</span>
     </div>
   </header>
 
   <!-- Vista: Sin configurar (primera vez) -->
   <div class="view" id="viewSetup">
     <div class="welcome">
-      <h2>Bienvenido</h2>
-      <p>Configura tu contraseña maestra para comenzar a proteger tus credenciales.</p>
-      <button class="btn btn-primary" id="btnGoSetup">
+      <h2 data-i18n="auth.setup.title">Bienvenido</h2>
+      <p data-i18n="auth.setup.desc">Configura tu contraseña maestra para comenzar a proteger tus credenciales.</p>
+      <button class="btn btn-primary" id="btnGoSetup" data-i18n="auth.setup.btn_create">
         Crear vault nuevo →
       </button>
-      <p class="setup-restore-hint">¿Ya tienes un vault en otro dispositivo?</p>
-      <button class="btn btn-secondary" id="btnRestoreGoogle">
+      <p class="setup-restore-hint" data-i18n="auth.setup.restore_hint">¿Ya tienes un vault en otro dispositivo?</p>
+      <button class="btn btn-secondary" id="btnRestoreGoogle" data-i18n="auth.setup.btn_restore_google">
         Restaurar desde Google Drive
       </button>
       <p class="error-msg hidden" id="setupRestoreError"></p>
@@ -43,35 +43,36 @@
   <!-- Vista: Bloqueado -->
   <div class="view hidden" id="viewLocked">
     <div class="unlock-form">
-      <p class="unlock-label">Ingresa tu contraseña maestra</p>
+      <p class="unlock-label" data-i18n="auth.unlock.title">Ingresa tu contraseña maestra</p>
       <div class="input-group">
         <input
           type="password"
           id="masterPasswordInput"
           class="input"
+          data-i18n-placeholder="auth.unlock.placeholder"
           placeholder="Contraseña maestra"
           autocomplete="off"
         />
-        <button class="btn-icon" id="btnTogglePassword" title="Mostrar/ocultar">
+        <button class="btn-icon" id="btnTogglePassword" data-i18n-title="common.aria_toggle_pass" title="Mostrar/ocultar">
           👁
         </button>
       </div>
-      <button class="btn btn-primary" id="btnUnlock">
+      <button class="btn btn-primary" id="btnUnlock" data-i18n="auth.unlock.btn">
         Desbloquear
       </button>
-      <p class="error-msg hidden" id="errorMsg">Contraseña incorrecta</p>
+      <p class="error-msg hidden" id="errorMsg" data-i18n="auth.unlock.error_incorrect">Contraseña incorrecta</p>
 
-      <p class="forgot-link" id="linkOlvide">¿Olvidaste tu contraseña?</p>
+      <p class="forgot-link" id="linkOlvide" data-i18n="auth.forgot.link">¿Olvidaste tu contraseña?</p>
 
       <div class="forgot-panel hidden" id="panelOlvide">
-        <p class="forgot-warning">
+        <p class="forgot-warning" data-i18n="auth.forgot.warning">
           ⚠️ Crear un vault nuevo eliminará permanentemente todas tus credenciales.
           Tu backup local y vault en la nube también quedarán inaccesibles.
           Esta acción no se puede deshacer.
         </p>
         <div class="forgot-actions">
-          <button class="btn btn-secondary btn-sm" id="btnOlvideCancelar">Cancelar</button>
-          <button class="btn btn-danger btn-sm" id="btnOlvideConfirmar">Crear vault nuevo</button>
+          <button class="btn btn-secondary btn-sm" id="btnOlvideCancelar" data-i18n="common.cancel">Cancelar</button>
+          <button class="btn btn-danger btn-sm" id="btnOlvideConfirmar" data-i18n="auth.forgot.btn_confirm">Crear vault nuevo</button>
         </div>
       </div>
     </div>
@@ -82,13 +83,13 @@
     <div class="quick-actions">
       <button class="action-card" id="btnOpenVault">
         <span class="action-icon">🗄️</span>
-        <span class="action-label">Vault</span>
+        <span class="action-label" data-i18n="popup.unlocked_vault_label">Vault</span>
         <span class="action-count" id="credentialCount">0 credenciales</span>
       </button>
       <button class="action-card" id="btnAddCredential">
         <span class="action-icon">➕</span>
-        <span class="action-label">Agregar</span>
-        <span class="action-count">Nueva credencial</span>
+        <span class="action-label" data-i18n="popup.unlocked_add_label">Agregar</span>
+        <span class="action-count" data-i18n="popup.unlocked_new_cred">Nueva credencial</span>
       </button>
     </div>
     <!-- Indicador de estado de sincronización (F2.4) -->
@@ -103,27 +104,27 @@
 
   <!-- Barra de navegación inferior -->
   <nav class="nav-bar" id="navBar">
-    <button class="nav-btn active" id="navVault" title="Vault">
+    <button class="nav-btn active" id="navVault" data-i18n-title="popup.nav_vault" title="Vault">
       <span>🗄️</span>
-      <span>Vault</span>
+      <span data-i18n="popup.nav_vault">Vault</span>
     </button>
-    <button class="nav-btn" id="navGenerator" title="Generador">
+    <button class="nav-btn" id="navGenerator" data-i18n-title="popup.nav_generator" title="Generador">
       <span>⚡</span>
-      <span>Generar</span>
+      <span data-i18n="popup.nav_generator">Generar</span>
     </button>
-    <button class="nav-btn" id="navSettings" title="Configuración">
+    <button class="nav-btn" id="navSettings" data-i18n-title="popup.nav_settings" title="Configuración">
       <span>⚙️</span>
-      <span>Config</span>
+      <span data-i18n="popup.nav_settings">Config</span>
     </button>
-    <button class="nav-btn nav-btn-danger" id="navLock" title="Bloquear">
+    <button class="nav-btn nav-btn-danger" id="navLock" data-i18n-title="popup.nav_lock" title="Bloquear">
       <span>🔒</span>
-      <span>Bloquear</span>
+      <span data-i18n="popup.nav_lock">Bloquear</span>
     </button>
   </nav>
 
   <!-- Footer -->
   <footer class="footer">
-    <span id="footerVersion">DacmosGroup.com · Zero-Knowledge · AES-256-GCM</span>
+    <span id="footerVersion">DacmosGroup.co · Zero-Knowledge · AES-256-GCM</span>
   </footer>
 
   <script src="popup.js" type="module"></script>

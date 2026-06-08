@@ -17,6 +17,8 @@ import { generarCSVGenerico, generarCSVBitwarden } from '../../export/csv-export
 
 import { inicializarWizardImport } from './import-wizard.js'
 
+import { t, walkI18n } from '../../i18n/t.js'
+
 // ── Referencias al DOM ──
 const inputNuevaMaster     = document.getElementById('inputNuevaMaster')
 const inputConfirmarMaster = document.getElementById('inputConfirmarMaster')
@@ -33,11 +35,11 @@ const panelCambiar         = document.getElementById('panelCambiar')
 // ── Sincronización Google Drive (F2.1 — F2.3) ──
 
 const SYNC_BADGE = {
-  desconectado:  { texto: 'Desconectado',  cls: 'sync-badge-off'  },
-  sincronizando: { texto: 'Sincronizando…', cls: 'sync-badge-sync' },
-  sincronizado:  { texto: 'Sincronizado',   cls: 'sync-badge-ok'   },
-  pendiente:     { texto: 'Pendiente',      cls: 'sync-badge-warn' },
-  error:         { texto: 'Error',          cls: 'sync-badge-err'  },
+  desconectado:  { texto: t('sync.badge_disconnected'), cls: 'sync-badge-off'  },
+  sincronizando: { texto: t('sync.badge_syncing'),      cls: 'sync-badge-sync' },
+  sincronizado:  { texto: t('sync.badge_synced'),       cls: 'sync-badge-ok'   },
+  pendiente:     { texto: t('sync.badge_pending'),      cls: 'sync-badge-warn' },
+  error:         { texto: t('sync.badge_error'),        cls: 'sync-badge-err'  },
 }
 
 async function cargarEstadoSync() {
@@ -66,39 +68,39 @@ async function cargarEstadoSync() {
     const fecha = new Date(estado.ultimaSync).toLocaleString('es', {
       day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
     })
-    lastTime.textContent = `Última sync: ${fecha}`
+    lastTime.textContent = t('sync.last_time', { fecha })
   } else {
     lastTime.textContent = ''
   }
 }
 
 async function conectarGoogle() {
-  const btnCon = document.getElementById('btnConectarGoogle')
+  const btnCon    = document.getElementById('btnConectarGoogle')
   const errorEl   = document.getElementById('errorSync')
   const successEl = document.getElementById('successSync')
   errorEl.classList.add('hidden')
   successEl.classList.add('hidden')
 
-  btnCon.textContent = 'Conectando…'
+  btnCon.textContent = t('settings.sync_connecting')
   btnCon.disabled    = true
 
   const resp = await new Promise(resolve =>
     chrome.runtime.sendMessage({ tipo: 'SYNC_CONECTAR' }, resolve)
   )
 
-  btnCon.textContent = 'Conectar con Google'
+  btnCon.textContent = t('settings.sync_btn_connect_google')
   btnCon.disabled    = false
 
   if (resp?.ok) {
-    mostrarExito(successEl, '✅ Google Drive conectado — vault sincronizando')
+    mostrarExito(successEl, t('sync.ok_google_connected'))
     await cargarEstadoSync()
   } else {
-    mostrarError(errorEl, resp?.error || 'Error al conectar con Google')
+    mostrarError(errorEl, resp?.error || t('sync.error_connect_google'))
   }
 }
 
 async function desconectarGoogle() {
-  if (!confirm('¿Desconectar Google Drive? Tu vault local no se borra.')) return
+  if (!confirm(t('settings.sync_confirm_google'))) return
 
   const errorEl   = document.getElementById('errorSync')
   const successEl = document.getElementById('successSync')
@@ -110,10 +112,10 @@ async function desconectarGoogle() {
   )
 
   if (resp?.ok) {
-    mostrarExito(successEl, '✅ Google Drive desconectado')
+    mostrarExito(successEl, t('sync.ok_google_disconnected'))
     await cargarEstadoSync()
   } else {
-    mostrarError(errorEl, resp?.error || 'Error al desconectar')
+    mostrarError(errorEl, resp?.error || t('sync.error_disconnect'))
   }
 }
 
@@ -124,21 +126,21 @@ async function syncAhora() {
   errorEl.classList.add('hidden')
   successEl.classList.add('hidden')
 
-  btnSync.textContent = 'Sincronizando…'
+  btnSync.textContent = t('settings.sync_syncing')
   btnSync.disabled    = true
 
   const resp = await new Promise(resolve =>
     chrome.runtime.sendMessage({ tipo: 'SYNC_SINCRONIZAR' }, resolve)
   )
 
-  btnSync.textContent = 'Sincronizar ahora'
+  btnSync.textContent = t('settings.sync_btn_sync_now')
   btnSync.disabled    = false
 
   if (resp?.ok) {
-    mostrarExito(successEl, '✅ Vault sincronizado')
+    mostrarExito(successEl, t('sync.ok_uploaded'))
     await cargarEstadoSync()
   } else {
-    mostrarError(errorEl, resp?.error || 'Error al sincronizar')
+    mostrarError(errorEl, resp?.error || t('sync.error_sync_google'))
   }
 }
 
@@ -170,7 +172,7 @@ async function cargarEstadoSyncOneDrive() {
     const fecha = new Date(estado.ultimaSync).toLocaleString('es', {
       day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
     })
-    lastTime.textContent = `Última sync: ${fecha}`
+    lastTime.textContent = t('sync.last_time', { fecha })
   } else {
     lastTime.textContent = ''
   }
@@ -183,26 +185,26 @@ async function conectarOneDrive() {
   errorEl.classList.add('hidden')
   successEl.classList.add('hidden')
 
-  btnCon.textContent = 'Conectando…'
+  btnCon.textContent = t('settings.sync_connecting')
   btnCon.disabled    = true
 
   const resp = await new Promise(resolve =>
     chrome.runtime.sendMessage({ tipo: 'SYNC_CONECTAR_ONEDRIVE' }, resolve)
   )
 
-  btnCon.textContent = 'Conectar con Microsoft'
+  btnCon.textContent = t('settings.sync_btn_connect_ms')
   btnCon.disabled    = false
 
   if (resp?.ok) {
-    mostrarExito(successEl, '✅ OneDrive conectado — vault sincronizando')
+    mostrarExito(successEl, t('sync.ok_onedrive_connected'))
     await cargarEstadoSyncOneDrive()
   } else {
-    mostrarError(errorEl, resp?.error || 'Error al conectar con Microsoft')
+    mostrarError(errorEl, resp?.error || t('sync.error_connect_ms'))
   }
 }
 
 async function desconectarOneDrive() {
-  if (!confirm('¿Desconectar OneDrive? Tu vault local no se borra.')) return
+  if (!confirm(t('settings.sync_confirm_onedrive'))) return
 
   const errorEl   = document.getElementById('errorSync')
   const successEl = document.getElementById('successSync')
@@ -214,10 +216,10 @@ async function desconectarOneDrive() {
   )
 
   if (resp?.ok) {
-    mostrarExito(successEl, '✅ OneDrive desconectado')
+    mostrarExito(successEl, t('sync.ok_onedrive_disconnected'))
     await cargarEstadoSyncOneDrive()
   } else {
-    mostrarError(errorEl, resp?.error || 'Error al desconectar')
+    mostrarError(errorEl, resp?.error || t('sync.error_disconnect'))
   }
 }
 
@@ -228,26 +230,27 @@ async function syncAhoraOneDrive() {
   errorEl.classList.add('hidden')
   successEl.classList.add('hidden')
 
-  btnSync.textContent = 'Sincronizando…'
+  btnSync.textContent = t('settings.sync_syncing')
   btnSync.disabled    = true
 
   const resp = await new Promise(resolve =>
     chrome.runtime.sendMessage({ tipo: 'SYNC_SINCRONIZAR_ONEDRIVE' }, resolve)
   )
 
-  btnSync.textContent = 'Sincronizar ahora'
+  btnSync.textContent = t('settings.sync_btn_sync_now')
   btnSync.disabled    = false
 
   if (resp?.ok) {
-    mostrarExito(successEl, '✅ Vault sincronizado')
+    mostrarExito(successEl, t('sync.ok_uploaded'))
     await cargarEstadoSyncOneDrive()
   } else {
-    mostrarError(errorEl, resp?.error || 'Error al sincronizar')
+    mostrarError(errorEl, resp?.error || t('sync.error_sync_onedrive'))
   }
 }
 
 // ── Inicialización ──
 async function inicializar() {
+  walkI18n()
   // Inyectar versión dinámica desde el manifest — evita desincronización con bumps
   const { version } = chrome.runtime.getManifest()
   document.getElementById('versionActual').textContent = version
@@ -293,12 +296,12 @@ function evaluarFortaleza(password, fillEl, labelEl) {
   if (/[^A-Za-z0-9]/.test(password)) puntos++
 
   const niveles = [
-    { label: '',           color: 'transparent', ancho: '0%'   },
-    { label: 'Muy débil',  color: '#e74c3c',     ancho: '20%'  },
-    { label: 'Débil',      color: '#e67e22',     ancho: '40%'  },
-    { label: 'Regular',    color: '#f39c12',     ancho: '60%'  },
-    { label: 'Fuerte',     color: '#2ecc71',     ancho: '80%'  },
-    { label: 'Muy fuerte', color: '#00d4ff',     ancho: '100%' },
+    { label: '',                               color: 'transparent', ancho: '0%'   },
+    { label: t('common.strength_very_weak'),   color: '#e74c3c',     ancho: '20%'  },
+    { label: t('common.strength_weak'),        color: '#e67e22',     ancho: '40%'  },
+    { label: t('common.strength_fair'),        color: '#f39c12',     ancho: '60%'  },
+    { label: t('common.strength_strong'),      color: '#2ecc71',     ancho: '80%'  },
+    { label: t('common.strength_very_strong'), color: '#00d4ff',     ancho: '100%' },
   ]
 
   const nivel = niveles[puntos] || niveles[0]
@@ -317,18 +320,18 @@ async function guardarMasterPassword() {
   errorMaster.classList.add('hidden')
   successMaster.classList.add('hidden')
 
-  if (!nueva || !confirmar) { mostrarError(errorMaster, 'Completa ambos campos'); return }
-  if (nueva.length < 12)    { mostrarError(errorMaster, 'Mínimo 12 caracteres'); return }
-  if (nueva !== confirmar)  { mostrarError(errorMaster, 'Las contraseñas no coinciden'); return }
+  if (!nueva || !confirmar) { mostrarError(errorMaster, t('settings.master_error_fields')); return }
+  if (nueva.length < 12)    { mostrarError(errorMaster, t('settings.master_error_min_length')); return }
+  if (nueva !== confirmar)  { mostrarError(errorMaster, t('settings.master_error_mismatch')); return }
 
   const fortaleza = evaluarFortaleza(nueva, strengthFill, strengthLabel)
   if (fortaleza < 3) {
-    mostrarError(errorMaster, 'Contraseña muy débil — usa mayúsculas, números y símbolos')
+    mostrarError(errorMaster, t('settings.master_error_weak'))
     return
   }
 
   const btnGuardar = document.getElementById('btnGuardarMaster')
-  btnGuardar.textContent = 'Configurando vault seguro...'
+  btnGuardar.textContent = t('settings.master_btn_save_loading')
   btnGuardar.disabled    = true
 
   try {
@@ -340,15 +343,15 @@ async function guardarMasterPassword() {
     strengthFill.style.width   = '0%'
     strengthLabel.textContent  = ''
 
-    mostrarExito(successMaster, '✅ Vault configurado con AES-256-GCM + PBKDF2-SHA256')
+    mostrarExito(successMaster, t('settings.master_success_configured'))
     setTimeout(() => {
       panelConfigurar.classList.add('hidden')
       panelCambiar.classList.remove('hidden')
     }, 2000)
   } catch (error) {
-    mostrarError(errorMaster, 'Error al configurar el vault — intenta de nuevo')
+    mostrarError(errorMaster, t('settings.master_error_generic'))
   } finally {
-    btnGuardar.textContent = 'Guardar contraseña maestra'
+    btnGuardar.textContent = t('settings.master_btn_save')
     btnGuardar.disabled    = false
   }
 }
@@ -366,16 +369,16 @@ async function cambiarPassword() {
   errorEl.classList.add('hidden')
   successEl.classList.add('hidden')
 
-  if (!actual || !nueva || !confirmar) { mostrarError(errorEl, 'Completa todos los campos'); return }
-  if (nueva.length < 12)  { mostrarError(errorEl, 'Mínimo 12 caracteres'); return }
-  if (nueva !== confirmar) { mostrarError(errorEl, 'Las contraseñas no coinciden'); return }
-  if (actual === nueva)    { mostrarError(errorEl, 'La nueva debe ser diferente a la actual'); return }
+  if (!actual || !nueva || !confirmar) { mostrarError(errorEl, t('settings.master_error_all_fields')); return }
+  if (nueva.length < 12)  { mostrarError(errorEl, t('settings.master_error_min_length')); return }
+  if (nueva !== confirmar) { mostrarError(errorEl, t('settings.master_error_mismatch')); return }
+  if (actual === nueva)    { mostrarError(errorEl, t('settings.master_error_same_pass')); return }
 
   const fortaleza = evaluarFortaleza(nueva, fillEl, labelEl)
-  if (fortaleza < 3) { mostrarError(errorEl, 'Contraseña muy débil'); return }
+  if (fortaleza < 3) { mostrarError(errorEl, t('settings.master_error_weak')); return }
 
   const btnCambiar = document.getElementById('btnCambiarMaster')
-  btnCambiar.textContent = 'Re-cifrando vault...'
+  btnCambiar.textContent = t('settings.master_btn_change_loading')
   btnCambiar.disabled    = true
 
   try {
@@ -385,15 +388,15 @@ async function cambiarPassword() {
     document.getElementById('inputConfirmarCambio').value = ''
     fillEl.style.width  = '0%'
     labelEl.textContent = ''
-    mostrarExito(successEl, '✅ Contraseña cambiada — vault re-cifrado con nuevas claves')
+    mostrarExito(successEl, t('settings.master_success_changed'))
   } catch (error) {
     if (error.message === 'PASSWORD_INCORRECTA') {
-      mostrarError(errorEl, 'La contraseña actual es incorrecta')
+      mostrarError(errorEl, t('settings.master_error_incorrect'))
     } else {
-      mostrarError(errorEl, 'Error al cambiar la contraseña — intenta de nuevo')
+      mostrarError(errorEl, t('settings.master_error_change'))
     }
   } finally {
-    btnCambiar.textContent = 'Cambiar contraseña maestra'
+    btnCambiar.textContent = t('settings.master_btn_change')
     btnCambiar.disabled    = false
   }
 }
@@ -405,7 +408,7 @@ async function guardarConfigSeguridad() {
     clipboard: parseInt(selectClipboard.value),
   }
   await new Promise((resolve) => chrome.storage.local.set({ config }, resolve))
-  mostrarExito(successSeguridad, '✅ Guardado')
+  mostrarExito(successSeguridad, t('settings.security_saved'))
 }
 
 // ── Helper de descarga de archivos ──
@@ -470,10 +473,10 @@ async function confirmarExportar() {
   const errorEl  = document.getElementById('errorExportar')
   errorEl.classList.add('hidden')
 
-  if (!password) { mostrarError(errorEl, 'Ingresa tu contraseña maestra'); return }
+  if (!password) { mostrarError(errorEl, t('settings.backup_error_no_password')); return }
 
   const btn = document.getElementById('btnConfirmarExportar')
-  btn.textContent = 'Generando backup...'
+  btn.textContent = t('settings.backup_btn_download_loading')
   btn.disabled    = true
 
   try {
@@ -486,15 +489,15 @@ async function confirmarExportar() {
     )
     document.getElementById('inputExportarPass').value = ''
     document.getElementById('formExportar').classList.add('hidden')
-    alert('✅ Backup exportado — guárdalo en un lugar seguro.')
+    alert(t('settings.backup_success_exported'))
   } catch (error) {
     if (error.message === 'PASSWORD_INCORRECTA') {
-      mostrarError(errorEl, 'Contraseña incorrecta')
+      mostrarError(errorEl, t('settings.backup_error_wrong_pass'))
     } else {
-      mostrarError(errorEl, 'Error al exportar — intenta de nuevo')
+      mostrarError(errorEl, t('settings.backup_error_export'))
     }
   } finally {
-    btn.textContent = 'Descargar backup'
+    btn.textContent = t('settings.backup_btn_download')
     btn.disabled    = false
   }
 }
@@ -519,10 +522,10 @@ async function confirmarExportarCSVGenerico() {
   const errorEl  = document.getElementById('errorCSVGenerico')
   errorEl.classList.add('hidden')
 
-  if (!password) { mostrarError(errorEl, 'Ingresa tu contraseña maestra'); return }
+  if (!password) { mostrarError(errorEl, t('settings.backup_error_no_password')); return }
 
   const btn = document.getElementById('btnConfirmarCSVGenerico')
-  btn.textContent = 'Generando...'
+  btn.textContent = t('settings.backup_btn_download_csv_loading')
   btn.disabled    = true
 
   try {
@@ -537,12 +540,12 @@ async function confirmarExportarCSVGenerico() {
     cerrarFormCSVGenerico()
   } catch (error) {
     if (error.message === 'PASSWORD_INCORRECTA') {
-      mostrarError(errorEl, 'Contraseña incorrecta')
+      mostrarError(errorEl, t('settings.backup_error_wrong_pass'))
     } else {
-      mostrarError(errorEl, 'Error al exportar — intenta de nuevo')
+      mostrarError(errorEl, t('settings.backup_error_export'))
     }
     // Restaurar el botón preservando el estado del checkbox
-    btn.textContent = 'Descargar CSV'
+    btn.textContent = t('settings.backup_btn_download_csv')
     actualizarBtnCSVGenerico()
   }
 }
@@ -567,10 +570,10 @@ async function confirmarExportarCSVBitwarden() {
   const errorEl  = document.getElementById('errorCSVBitwarden')
   errorEl.classList.add('hidden')
 
-  if (!password) { mostrarError(errorEl, 'Ingresa tu contraseña maestra'); return }
+  if (!password) { mostrarError(errorEl, t('settings.backup_error_no_password')); return }
 
   const btn = document.getElementById('btnConfirmarCSVBitwarden')
-  btn.textContent = 'Generando...'
+  btn.textContent = t('settings.backup_btn_download_csv_loading')
   btn.disabled    = true
 
   try {
@@ -585,11 +588,11 @@ async function confirmarExportarCSVBitwarden() {
     cerrarFormCSVBitwarden()
   } catch (error) {
     if (error.message === 'PASSWORD_INCORRECTA') {
-      mostrarError(errorEl, 'Contraseña incorrecta')
+      mostrarError(errorEl, t('settings.backup_error_wrong_pass'))
     } else {
-      mostrarError(errorEl, 'Error al exportar — intenta de nuevo')
+      mostrarError(errorEl, t('settings.backup_error_export'))
     }
-    btn.textContent = 'Descargar CSV'
+    btn.textContent = t('settings.backup_btn_download_csv')
     actualizarBtnCSVBitwarden()
   }
 }
@@ -611,11 +614,11 @@ async function confirmarImportar() {
   errorEl.classList.add('hidden')
   successEl.classList.add('hidden')
 
-  if (!archivo)  { mostrarError(errorEl, 'Selecciona un archivo de backup'); return }
-  if (!password) { mostrarError(errorEl, 'Ingresa la contraseña maestra'); return }
+  if (!archivo)  { mostrarError(errorEl, t('settings.backup_error_no_file')); return }
+  if (!password) { mostrarError(errorEl, t('settings.backup_error_no_import_pass')); return }
 
   const btn = document.getElementById('btnConfirmarImportar')
-  btn.textContent = 'Importando...'
+  btn.textContent = t('settings.backup_btn_import_loading')
   btn.disabled    = true
 
   try {
@@ -627,31 +630,31 @@ async function confirmarImportar() {
     document.getElementById('inputArchivoBackup').value = ''
     document.getElementById('inputImportarPass').value  = ''
 
-    mostrarExito(successEl, `✅ ${totalCredenciales} credenciales importadas correctamente`)
+    mostrarExito(successEl, t('settings.backup_success_imported', { count: totalCredenciales }))
 
     setTimeout(() => {
       document.getElementById('formImportar').classList.add('hidden')
     }, 3000)
   } catch (error) {
     if (error.message === 'PASSWORD_INCORRECTA') {
-      mostrarError(errorEl, 'Contraseña incorrecta o backup de otro vault')
+      mostrarError(errorEl, t('settings.backup_error_wrong_import'))
     } else if (error.message === 'BACKUP_INVALIDO') {
-      mostrarError(errorEl, 'Archivo inválido — no es un backup de DacmosGroup')
+      mostrarError(errorEl, t('settings.backup_error_invalid'))
     } else {
-      mostrarError(errorEl, 'Error al importar — verifica el archivo')
+      mostrarError(errorEl, t('settings.backup_error_import'))
     }
   } finally {
-    btn.textContent = 'Importar credenciales'
+    btn.textContent = t('settings.backup_btn_import')
     btn.disabled    = false
   }
 }
 
 // ── Borrar todo ──
 async function borrarTodo() {
-  if (!confirm('⚠️ ¿Eliminar TODAS las credenciales permanentemente?')) return
-  if (!confirm('⚠️ Última advertencia — esta acción NO se puede deshacer.')) return
+  if (!confirm(t('settings.danger_confirm_1'))) return
+  if (!confirm(t('settings.danger_confirm_2'))) return
   await new Promise((resolve) => chrome.storage.local.clear(resolve))
-  alert('✅ Vault borrado completamente')
+  alert(t('settings.danger_success'))
   window.location.reload()
 }
 

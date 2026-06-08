@@ -3,6 +3,8 @@
 // F1.5: Login · Tarjeta de crédito · Identidad
 // ============================================================
 
+import { t } from '../../i18n/t.js'
+
 // ── Constantes de tipo ──
 export const TIPO_LOGIN     = 'login'
 export const TIPO_TARJETA   = 'tarjeta'
@@ -36,9 +38,9 @@ export function obtenerIconoTipo(cred) {
 // ── Título y subtítulo para la fila de la lista ──
 export function obtenerTituloLista(cred) {
   const tipo = resolverTipo(cred)
-  if (tipo === TIPO_TARJETA)   return cred.alias   || 'Tarjeta sin nombre'
-  if (tipo === TIPO_IDENTIDAD) return cred.nombre  || 'Identidad sin nombre'
-  return cred.sitio || 'Sin nombre'
+  if (tipo === TIPO_TARJETA)   return cred.alias  || t('cred.fallback_card')
+  if (tipo === TIPO_IDENTIDAD) return cred.nombre || t('cred.fallback_identity')
+  return cred.sitio || t('cred.fallback_login')
 }
 
 export function obtenerSubtituloLista(cred) {
@@ -62,27 +64,27 @@ export function enmascararNumero(numero) {
 export function renderFormularioLogin() {
   return `
     <div class="form-group">
-      <label class="form-label">Sitio / Servicio *</label>
+      <label class="form-label">${t('cred.login_label_site')}</label>
       <input type="text" id="inputSitio" class="input"
-        placeholder="ej. Gmail, Netflix, GitHub" autocomplete="off"/>
+        placeholder="${t('cred.login_placeholder_site')}" autocomplete="off"/>
     </div>
     <div class="form-group">
-      <label class="form-label">URL (opcional)</label>
+      <label class="form-label">${t('cred.login_label_url')}</label>
       <input type="url" id="inputUrl" class="input"
-        placeholder="https://ejemplo.com" autocomplete="off"/>
+        placeholder="${t('cred.login_placeholder_url')}" autocomplete="off"/>
     </div>
     <div class="form-group">
-      <label class="form-label">Usuario / Email *</label>
+      <label class="form-label">${t('cred.login_label_user')}</label>
       <input type="text" id="inputUsuario" class="input"
-        placeholder="tu@email.com" autocomplete="off"/>
+        placeholder="${t('cred.login_placeholder_user')}" autocomplete="off"/>
     </div>
     <div class="form-group">
-      <label class="form-label">Contraseña *</label>
+      <label class="form-label">${t('cred.login_label_password')}</label>
       <div class="input-group">
         <input type="password" id="inputPassword" class="input"
-          placeholder="Contraseña" autocomplete="off"/>
-        <button class="btn-icon" id="btnTogglePass" title="Mostrar/ocultar">👁</button>
-        <button class="btn-icon" id="btnGenerarPass" title="Generar contraseña segura">⚡</button>
+          placeholder="${t('cred.login_placeholder_pass')}" autocomplete="off"/>
+        <button class="btn-icon" id="btnTogglePass" title="${t('common.aria_toggle_pass')}">👁</button>
+        <button class="btn-icon" id="btnGenerarPass" title="⚡">⚡</button>
       </div>
       <div class="strength-bar">
         <div class="strength-fill" id="strengthFill"></div>
@@ -90,18 +92,18 @@ export function renderFormularioLogin() {
       <span class="strength-label" id="strengthLabel"></span>
     </div>
     <div class="form-group">
-      <label class="form-label">Notas (opcional)</label>
+      <label class="form-label">${t('cred.login_label_notes')}</label>
       <textarea id="inputNotas" class="input textarea"
-        placeholder="Notas adicionales..."></textarea>
+        placeholder="${t('cred.login_placeholder_notes')}"></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">Clave TOTP (2FA) — opcional</label>
+      <label class="form-label">${t('cred.login_label_totp')}</label>
       <div class="input-group">
         <input type="password" id="inputTotp" class="input"
-          placeholder="ej. JBSWY3DPEHPK3PXP" autocomplete="off"/>
-        <button class="btn-icon" id="btnToggleTotp" title="Mostrar/ocultar clave">👁</button>
+          placeholder="${t('cred.login_placeholder_totp')}" autocomplete="off"/>
+        <button class="btn-icon" id="btnToggleTotp" title="${t('common.aria_toggle_pass')}">👁</button>
       </div>
-      <span class="form-hint">Clave Base32 de tu autenticador 2FA (solo la clave, no la URL)</span>
+      <span class="form-hint">${t('cred.login_hint_totp')}</span>
     </div>
   `
 }
@@ -109,50 +111,50 @@ export function renderFormularioLogin() {
 export function renderFormularioTarjeta() {
   return `
     <div class="form-group">
-      <label class="form-label">Alias de la tarjeta *</label>
+      <label class="form-label">${t('cred.card_label_alias')}</label>
       <input type="text" id="inputAlias" class="input"
-        placeholder="ej. Visa Banco General, Mastercard Personal" autocomplete="off"/>
-      <span class="form-hint">Nombre para identificar esta tarjeta en tu vault</span>
+        placeholder="${t('cred.card_placeholder_alias')}" autocomplete="off"/>
+      <span class="form-hint">${t('cred.card_hint_alias')}</span>
     </div>
     <div class="form-group">
-      <label class="form-label">Titular *</label>
+      <label class="form-label">${t('cred.card_label_holder')}</label>
       <input type="text" id="inputTitular" class="input"
-        placeholder="Nombre tal como aparece en la tarjeta" autocomplete="off"/>
+        placeholder="${t('cred.card_placeholder_holder')}" autocomplete="off"/>
     </div>
     <div class="form-group">
-      <label class="form-label">Número de tarjeta *</label>
+      <label class="form-label">${t('cred.card_label_number')}</label>
       <div class="input-group">
         <input type="password" id="inputNumero" class="input"
           placeholder="XXXX XXXX XXXX XXXX" autocomplete="off"
           inputmode="numeric" maxlength="19"/>
-        <button class="btn-icon" id="btnToggleNumero" title="Mostrar/ocultar número">👁</button>
+        <button class="btn-icon" id="btnToggleNumero" title="${t('common.aria_toggle_pass')}">👁</button>
       </div>
     </div>
     <div class="form-row-2">
       <div class="form-group">
-        <label class="form-label">Vencimiento *</label>
+        <label class="form-label">${t('cred.card_label_expiry')}</label>
         <input type="text" id="inputVencimiento" class="input"
           placeholder="MM/AA" autocomplete="off" maxlength="5"/>
       </div>
       <div class="form-group">
-        <label class="form-label">CVV *</label>
+        <label class="form-label">${t('cred.card_label_cvv')}</label>
         <div class="input-group">
           <input type="password" id="inputCvv" class="input"
             placeholder="XXX" autocomplete="off"
             inputmode="numeric" maxlength="4"/>
-          <button class="btn-icon" id="btnToggleCvv" title="Mostrar/ocultar CVV">👁</button>
+          <button class="btn-icon" id="btnToggleCvv" title="${t('common.aria_toggle_pass')}">👁</button>
         </div>
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Banco (opcional)</label>
+      <label class="form-label">${t('cred.card_label_bank')}</label>
       <input type="text" id="inputBanco" class="input"
-        placeholder="ej. Banco General, BAC, Banistmo" autocomplete="off"/>
+        placeholder="${t('cred.card_placeholder_bank')}" autocomplete="off"/>
     </div>
     <div class="form-group">
-      <label class="form-label">Notas (opcional)</label>
+      <label class="form-label">${t('cred.card_label_notes')}</label>
       <textarea id="inputNotas" class="input textarea"
-        placeholder="Notas adicionales..."></textarea>
+        placeholder="${t('cred.login_placeholder_notes')}"></textarea>
     </div>
   `
 }
@@ -160,41 +162,41 @@ export function renderFormularioTarjeta() {
 export function renderFormularioIdentidad() {
   return `
     <div class="form-group">
-      <label class="form-label">Nombre completo *</label>
+      <label class="form-label">${t('cred.identity_label_name')}</label>
       <input type="text" id="inputNombre" class="input"
-        placeholder="Juan Pérez García" autocomplete="off"/>
+        placeholder="${t('cred.identity_placeholder_name')}" autocomplete="off"/>
     </div>
     <div class="form-group">
-      <label class="form-label">Email *</label>
+      <label class="form-label">${t('cred.identity_label_email')}</label>
       <input type="email" id="inputEmail" class="input"
-        placeholder="tu@email.com" autocomplete="off"/>
+        placeholder="${t('cred.login_placeholder_user')}" autocomplete="off"/>
     </div>
     <div class="form-group">
-      <label class="form-label">Teléfono</label>
+      <label class="form-label">${t('cred.identity_label_phone')}</label>
       <input type="tel" id="inputTelefono" class="input"
-        placeholder="+507 6000-0000" autocomplete="off"/>
+        placeholder="${t('cred.identity_placeholder_phone')}" autocomplete="off"/>
     </div>
     <div class="form-group">
-      <label class="form-label">Dirección</label>
+      <label class="form-label">${t('cred.identity_label_address')}</label>
       <input type="text" id="inputDireccion" class="input"
-        placeholder="Calle, número, apto..." autocomplete="off"/>
+        placeholder="${t('cred.identity_placeholder_addr')}" autocomplete="off"/>
     </div>
     <div class="form-row-2">
       <div class="form-group">
-        <label class="form-label">Ciudad</label>
+        <label class="form-label">${t('cred.identity_label_city')}</label>
         <input type="text" id="inputCiudad" class="input"
-          placeholder="Ciudad de Panamá" autocomplete="off"/>
+          placeholder="${t('cred.identity_placeholder_city')}" autocomplete="off"/>
       </div>
       <div class="form-group">
-        <label class="form-label">País</label>
+        <label class="form-label">${t('cred.identity_label_country')}</label>
         <input type="text" id="inputPais" class="input"
-          placeholder="Panamá" autocomplete="off"/>
+          placeholder="${t('cred.identity_placeholder_ctry')}" autocomplete="off"/>
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Notas (opcional)</label>
+      <label class="form-label">${t('cred.identity_label_notes')}</label>
       <textarea id="inputNotas" class="input textarea"
-        placeholder="Notas adicionales..."></textarea>
+        placeholder="${t('cred.login_placeholder_notes')}"></textarea>
     </div>
   `
 }
@@ -210,12 +212,11 @@ export function leerFormularioLogin(esBase32Valido) {
   const notas    = document.getElementById('inputNotas')?.value.trim()    || ''
   const totpRaw  = document.getElementById('inputTotp')?.value.trim()     || ''
 
-  // Validaciones
-  if (!sitio)    return { error: 'El nombre del sitio es obligatorio' }
-  if (!usuario)  return { error: 'El usuario o email es obligatorio' }
-  if (!password) return { error: 'La contraseña es obligatoria' }
+  if (!sitio)    return { error: t('cred.login_error_no_site') }
+  if (!usuario)  return { error: t('cred.login_error_no_user') }
+  if (!password) return { error: t('cred.login_error_no_pass') }
   if (totpRaw && !esBase32Valido(totpRaw)) {
-    return { error: 'La clave TOTP no parece ser Base32 válido. Verifica que copiaste solo la clave.' }
+    return { error: t('cred.login_error_totp') }
   }
 
   const claveTotp = totpRaw
@@ -234,14 +235,14 @@ export function leerFormularioTarjeta() {
   const banco       = document.getElementById('inputBanco')?.value.trim()      || ''
   const notas       = document.getElementById('inputNotas')?.value.trim()      || ''
 
-  if (!alias)       return { error: 'El alias de la tarjeta es obligatorio' }
-  if (!titular)     return { error: 'El titular es obligatorio' }
-  if (!numero)      return { error: 'El número de tarjeta es obligatorio' }
-  if (!/^\d{13,19}$/.test(numero)) return { error: 'El número de tarjeta debe tener entre 13 y 19 dígitos' }
-  if (!vencimiento) return { error: 'El vencimiento es obligatorio' }
-  if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(vencimiento)) return { error: 'El vencimiento debe tener formato MM/AA' }
-  if (!cvv)         return { error: 'El CVV es obligatorio' }
-  if (!/^\d{3,4}$/.test(cvv)) return { error: 'El CVV debe tener 3 o 4 dígitos' }
+  if (!alias)       return { error: t('cred.card_error_no_alias') }
+  if (!titular)     return { error: t('cred.card_error_no_holder') }
+  if (!numero)      return { error: t('cred.card_error_no_number') }
+  if (!/^\d{13,19}$/.test(numero)) return { error: t('cred.card_error_number_fmt') }
+  if (!vencimiento) return { error: t('cred.card_error_no_expiry') }
+  if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(vencimiento)) return { error: t('cred.card_error_expiry_fmt') }
+  if (!cvv)         return { error: t('cred.card_error_no_cvv') }
+  if (!/^\d{3,4}$/.test(cvv)) return { error: t('cred.card_error_cvv_fmt') }
 
   return { tipo: TIPO_TARJETA, alias, titular, numero, vencimiento, cvv, banco, notas }
 }
@@ -255,8 +256,8 @@ export function leerFormularioIdentidad() {
   const pais      = document.getElementById('inputPais')?.value.trim()      || ''
   const notas     = document.getElementById('inputNotas')?.value.trim()     || ''
 
-  if (!nombre) return { error: 'El nombre completo es obligatorio' }
-  if (!email)  return { error: 'El email es obligatorio' }
+  if (!nombre) return { error: t('cred.identity_error_no_name') }
+  if (!email)  return { error: t('cred.identity_error_no_email') }
 
   return { tipo: TIPO_IDENTIDAD, nombre, email, telefono, direccion, ciudad, pais, notas }
 }
@@ -314,13 +315,13 @@ export function htmlExtraTarjeta(cred) {
     <div class="card-numero-row">
       <span class="card-numero-mask" id="card-num-${cred.id}">${escapeHtmlInterno(numMask)}</span>
       <button class="btn-revelar" data-id="${cred.id}" data-campo="numero"
-        title="Revelar número (5 s)">👁</button>
+        title="👁">👁</button>
     </div>
     <div class="card-meta-row">
-      <span class="card-venc">Vence: ${escapeHtmlInterno(cred.vencimiento || '--/--')}</span>
-      <span class="card-cvv-mask" id="card-cvv-${cred.id}">CVV: •••</span>
+      <span class="card-venc">${t('cred.card_expires_label', { date: escapeHtmlInterno(cred.vencimiento || '--/--') })}</span>
+      <span class="card-cvv-mask" id="card-cvv-${cred.id}">${t('cred.card_cvv_hidden')}</span>
       <button class="btn-revelar btn-revelar-cvv" data-id="${cred.id}" data-campo="cvv"
-        title="Revelar CVV (5 s)">👁</button>
+        title="👁">👁</button>
       ${banco}
     </div>
   `
@@ -351,7 +352,7 @@ export function revelarCampoTarjeta(cred, campo) {
     if (campo === 'numero') {
       el.textContent = enmascararNumero(cred.numero)
     } else {
-      el.textContent = 'CVV: •••'
+      el.textContent = t('cred.card_cvv_hidden')
     }
     el.classList.remove('campo-revelado')
     el._timerRevelado = null

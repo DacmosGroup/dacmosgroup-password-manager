@@ -4,6 +4,7 @@
 // ============================================
 
 import { verificarHIBP } from '../../health/password-health.js'
+import { t, walkI18n } from '../../i18n/t.js'
 
 // ── Referencias al DOM ──
 const btnInicio         = document.getElementById('btnInicio')
@@ -90,25 +91,25 @@ function htmlBadgesItem(item) {
   const badges = []
 
   if (item.esDebil) {
-    badges.push(`<span class="hbadge hbadge-debil">⚠️ Débil · ${item.entropia} bits</span>`)
+    badges.push(`<span class="hbadge hbadge-debil">${t('health.badge_weak', { entropy: item.entropia })}</span>`)
   }
 
   if (item.esReutilizada) {
-    badges.push(`<span class="hbadge hbadge-reutilizada">🔁 Reutilizada</span>`)
+    badges.push(`<span class="hbadge hbadge-reutilizada">${t('health.badge_reused')}</span>`)
   }
 
   // Estado HIBP: null = pendiente, error = sin red, comprometida = en filtraciones
   if (item.hibp === null) {
-    badges.push(`<span class="hbadge hbadge-verificando" id="hibp-badge-${item.id}">⏳ Verificando HIBP...</span>`)
+    badges.push(`<span class="hbadge hbadge-verificando" id="hibp-badge-${item.id}">${t('health.badge_checking_hibp')}</span>`)
   } else if (item.hibp.error) {
-    badges.push(`<span class="hbadge hbadge-error-hibp">🔘 HIBP no disponible</span>`)
+    badges.push(`<span class="hbadge hbadge-error-hibp">${t('health.badge_hibp_error')}</span>`)
   } else if (item.hibp.comprometida) {
-    const veces = item.hibp.conteo.toLocaleString('es')
-    badges.push(`<span class="hbadge hbadge-comprometida">🚨 Comprometida · ${veces} filtraciones</span>`)
+    const veces = item.hibp.conteo.toLocaleString()
+    badges.push(`<span class="hbadge hbadge-comprometida">${t('health.badge_compromised', { count: veces })}</span>`)
   }
 
   if (badges.length === 0) {
-    badges.push(`<span class="hbadge hbadge-ok">✅ Sin problemas detectados</span>`)
+    badges.push(`<span class="hbadge hbadge-ok">${t('health.badge_ok')}</span>`)
   }
 
   return badges.join('')
@@ -169,7 +170,7 @@ async function ejecutarVerificacionHIBP(credencialesSesion) {
   if (total === 0) return
 
   hibpProgress.classList.remove('hidden')
-  mostrarBanner('info', '⏳', 'Verificando contraseñas con Have I Been Pwned (k-anonymity)...')
+  mostrarBanner('info', '⏳', t('health.hibp_checking_long'))
 
   for (let i = 0; i < reporte.items.length; i++) {
     const item = reporte.items[i]
@@ -189,7 +190,7 @@ async function ejecutarVerificacionHIBP(credencialesSesion) {
     // Detectar rate limit — detener el bucle
     if (resultado.error && resultado.codigoHttp === 429) {
       erroresHIBP = total - i
-      mostrarBanner('warn', '⚠️', 'Límite de la API HIBP alcanzado. Resultados parciales mostrados.')
+      mostrarBanner('warn', '⚠️', t('health.hibp_rate_limit'))
       actualizarBadgeHIBP(item)
       // Marcar las credenciales restantes como "error"
       for (let j = i + 1; j < reporte.items.length; j++) {
@@ -213,19 +214,20 @@ async function ejecutarVerificacionHIBP(credencialesSesion) {
     const progreso = Math.round(((i + 1) / total) * 100)
     hibpProgressBar.style.width = `${progreso}%`
     hibpProgressPct.textContent = `${progreso}%`
-    hibpProgressLabel.textContent =
-      `Verificando ${i + 1} de ${total} con Have I Been Pwned...`
+    hibpProgressLabel.textContent = t('health.hibp_progress_item', { current: i + 1, total })
   }
 
   // Verificación completada
   hibpProgress.classList.add('hidden')
 
   if (erroresHIBP > 0 && erroresHIBP < total) {
-    mostrarBanner('warn', '⚠️', `Verificación parcial: ${erroresHIBP} credencial${erroresHIBP > 1 ? 'es' : ''} no pudo verificarse por error de red.`)
+    mostrarBanner('warn', '⚠️', erroresHIBP > 1
+      ? t('health.hibp_partial_other', { count: erroresHIBP })
+      : t('health.hibp_partial_one',   { count: erroresHIBP }))
   } else if (erroresHIBP === total) {
-    mostrarBanner('warn', '⚠️', 'HIBP no disponible. Análisis local completado (entropía + reutilización).')
+    mostrarBanner('warn', '⚠️', t('health.hibp_offline'))
   } else {
-    mostrarBanner('ok', '✅', 'Verificación completada. Resultados actualizados.')
+    mostrarBanner('ok', '✅', t('health.hibp_done'))
     setTimeout(ocultarBanner, 4000)
   }
 
@@ -234,6 +236,8 @@ async function ejecutarVerificacionHIBP(credencialesSesion) {
 
 // ── Punto de entrada del dashboard ──
 async function inicializar() {
+  walkI18n()
+
   try {
     // Leer el reporte pre-computado y las credenciales de sesión en paralelo
     const [datosReporte, datosSesion] = await Promise.all([
@@ -244,7 +248,7 @@ async function inicializar() {
     // El reporte se consume al leerlo — eliminarlo de session para no dejarlo huérfano
     chrome.storage.session.remove(['healthReport'])
 
-    const reporteCargado    = datosReporte.healthReport
+    const reporteCargado     = datosReporte.healthReport
     const credencialesSesion = datosSesion.credencialesSesion || []
 
     // Ocultar estado de carga
@@ -273,7 +277,7 @@ async function inicializar() {
     if (credencialesSesion.length > 0) {
       await ejecutarVerificacionHIBP(credencialesSesion)
     } else {
-      mostrarBanner('warn', '⚠️', 'Sesión expirada — no se pudo verificar HIBP. Desbloquea el vault e intenta de nuevo.')
+      mostrarBanner('warn', '⚠️', t('health.hibp_session_expired'))
     }
 
   } catch (err) {

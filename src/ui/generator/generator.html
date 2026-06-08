@@ -14,11 +14,11 @@
       <span class="logo-icon">🔐</span>
       <div class="logo-text">
         <span class="logo-title">DacmosGroup</span>
-        <span class="logo-subtitle">Generador de Contraseñas</span>
+        <span class="logo-subtitle" data-i18n="generator.header_subtitle">Generador de Contraseñas</span>
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn btn-inicio" id="btnInicio">← Inicio</button>
+      <button class="btn btn-inicio" id="btnInicio" data-i18n="common.back">← Inicio</button>
     </div>
   </header>
 
@@ -27,9 +27,9 @@
     <!-- Contraseña generada -->
     <section class="password-display-section">
       <div class="password-display" id="passwordDisplay">
-        <span class="password-text" id="passwordText">Haz clic en Generar</span>
+        <span class="password-text" id="passwordText" data-i18n="generator.initial_text">Haz clic en Generar</span>
         <div class="password-actions">
-          <button class="btn-icon" id="btnCopiar" title="Copiar">📋</button>
+          <button class="btn-icon" id="btnCopiar" data-i18n-title="common.copy_title" title="Copiar">📋</button>
           <button class="btn-icon" id="btnRefresh" title="Generar nueva">🔄</button>
         </div>
       </div>
@@ -45,12 +45,12 @@
 
     <!-- Opciones del generador -->
     <section class="options-section">
-      <h3 class="options-title">⚙️ Opciones</h3>
+      <h3 class="options-title" data-i18n="generator.options_title">⚙️ Opciones</h3>
 
       <!-- Longitud -->
       <div class="option-row">
         <div class="option-info">
-          <span class="option-name">Longitud</span>
+          <span class="option-name" data-i18n="generator.option_length">Longitud</span>
           <span class="option-value" id="longitudValue">16</span>
         </div>
         <input
@@ -69,7 +69,7 @@
 
       <!-- Toggles de caracteres -->
       <div class="option-row">
-        <span class="option-name">Mayúsculas (A-Z)</span>
+        <span class="option-name" data-i18n="generator.option_uppercase">Mayúsculas (A-Z)</span>
         <label class="toggle">
           <input type="checkbox" id="chkMayusculas" checked/>
           <span class="toggle-slider"></span>
@@ -77,7 +77,7 @@
       </div>
 
       <div class="option-row">
-        <span class="option-name">Minúsculas (a-z)</span>
+        <span class="option-name" data-i18n="generator.option_lowercase">Minúsculas (a-z)</span>
         <label class="toggle">
           <input type="checkbox" id="chkMinusculas" checked/>
           <span class="toggle-slider"></span>
@@ -85,7 +85,7 @@
       </div>
 
       <div class="option-row">
-        <span class="option-name">Números (0-9)</span>
+        <span class="option-name" data-i18n="generator.option_numbers">Números (0-9)</span>
         <label class="toggle">
           <input type="checkbox" id="chkNumeros" checked/>
           <span class="toggle-slider"></span>
@@ -93,7 +93,7 @@
       </div>
 
       <div class="option-row">
-        <span class="option-name">Símbolos (!@#$...)</span>
+        <span class="option-name" data-i18n="generator.option_symbols">Símbolos (!@#$...)</span>
         <label class="toggle">
           <input type="checkbox" id="chkSimbolos" checked/>
           <span class="toggle-slider"></span>
@@ -101,15 +101,15 @@
       </div>
 
       <div class="option-row">
-        <span class="option-name">Excluir caracteres ambiguos</span>
+        <span class="option-name" data-i18n="generator.option_excl_ambiguous">Excluir caracteres ambiguos</span>
         <label class="toggle">
           <input type="checkbox" id="chkExcluirAmbiguos"/>
           <span class="toggle-slider"></span>
         </label>
       </div>
-      <p class="option-hint">Excluye: 0, O, l, 1, I (fáciles de confundir)</p>
+      <p class="option-hint" data-i18n="generator.exclude_hint">Excluye: 0, O, l, 1, I (fáciles de confundir)</p>
 
-      <button class="btn btn-primary" id="btnGenerar">
+      <button class="btn btn-primary" id="btnGenerar" data-i18n="generator.btn_generate">
         ⚡ Generar Contraseña
       </button>
     </section>
@@ -117,11 +117,11 @@
     <!-- Historial -->
     <section class="history-section">
       <div class="history-header">
-        <h3 class="options-title">🕐 Historial reciente</h3>
-        <button class="btn-text" id="btnLimpiarHistorial">Limpiar</button>
+        <h3 class="options-title" data-i18n="generator.history_title">🕐 Historial reciente</h3>
+        <button class="btn-text" id="btnLimpiarHistorial" data-i18n="generator.btn_clear_history">Limpiar</button>
       </div>
       <ul class="history-list" id="historyList">
-        <li class="history-empty">Aún no has generado contraseñas</li>
+        <li class="history-empty" data-i18n="generator.history_empty">Aún no has generado contraseñas</li>
       </ul>
     </section>
 
@@ -129,7 +129,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <span>DacmosGroup.com · Generador criptográfico · Web Crypto API</span>
+    <span data-i18n="generator.footer">DacmosGroup.co · Generador criptográfico · Web Crypto API</span>
   </footer>
 
   <script src="generator.js" type="module"></script>

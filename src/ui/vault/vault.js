@@ -7,6 +7,7 @@
 // ============================================
 
 import { desbloquearVault, guardarVaultCifrado, cargarVaultDescifrado } from '../../crypto/engine.js'
+import { t, walkI18n } from '../../i18n/t.js'
 import { generarCodigo, esBase32Valido, segundosRestantes } from '../../crypto/totp.js'
 import { analizarSaludLocal } from '../../health/password-health.js'
 import {
@@ -56,6 +57,7 @@ let periodoUltimo     = -1
 // ── Inicialización ──
 async function inicializar() {
   await new Promise(resolve => chrome.storage.local.get(['sesionActiva'], resolve))
+  walkI18n()
   unlockInput.focus()
 
   const params = new URLSearchParams(window.location.search)
@@ -68,18 +70,18 @@ async function inicializar() {
 async function desbloquear() {
   const password = unlockInput.value
   if (!password) {
-    mostrarErrorUnlock('Ingresa tu contraseña maestra')
+    mostrarErrorUnlock(t('auth.unlock_error_no_pass'))
     return
   }
 
-  btnDesbloquear.textContent = 'Verificando...'
+  btnDesbloquear.textContent = t('auth.unlock_btn_loading')
   btnDesbloquear.disabled    = true
   unlockError.classList.add('hidden')
 
   try {
     claveSesion = await desbloquearVault(password)
     if (!claveSesion) {
-      mostrarErrorUnlock('Contraseña incorrecta')
+      mostrarErrorUnlock(t('auth.unlock_error_incorrect'))
       unlockInput.value = ''
       unlockInput.focus()
       return
@@ -108,12 +110,12 @@ async function desbloquear() {
     // VAULT_VERSION_INCOMPATIBLE indica que el vault fue creado con una
     // versión futura del engine — no es contraseña incorrecta.
     if (err.message?.startsWith('VAULT_VERSION_INCOMPATIBLE')) {
-      mostrarErrorUnlock('Actualiza la extensión para abrir este vault')
+      mostrarErrorUnlock(t('auth.unlock_error_version'))
     } else {
-      mostrarErrorUnlock('Contraseña incorrecta — intenta de nuevo')
+      mostrarErrorUnlock(t('auth.unlock_error_retry'))
     }
   } finally {
-    btnDesbloquear.textContent = 'Desbloquear Vault'
+    btnDesbloquear.textContent = t('auth.unlock_btn_vault')
     btnDesbloquear.disabled    = false
   }
 }
@@ -129,7 +131,7 @@ function renderizarLista(lista) {
 
   const total = credenciales.length
   credentialCounter.textContent = total > 0
-    ? `${lista.length} de ${total} credencial${total !== 1 ? 'es' : ''}`
+    ? (total !== 1 ? t('vault.counter_other', { shown: lista.length, total }) : t('vault.counter_one', { shown: lista.length, total }))
     : ''
 
   if (lista.length === 0) {
@@ -172,7 +174,7 @@ function crearItemLogin(cred) {
         <div class="totp-barra" id="totp-barra-${cred.id}"></div>
       </div>
       <span class="totp-timer" id="totp-timer-${cred.id}">--s</span>
-      <button class="btn-icon btn-copiar-totp" data-id="${cred.id}" title="Copiar código 2FA">📋</button>
+      <button class="btn-icon btn-copiar-totp" data-id="${cred.id}" title="${t('vault.cred_copy_totp_title')}">📋</button>
     </div>` : ''
 
   const itemSalud   = reporteSalud?.items.find(i => i.id === cred.id)
@@ -186,14 +188,14 @@ function crearItemLogin(cred) {
     <div class="credential-info">
       <div class="credential-site">${escapeHtml(obtenerTituloLista(cred))}</div>
       <div class="credential-user">${escapeHtml(obtenerSubtituloLista(cred))}</div>
-      <div class="credential-date">Modificado: ${fecha}</div>
+      <div class="credential-date">${t('vault.cred_date_modified', { fecha })}</div>
       ${badgesSalud}
       ${badgeTotp}
     </div>
     <div class="credential-actions">
-      <button class="btn-icon btn-copiar"   data-id="${cred.id}" title="Copiar contraseña">📋</button>
-      <button class="btn-icon btn-editar"   data-id="${cred.id}" title="Editar">✏️</button>
-      <button class="btn-icon btn-eliminar" data-id="${cred.id}" title="Eliminar">🗑️</button>
+      <button class="btn-icon btn-copiar"   data-id="${cred.id}" title="${t('vault.cred_copy_pass_title')}">📋</button>
+      <button class="btn-icon btn-editar"   data-id="${cred.id}" title="${t('common.edit_title')}">✏️</button>
+      <button class="btn-icon btn-eliminar" data-id="${cred.id}" title="${t('common.delete_title')}">🗑️</button>
     </div>
   `
 
@@ -227,12 +229,12 @@ function crearItemTarjeta(cred) {
       <div class="credential-site">${escapeHtml(obtenerTituloLista(cred))}</div>
       <div class="credential-user">${escapeHtml(obtenerSubtituloLista(cred))}</div>
       ${htmlExtraTarjeta(cred)}
-      <div class="credential-date">Modificado: ${fecha}</div>
+      <div class="credential-date">${t('vault.cred_date_modified', { fecha })}</div>
     </div>
     <div class="credential-actions">
-      <button class="btn-icon btn-copiar-num" data-id="${cred.id}" title="Copiar número">📋</button>
-      <button class="btn-icon btn-editar"     data-id="${cred.id}" title="Editar">✏️</button>
-      <button class="btn-icon btn-eliminar"   data-id="${cred.id}" title="Eliminar">🗑️</button>
+      <button class="btn-icon btn-copiar-num" data-id="${cred.id}" title="${t('vault.cred_copy_num_title')}">📋</button>
+      <button class="btn-icon btn-editar"     data-id="${cred.id}" title="${t('common.edit_title')}">✏️</button>
+      <button class="btn-icon btn-eliminar"   data-id="${cred.id}" title="${t('common.delete_title')}">🗑️</button>
     </div>
   `
 
@@ -247,7 +249,7 @@ function crearItemTarjeta(cred) {
   // Copiar número completo al portapapeles
   li.querySelector('.btn-copiar-num').addEventListener('click', e => {
     e.stopPropagation()
-    copiarAlPortapapeles(cred.numero, li.querySelector('.btn-copiar-num'), 'Copiar número')
+    copiarAlPortapapeles(cred.numero, li.querySelector('.btn-copiar-num'), t('vault.cred_copy_num_title'))
   })
 
   li.querySelector('.btn-editar').addEventListener('click',   e => { e.stopPropagation(); abrirModalEdicion(cred.id) })
@@ -276,11 +278,11 @@ function crearItemIdentidad(cred) {
       <div class="credential-site">${escapeHtml(obtenerTituloLista(cred))}</div>
       <div class="credential-user">${escapeHtml(obtenerSubtituloLista(cred))}</div>
       ${telefono}
-      <div class="credential-date">Modificado: ${fecha}</div>
+      <div class="credential-date">${t('vault.cred_date_modified', { fecha })}</div>
     </div>
     <div class="credential-actions">
-      <button class="btn-icon btn-editar"   data-id="${cred.id}" title="Editar">✏️</button>
-      <button class="btn-icon btn-eliminar" data-id="${cred.id}" title="Eliminar">🗑️</button>
+      <button class="btn-icon btn-editar"   data-id="${cred.id}" title="${t('common.edit_title')}">✏️</button>
+      <button class="btn-icon btn-eliminar" data-id="${cred.id}" title="${t('common.delete_title')}">🗑️</button>
     </div>
   `
 
@@ -355,7 +357,7 @@ async function copiarPassword(id) {
   await copiarAlPortapapeles(
     cred.password,
     document.querySelector(`.btn-copiar[data-id="${id}"]`),
-    'Copiar contraseña',
+    t('vault.cred_copy_pass_title'),
   )
 }
 
@@ -392,14 +394,14 @@ async function copiarTotp(id) {
     await copiarAlPortapapeles(
       codigo,
       document.querySelector(`.btn-copiar-totp[data-id="${id}"]`),
-      'Copiar código 2FA',
+      t('vault.cred_copy_totp_title'),
     )
   } catch (_) {}
 }
 
 async function eliminarCredencial(id) {
   const cred = credenciales.find(c => c.id === id)
-  if (!confirm(`¿Eliminar credencial de "${obtenerTituloLista(cred)}"?`)) return
+  if (!confirm(t('vault.cred_delete_confirm', { name: obtenerTituloLista(cred) }))) return
 
   credenciales = credenciales.filter(c => c.id !== id)
   await guardarVaultCifrado(credenciales, claveSesion)
@@ -469,7 +471,7 @@ function registrarToggle(inputId, btnId) {
 
 function abrirModal() {
   credencialEditando = null
-  modalTitle.textContent = '+ Nueva Credencial'
+  modalTitle.textContent = t('vault.modal_title_new')
   modalError.classList.add('hidden')
   // Bloquear selector de tipo en nueva credencial (el usuario elige antes de guardar)
   typeSelector.querySelectorAll('.type-tab').forEach(btn => btn.disabled = false)
@@ -485,7 +487,7 @@ function abrirModalEdicion(id) {
 
   const tipo = resolverTipo(cred)
   credencialEditando = id
-  modalTitle.textContent = `✏️ Editar — ${obtenerTituloLista(cred)}`
+  modalTitle.textContent = t('vault.modal_title_edit', { name: obtenerTituloLista(cred) })
   modalError.classList.add('hidden')
 
   // Bloquear cambio de tipo al editar para preservar integridad de la credencial
@@ -549,7 +551,7 @@ async function guardarCredencial() {
     })
   }
 
-  btnGuardar.textContent = 'Guardando...'
+  btnGuardar.textContent = t('vault.modal_btn_save_loading')
   btnGuardar.disabled    = true
 
   try {
@@ -558,9 +560,9 @@ async function guardarCredencial() {
     renderizarLista(credenciales)
     programarAnalisisSalud(credenciales)
   } catch (_) {
-    mostrarErrorModal('Error al guardar — intenta de nuevo')
+    mostrarErrorModal(t('vault.modal_error_generic'))
   } finally {
-    btnGuardar.textContent = 'Guardar'
+    btnGuardar.textContent = t('vault.modal_btn_save')
     btnGuardar.disabled    = false
   }
 }
@@ -606,14 +608,14 @@ async function abrirHealthDashboard() {
   const credsLogin = credenciales.filter(c => !c.tipo || c.tipo === TIPO_LOGIN)
   if (!credsLogin.length || !reporteSalud) return
 
-  btnHealth.textContent = 'Analizando...'
+  btnHealth.textContent = t('vault.btn_health_loading')
   btnHealth.disabled    = true
 
   try {
     await new Promise(r => chrome.storage.session.set({ healthReport: reporteSalud }, r))
     chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/health/health.html') })
   } finally {
-    btnHealth.textContent = '🛡 Health'
+    btnHealth.textContent = t('vault.btn_health')
     btnHealth.disabled    = false
   }
 }
@@ -632,12 +634,12 @@ function evaluarFortaleza(password) {
   if (/[^A-Za-z0-9]/.test(password)) puntos++
 
   const niveles = [
-    { label: '',           color: 'transparent', ancho: '0%'   },
-    { label: 'Muy débil',  color: '#e74c3c',     ancho: '20%'  },
-    { label: 'Débil',      color: '#e67e22',     ancho: '40%'  },
-    { label: 'Regular',    color: '#f39c12',     ancho: '60%'  },
-    { label: 'Fuerte',     color: '#2ecc71',     ancho: '80%'  },
-    { label: 'Muy fuerte', color: '#00d4ff',     ancho: '100%' },
+    { label: '',                               color: 'transparent', ancho: '0%'   },
+    { label: t('common.strength_very_weak'),   color: '#e74c3c',     ancho: '20%'  },
+    { label: t('common.strength_weak'),        color: '#e67e22',     ancho: '40%'  },
+    { label: t('common.strength_fair'),        color: '#f39c12',     ancho: '60%'  },
+    { label: t('common.strength_strong'),      color: '#2ecc71',     ancho: '80%'  },
+    { label: t('common.strength_very_strong'), color: '#00d4ff',     ancho: '100%' },
   ]
 
   const nivel = niveles[puntos] || niveles[0]

@@ -14,13 +14,13 @@
       <span class="logo-icon">🔐</span>
       <div class="logo-text">
         <span class="logo-title">DacmosGroup</span>
-        <span class="logo-subtitle">Vault</span>
+        <span class="logo-subtitle" data-i18n="vault.header_subtitle">Vault</span>
       </div>
     </div>
-    <button class="btn btn-inicio" id="btnInicio">← Inicio</button>
+    <button class="btn btn-inicio" id="btnInicio" data-i18n="common.back">← Inicio</button>
     <div class="header-actions">
-      <button class="btn btn-secondary btn-sm hidden" id="btnHealth">🛡 Health</button>
-      <button class="btn btn-primary btn-sm hidden" id="btnNuevaCredencial">+ Nueva</button>
+      <button class="btn btn-secondary btn-sm hidden" id="btnHealth" data-i18n="vault.btn_health">🛡 Health</button>
+      <button class="btn btn-primary btn-sm hidden" id="btnNuevaCredencial" data-i18n="vault.btn_new">+ Nueva</button>
     </div>
   </header>
 
@@ -28,20 +28,21 @@
   <div class="unlock-overlay" id="unlockOverlay">
     <div class="unlock-card">
       <span class="unlock-icon">🔒</span>
-      <h2>Vault Bloqueado</h2>
-      <p>Ingresa tu contraseña maestra para acceder</p>
+      <h2 data-i18n="auth.unlock.title_vault">Vault Bloqueado</h2>
+      <p data-i18n="auth.unlock.desc_vault">Ingresa tu contraseña maestra para acceder</p>
       <div class="input-group">
         <input
           type="password"
           id="unlockInput"
           class="input"
+          data-i18n-placeholder="auth.unlock.placeholder"
           placeholder="Contraseña maestra"
           autocomplete="off"
         />
-        <button class="btn-icon" id="btnToggleUnlock">👁</button>
+        <button class="btn-icon" id="btnToggleUnlock" data-i18n-aria="common.aria_toggle_pass">👁</button>
       </div>
-      <p class="error-msg hidden" id="unlockError">Contraseña incorrecta</p>
-      <button class="btn btn-primary" id="btnDesbloquear">
+      <p class="error-msg hidden" id="unlockError" data-i18n="auth.unlock.error_incorrect">Contraseña incorrecta</p>
+      <button class="btn btn-primary" id="btnDesbloquear" data-i18n="auth.unlock.btn_vault">
         Desbloquear Vault
       </button>
     </div>
@@ -57,6 +58,7 @@
         type="text"
         id="searchInput"
         class="search-input"
+        data-i18n-placeholder="vault.search_placeholder"
         placeholder="Buscar credenciales..."
         autocomplete="off"
       />
@@ -69,9 +71,9 @@
       <!-- Estado vacío -->
       <div class="empty-state hidden" id="emptyState">
         <span class="empty-icon">🗄️</span>
-        <h3>Tu vault está vacío</h3>
-        <p>Agrega tu primera credencial para comenzar</p>
-        <button class="btn btn-primary" id="btnAgregarPrimero">
+        <h3 data-i18n="vault.empty_title">Tu vault está vacío</h3>
+        <p data-i18n="vault.empty_desc">Agrega tu primera credencial para comenzar</p>
+        <button class="btn btn-primary" id="btnAgregarPrimero" data-i18n="vault.empty_btn">
           + Agregar credencial
         </button>
       </div>
@@ -86,15 +88,15 @@
   <div class="modal-overlay hidden" id="modalOverlay">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="modalTitle">Nueva Credencial</h3>
+        <h3 id="modalTitle" data-i18n="vault.modal_title_new">Nueva Credencial</h3>
         <button class="btn-close" id="btnCerrarModal">✕</button>
       </div>
 
       <!-- Selector de tipo -->
       <div class="type-selector" id="typeSelector">
-        <button class="type-tab active" data-tipo="login">🔐 Login</button>
-        <button class="type-tab" data-tipo="tarjeta">💳 Tarjeta</button>
-        <button class="type-tab" data-tipo="identidad">👤 Identidad</button>
+        <button class="type-tab active" data-tipo="login" data-i18n="vault.modal_type_login">🔐 Login</button>
+        <button class="type-tab" data-tipo="tarjeta" data-i18n="vault.modal_type_card">💳 Tarjeta</button>
+        <button class="type-tab" data-tipo="identidad" data-i18n="vault.modal_type_identity">👤 Identidad</button>
       </div>
 
       <div class="modal-body">
@@ -104,15 +106,15 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
-        <button class="btn btn-primary" id="btnGuardar">Guardar</button>
+        <button class="btn btn-secondary" id="btnCancelar" data-i18n="common.cancel">Cancelar</button>
+        <button class="btn btn-primary" id="btnGuardar" data-i18n="vault.modal_btn_save">Guardar</button>
       </div>
     </div>
   </div>
 
   <!-- Footer -->
   <footer class="footer">
-    <span>DacmosGroup.com · Zero-Knowledge · AES-256-GCM</span>
+    <span data-i18n="vault.footer">DacmosGroup.co · Zero-Knowledge · AES-256-GCM</span>
   </footer>
 
   <script src="vault.js" type="module"></script>

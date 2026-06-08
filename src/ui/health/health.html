@@ -14,16 +14,16 @@
       <span class="logo-icon">🔐</span>
       <div class="logo-text">
         <span class="logo-title">DacmosGroup</span>
-        <span class="logo-subtitle">Password Health</span>
+        <span class="logo-subtitle" data-i18n="health.header_subtitle">Password Health</span>
       </div>
     </div>
-    <button class="btn btn-secondary btn-sm" id="btnInicio">← Inicio</button>
+    <button class="btn btn-secondary btn-sm" id="btnInicio" data-i18n="common.back">← Inicio</button>
   </header>
 
   <!-- Banner de estado HIBP — visible durante verificación o ante errores de red -->
   <div class="status-banner hidden" id="statusBanner">
     <span class="banner-icono" id="bannerIcono">⏳</span>
-    <span class="banner-texto" id="bannerTexto">Verificando con Have I Been Pwned...</span>
+    <span class="banner-texto" id="bannerTexto" data-i18n="health.banner_checking">Verificando con Have I Been Pwned...</span>
   </div>
 
   <!-- Contenido principal -->
@@ -32,21 +32,21 @@
     <!-- Estado de carga inicial -->
     <div class="loading-state" id="loadingState">
       <span class="loading-icono">⏳</span>
-      <p>Cargando reporte de salud...</p>
+      <p data-i18n="health.loading">Cargando reporte de salud...</p>
     </div>
 
     <!-- Estado vacío — vault sin credenciales -->
     <div class="empty-state hidden" id="emptyState">
       <span class="empty-icono">🗄️</span>
-      <h3>Sin credenciales</h3>
-      <p>Agrega credenciales a tu vault para ver el reporte de salud.</p>
+      <h3 data-i18n="health.empty_title">Sin credenciales</h3>
+      <p data-i18n="health.empty_desc">Agrega credenciales a tu vault para ver el reporte de salud.</p>
     </div>
 
     <!-- Error — vault bloqueado o acceso directo sin reporte -->
     <div class="error-state hidden" id="errorState">
       <span class="error-icono">🔒</span>
-      <h3>Sesión no disponible</h3>
-      <p>Desbloquea tu vault y usa el botón "🛡 Health" para ver el reporte.</p>
+      <h3 data-i18n="health.error_title">Sesión no disponible</h3>
+      <p data-i18n="health.error_desc">Desbloquea tu vault y usa el botón "🛡 Health" para ver el reporte.</p>
     </div>
 
     <!-- Contenido del reporte (oculto hasta que el reporte esté disponible) -->
@@ -56,26 +56,26 @@
       <div class="summary-grid">
         <div class="summary-card card-ok">
           <span class="summary-num" id="numSeguras">0</span>
-          <span class="summary-label">✅ Seguras</span>
+          <span class="summary-label" data-i18n="health.summary_safe">✅ Seguras</span>
         </div>
         <div class="summary-card card-warn">
           <span class="summary-num" id="numDebiles">0</span>
-          <span class="summary-label">⚠️ Débiles</span>
+          <span class="summary-label" data-i18n="health.summary_weak">⚠️ Débiles</span>
         </div>
         <div class="summary-card card-info">
           <span class="summary-num" id="numReutilizadas">0</span>
-          <span class="summary-label">🔁 Reutilizadas</span>
+          <span class="summary-label" data-i18n="health.summary_reused">🔁 Reutilizadas</span>
         </div>
         <div class="summary-card card-danger">
           <span class="summary-num" id="numComprometidas">—</span>
-          <span class="summary-label">🚨 Comprometidas</span>
+          <span class="summary-label" data-i18n="health.summary_compromised">🚨 Comprometidas</span>
         </div>
       </div>
 
       <!-- Barra de progreso de verificación HIBP -->
       <div class="hibp-progress hidden" id="hibpProgress">
         <div class="hibp-progress-header">
-          <span class="hibp-progress-label" id="hibpProgressLabel">
+          <span class="hibp-progress-label" id="hibpProgressLabel" data-i18n="health.hibp_progress_label">
             Verificando con Have I Been Pwned...
           </span>
           <span class="hibp-progress-pct" id="hibpProgressPct">0%</span>
@@ -83,7 +83,7 @@
         <div class="hibp-progress-bar-wrap">
           <div class="hibp-progress-bar" id="hibpProgressBar"></div>
         </div>
-        <p class="hibp-nota">
+        <p class="hibp-nota" data-i18n="health.hibp_privacy_note">
           Solo los primeros 5 caracteres del hash SHA-1 se envían a la API (k-anonymity).
           Tu contraseña nunca abandona el dispositivo.
         </p>
@@ -91,7 +91,7 @@
 
       <!-- Lista detallada por credencial -->
       <div class="health-list-wrap">
-        <h2 class="list-title">Detalle por credencial</h2>
+        <h2 class="list-title" data-i18n="health.list_title">Detalle por credencial</h2>
         <ul class="health-list" id="healthList"></ul>
       </div>
 
@@ -100,7 +100,7 @@
 
   <!-- Pie de página -->
   <footer class="footer">
-    <span>DacmosGroup.com · Zero-Knowledge · AES-256-GCM</span>
+    <span data-i18n="health.footer">DacmosGroup.co · Zero-Knowledge · AES-256-GCM</span>
   </footer>
 
   <script src="health.js" type="module"></script>
