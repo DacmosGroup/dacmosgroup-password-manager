@@ -101,3 +101,41 @@ real de producción — fue la causa del incidente de la sesión 31 mayo 2026.
 
 **Regla:** Usar un perfil Chrome separado o cuenta de prueba para
 sesiones de desarrollo que involucren sync con Drive u OneDrive.
+
+---
+
+## Checklist de documentación — pre-commit y pre-cierre de sesión
+
+Ejecutar en orden al final de cada sesión con cambios, antes de push.
+
+### 1. Archivos del repo — verificar antes del commit `docs:`
+
+- [ ] `manifest.json` (root) — `"version"` coincide con el tag del release
+- [ ] `web/manifest.json` — `"version"` coincide con el tag del release
+- [ ] `README.md` — badges, sección Funciones Principales, roadmap, estado CWS
+- [ ] `CLAUDE.md` (root) — Versioning Strategy, próximo hito
+- [ ] `docs/roadmap-vX.X.md` activo — criterios `[x]`, estado `✅ COMPLETADO fecha`
+- [ ] `docs/documento-tecnico.md` — header versión, sección de decisiones nueva
+- [ ] `docs/fX.X-decisiones-temp.md` — consumir e insertar en documento-tecnico.md, luego **eliminar** (nunca commitear el temporal)
+- [ ] `docs/decisions/ADR-*.md` — crear si hubo nueva decisión arquitectural aprobada
+
+### 2. Archivos fuera del repo — actualizar en la misma sesión
+
+- [ ] `C:\DacmosGroup\CLAUDE.md` (L1) — tabla "Estado de productos activos"
+- [ ] `_KNOWLEDGE/DACMOSGROUP_MASTER_CONTEXT.md` — snapshot versiones + entrada en historial
+- [ ] `memory/project-products.md` — versiones y estado actual del producto
+
+### 3. Claude AI — subida manual al Project DPM
+
+Subir los archivos que fueron modificados en esta sesión:
+
+| Archivo | Destino |
+|---|---|
+| `_KNOWLEDGE/DACMOSGROUP_MASTER_CONTEXT.md` | Project **DPM** + Project **General** |
+| `docs/documento-tecnico.md` | Project **DPM** |
+| `docs/roadmap-vX.X.md` activo | Project **DPM** |
+| `CLAUDE.md` (root del repo) | Project **DPM** |
+| `README.md` | Project **DPM** |
+
+Registrar la fecha de subida en la tabla "Sincronización con Claude.ai Projects"
+de `DACMOSGROUP_MASTER_CONTEXT.md`.
