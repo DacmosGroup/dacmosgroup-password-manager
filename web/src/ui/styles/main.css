@@ -1191,6 +1191,63 @@ textarea.input {
   color: var(--color-success);
 }
 
+/* ── Flujo "Olvidé mi contraseña" (vista unlock) ── */
+.unlock__olvide-link {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  cursor: pointer;
+  margin-top: 0.25rem;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  transition: color 0.2s;
+}
+
+.unlock__olvide-link:hover {
+  color: var(--color-warning);
+}
+
+.unlock__olvide-panel {
+  background: rgba(231, 76, 60, 0.08);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: var(--radio-btn);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.unlock__olvide-aviso {
+  font-size: 0.8rem;
+  color: var(--color-warning);
+  line-height: 1.5;
+}
+
+.unlock__olvide-acciones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.unlock__olvide-acciones .btn {
+  flex: 1;
+}
+
+.btn--peligro {
+  background: var(--color-danger);
+  color: #fff;
+  border: none;
+}
+
+.btn--peligro:hover {
+  background: #c0392b;
+}
+
+.btn--sm {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+}
+
 /* Título principal de la vista health */
 .health__titulo {
   margin-bottom: 1rem;

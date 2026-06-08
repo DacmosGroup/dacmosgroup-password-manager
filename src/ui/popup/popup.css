@@ -316,6 +316,64 @@ body {
 .sync-row.sync-error   { color: var(--color-danger); }
 .sync-row.sync-syncing { color: var(--color-accent); }
 
+/* ── Flujo "Olvidé mi contraseña" ── */
+.forgot-link {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  margin-top: 4px;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  transition: color 0.2s;
+}
+
+.forgot-link:hover {
+  color: var(--color-warning);
+}
+
+.forgot-panel {
+  background: rgba(231, 76, 60, 0.08);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.forgot-warning {
+  font-size: 12px;
+  color: var(--color-warning);
+  line-height: 1.5;
+}
+
+.forgot-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.forgot-actions .btn {
+  width: auto;
+  flex: 1;
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+.btn-sm {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
 /* ── Footer ── */
 .footer {
   background: var(--color-surface);

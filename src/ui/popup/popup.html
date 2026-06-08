@@ -60,6 +60,20 @@
         Desbloquear
       </button>
       <p class="error-msg hidden" id="errorMsg">Contraseña incorrecta</p>
+
+      <p class="forgot-link" id="linkOlvide">¿Olvidaste tu contraseña?</p>
+
+      <div class="forgot-panel hidden" id="panelOlvide">
+        <p class="forgot-warning">
+          ⚠️ Crear un vault nuevo eliminará permanentemente todas tus credenciales.
+          Tu backup local y vault en la nube también quedarán inaccesibles.
+          Esta acción no se puede deshacer.
+        </p>
+        <div class="forgot-actions">
+          <button class="btn btn-secondary btn-sm" id="btnOlvideCancelar">Cancelar</button>
+          <button class="btn btn-danger btn-sm" id="btnOlvideConfirmar">Crear vault nuevo</button>
+        </div>
+      </div>
     </div>
   </div>
 

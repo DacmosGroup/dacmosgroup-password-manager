@@ -11,6 +11,7 @@
 import { desbloquearVault, cargarVaultDescifrado } from '../../crypto/engine.js'
 import { establecerClave, establecerCredenciales } from '../../storage/session.js'
 import { navegar } from '../router.js'
+import { idbStorage } from '../../storage/indexeddb-adapter.js'
 
 /** Monta la vista de desbloqueo en el contenedor dado */
 export async function montar(contenedor) {
@@ -42,6 +43,20 @@ export async function montar(contenedor) {
           </button>
         </form>
 
+        <p class="unlock__olvide-link" id="link-olvide">¿Olvidaste tu contraseña?</p>
+
+        <div class="unlock__olvide-panel oculto" id="panel-olvide">
+          <p class="unlock__olvide-aviso">
+            ⚠️ Crear un vault nuevo eliminará permanentemente todas tus credenciales.
+            Tu backup local y vault en la nube también quedarán inaccesibles.
+            Esta acción no se puede deshacer.
+          </p>
+          <div class="unlock__olvide-acciones">
+            <button class="btn btn--secundario btn--sm" id="btn-olvide-cancelar">Cancelar</button>
+            <button class="btn btn--peligro btn--sm" id="btn-olvide-confirmar">Crear vault nuevo</button>
+          </div>
+        </div>
+
         <p class="auth__nota-pie">
           Zero-Knowledge · AES-256-GCM · Local-first
         </p>
@@ -57,6 +72,22 @@ export async function montar(contenedor) {
   // ── Toggle de visibilidad ──
   contenedor.querySelector('#toggle-pass').addEventListener('click', () => {
     inputPass.type = inputPass.type === 'password' ? 'text' : 'password'
+  })
+
+  // ── Flujo "Olvidé mi contraseña" ──
+  contenedor.querySelector('#link-olvide').addEventListener('click', () => {
+    contenedor.querySelector('#panel-olvide').classList.remove('oculto')
+    contenedor.querySelector('#link-olvide').classList.add('oculto')
+  })
+
+  contenedor.querySelector('#btn-olvide-cancelar').addEventListener('click', () => {
+    contenedor.querySelector('#panel-olvide').classList.add('oculto')
+    contenedor.querySelector('#link-olvide').classList.remove('oculto')
+  })
+
+  contenedor.querySelector('#btn-olvide-confirmar').addEventListener('click', async () => {
+    await idbStorage.clear()
+    await navegar('#/setup')
   })
 
   // ── Submit del formulario ──

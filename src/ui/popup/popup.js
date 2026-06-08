@@ -208,6 +208,21 @@ document.getElementById('btnUnlock').addEventListener('click', async () => {
   }
 });
 
+// ── Flujo "Olvidé mi contraseña" ──
+document.getElementById('linkOlvide').addEventListener('click', () => {
+  document.getElementById('panelOlvide').classList.remove('hidden')
+  document.getElementById('linkOlvide').classList.add('hidden')
+})
+
+document.getElementById('btnOlvideCancelar').addEventListener('click', () => {
+  document.getElementById('panelOlvide').classList.add('hidden')
+  document.getElementById('linkOlvide').classList.remove('hidden')
+})
+
+document.getElementById('btnOlvideConfirmar').addEventListener('click', () => {
+  chrome.storage.local.clear(() => window.location.reload())
+})
+
 document.getElementById('btnOpenVault').addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/vault/vault.html') });
 });
