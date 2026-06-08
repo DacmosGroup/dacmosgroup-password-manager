@@ -151,8 +151,8 @@ Per-platform independent versioning:
 
 | Platform | Manifest | Estado |
 |---|---|---|
-| Chrome Extension | `manifest.json` | v0.4.1 — flujo "Olvidé mi contraseña" · pendiente nueva submission CWS |
-| PWA | `web/manifest.json` | v0.4.3 — flujo "Olvidé mi contraseña" · pendiente deploy Cloudflare Pages |
+| Chrome Extension | `manifest.json` | v0.4.1 — flujo "Olvidé mi contraseña" · en review CWS (submitted 2026-06-08) |
+| PWA | `web/manifest.json` | v0.4.3 — flujo "Olvidé mi contraseña" · LIVE en dpm.dacmosgroup.co ✅ |
 | APK Android (TWA) | GitHub Releases | v0.4.2 en IzzyOnDroid · en producción |
 
 **Estado auditoría:** Fases 1–4 completas (commit `4970463`, merge `01c8623`). Branch `fix/auditoria-remediaciones` cerrada.
