@@ -6,8 +6,8 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
-[![Extension](https://img.shields.io/badge/Extension-v0.4.1-blue)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
-[![PWA](https://img.shields.io/badge/PWA-v0.4.3-green)](https://dpm.dacmosgroup.co)
+[![Extension](https://img.shields.io/badge/Extension-v0.5.0-blue)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![PWA](https://img.shields.io/badge/PWA-v0.5.0-green)](https://dpm.dacmosgroup.co)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -85,10 +85,13 @@
 | v0.4.2 | Auditoría #3: 4 Críticos (C1–C4) + 4 Altos (A2–A5) resueltos. Flujo multi-dispositivo "Restaurar desde tu nube" en Extension y PWA. Version display en popup. 7 criterios de aceptación verificados (round-trip manual 2026-06-06). | ✅ |
 | v0.4.1 (Ext) / v0.4.3 (PWA) | Flujo "¿Olvidaste tu contraseña?" — escape hatch desde pantalla bloqueada para crear vault nuevo vacío. Principio ZK mantenido: datos cifrados anteriores irrecuperables por diseño. | ✅ |
 
-### ⏳ Fase 5 — v0.5.0 (PENDIENTE)
+### ✅ Fase 5 — v0.5.0 (COMPLETADA)
 
-- Auto-lock timer en PWA (paridad con Chrome Extension)
-- Internacionalización (i18n) ES / EN / PT-BR — Extension + PWA
+| Feature | Descripción | Estado |
+|---------|-------------|--------|
+| F5-A | Auto-lock timer en PWA — `visibilitychange` + `Date.now()`, paridad con Chrome Extension | ✅ |
+| F5-B | i18n ES / EN / PT-BR — Extension (`chrome.i18n` MV3) + PWA (módulo custom `web/src/i18n/`) | ✅ |
+| F5-B | Toggle de idioma en Settings — Automático \| Español \| English \| Português | ✅ |
 
 ### ⏳ Fase 6 — Capacitor + Autofill Nativo v0.6.0+ (PENDIENTE)
 
@@ -110,7 +113,7 @@ v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.4.1 ✅  Ext: flujo "¿Olvidaste tu contraseña?" — escape hatch desde pantalla bloqueada
 v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispositivo
 v0.4.3 ✅  PWA: paridad con v0.4.1 Ext — flujo "¿Olvidaste tu contraseña?"
-v0.5.0 ⏳  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
+v0.5.0 ✅  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
 v0.6.0 ⏳  Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
 v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)
@@ -146,13 +149,13 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ## 📦 Chrome Web Store
 
-**v0.4.0 PUBLICADA** ✅ (aprobada 2026-06-08) · v0.4.1 en revisión. Instalación via enlace directo:
+**v0.4.0 PUBLICADA** ✅ (aprobada 2026-06-08) · v0.4.1 en revisión · v0.5.0 ZIP listo para submission. Instalación via enlace directo:
 
 `https://chromewebstore.google.com/detail/dacmos-password-manager/aflgjjkallibohcebggkkjdlhdnainai`
 
 ---
 
-## 🔑 Funciones Principales v0.4.3
+## 🔑 Funciones Principales v0.5.0
 
 - **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
 - **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
@@ -161,12 +164,11 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 - **Exportar** — CSV genérico y CSV compatible con Bitwarden
 - **Autocompletado** — login, checkout (tarjetas) y registro (identidades)
 - **URL matching robusto** — dominio base, subdominios y wildcards
-- **Lock automático** — chrome.alarms, cero persistencia de clave
+- **Auto-lock** — chrome.alarms (Extension) / visibilitychange + Date.now() (PWA), cero persistencia de clave
+- **i18n ES / EN / PT-BR** — detección automática del idioma del browser + toggle manual en Settings
 - **Sync Google Drive** — OAuth drive.appdata, vault cifrado opaco, Zero-Knowledge
 - **Sync OneDrive** — Microsoft Graph API, misma garantía de privacidad
 - **BYOC** — tú eliges el proveedor cloud; DacmosGroup no almacena nada
-- **Navegación consistente** — botón ← Inicio en todas las vistas
-- **UX mejorada** — legibilidad de cards, versión dinámica, fix formularios registro
 - **PWA Mobile** — vault accesible desde cualquier browser mobile en `dpm.dacmosgroup.co`
 - **APK Android** — distribución directa via GitHub Releases (TWA, sin Play Store)
 - **SW update flow** — banner "Nueva versión disponible" sin forzar cierre de tabs
