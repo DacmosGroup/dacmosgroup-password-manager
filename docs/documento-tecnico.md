@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Versión 0.4.2 · Junio 2026**
+**Versión 0.5.0 · Junio 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -35,7 +35,9 @@
 22. [Decisiones de Implementación — v0.4.2](#22-decisiones-de-implementación--v042)
 23. [Versionado por superficie](#23-versionado-por-superficie)
 24. [Decisiones de Sesión — v0.5.0 Replanificación Estratégica](#24-decisiones-de-sesión--v050-replanificación-estratégica)
-25. [Referencias](#25-referencias)
+25. [Decisiones de Implementación — F5-A (Auto-lock PWA)](#25-decisiones-de-implementación--f5-a)
+26. [Decisiones de Implementación — F5-B (i18n ES/EN/PT-BR)](#26-decisiones-de-implementación--f5-b)
+27. [Referencias](#27-referencias)
 
 ---
 
@@ -2219,7 +2221,7 @@ v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.4.1 ✅  Ext: flujo "¿Olvidaste tu contraseña?"
 v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispositivo
 v0.4.3 ✅  PWA: paridad con v0.4.1 Ext
-v0.5.0 ⏳  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
+v0.5.0 ✅  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)  ← 2026-06-08
 v0.6.0 ⏳  Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
 v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)
@@ -2229,7 +2231,132 @@ v1.0.0 ⏳  Auditoría Cure53 + App Store + Play Store público
 
 ---
 
-## 25. Referencias
+## 25. Decisiones de Implementación — F5-A
+
+**Fecha:** 2026-06-08
+
+### Módulo: web/src/auto-lock/auto-lock-manager.js
+
+La Chrome Extension usa `chrome.alarms` para el auto-lock (sobrevive al sleep del service worker MV3). La PWA no tiene `chrome.alarms` — la implementación usa exclusivamente Web APIs estándar.
+
+**Contrato de módulo aprobado:**
+
+```javascript
+export function init({ limitMinutos, onLock }) { ... }  // 0 = "Nunca"
+export function reset()   { ... }  // resetea _tsLastActivity + setTimeout
+export function destroy() { ... }  // idempotente — safe para llamar N veces
+```
+
+### Mecanismo visibilitychange + Date.now()
+
+Cuando la PWA va a background (`visibilitychange → 'hidden'`), `setTimeout` es poco fiable en mobile browsers. El auto-lock PWA usa:
+
+1. Al ir a background: cancelar el `setTimeout` activo + registrar `_tsLastActivity`
+2. Al volver a foreground (`visibilitychange → 'visible'`): evaluar `Date.now() - _tsLastActivity >= limitMs`
+   - Si sí → `onLock()` inmediato
+   - Si no → reanudar `setTimeout` con tiempo restante
+
+### Persistencia de config
+
+`config.autoLock` (integer, minutos) persiste en IndexedDB — mismo nombre de campo que `chrome.storage.local.config.autoLock` en la Extension. Valor 0 = "Nunca" (sin timer).
+
+### Integración en el flujo de vistas
+
+- `web/src/ui/views/unlock.js` — `init()` post-desbloqueo exitoso; `destroy()` antes de navegar
+- `web/src/ui/views/settings.js` — selector UI persiste `config.autoLock`; `destroy()` antes de re-init; `destroy()` en bloqueo manual
+
+### Riesgos identificados
+
+| # | Riesgo | Severidad | Mitigación |
+|---|--------|-----------|------------|
+| R1 | `setTimeout` no fiable en background mobile | Alto | `visibilitychange` + `Date.now()` evalúa tiempo real transcurrido |
+| R2 | Timer no destruido al navegar → double-lock | Medio | `destroy()` idempotente llamado en cada transición de vista |
+| R3 | Timer nunca iniciado con "Nunca" | Bajo | `limitMinutos === 0` → `init()` retorna sin crear timer |
+
+---
+
+## 26. Decisiones de Implementación — F5-B
+
+**Fecha:** 2026-06-08
+
+### Dos sistemas de i18n — mismo contrato de keys
+
+F5-B implementa internacionalización (ES/EN/PT-BR) en dos plataformas con mecanismos distintos:
+
+| Aspecto | Chrome Extension | PWA |
+|---------|-----------------|-----|
+| Mecanismo | `chrome.i18n` nativo MV3 | Módulo custom `web/src/i18n/i18n.js` |
+| Archivos | `_locales/{es,en,pt_BR}/messages.json` | `web/src/i18n/strings.{es,en,pt_BR}.js` |
+| Keys | Underscore (`auth_unlock_title`) | Puntos directos (`auth.unlock.title`) |
+| Detección | Automática desde idioma del browser Chrome | `navigator.language` |
+| Override | `config.idioma` en `chrome.storage.local` | `config.idioma` en IndexedDB |
+| Toggle UI | Settings (Extension) | Settings — prominente ✅ |
+
+Las keys son las mismas semánticamente en ambas plataformas; la diferencia es solo el separador. La sincronía es manual — sin build step.
+
+### Módulo i18n PWA — inicialización
+
+```javascript
+export async function initI18n() {
+  try {
+    const { config } = await idbStorage.get(['config'])
+    const stored = config?.idioma
+    if (stored && DICTIONARIES[stored]) {
+      _dict = DICTIONARIES[stored]
+      return  // early return — IDB tiene prioridad absoluta
+    }
+  } catch (_) { }
+  const lang = navigator.language ?? 'en'
+  if (lang.startsWith('es'))      { _dict = stringsEs }
+  else if (lang.startsWith('pt')) { _dict = stringsPtBr }
+  else                            { _dict = stringsEn }
+}
+```
+
+El `early return` garantiza que `config.idioma` en IDB tiene prioridad absoluta — sin condición que lo bypasee.
+
+### Toggle de idioma en Settings — decisiones de implementación
+
+| Opción evaluada | Estado | Razón |
+|---|---|---|
+| `navegar('#/settings')` post-cambio | Descartada | Navega fuera de la vista actual si el usuario estaba en vault/generator |
+| **`window.location.reload()`** | ✅ Elegida | Recarga completa — toda la UI (incluidos SW banner y nav) refleja el nuevo idioma |
+
+**Opción "Automático" (no estaba en spec original):** La opción `auto` borra `config.idioma` del objeto de configuración con destructuring:
+
+```javascript
+const { idioma: _omit, ...configSinIdioma } = configActual
+await idbStorage.set({ config: configSinIdioma })
+```
+
+Restaura la detección via `navigator.language` en la próxima carga. Aprobado por el arquitecto — mejora de UX, no una desviación del spec.
+
+### Guard de copia en Generator — language-agnostic
+
+La versión anterior usaba `texto.startsWith('Pulsa') || texto.startsWith('Selecciona')` — strings hardcodeados en español que romperían en EN/PT-BR. Solución: atributo `data-has-password` en el `<span>` de output:
+
+```javascript
+// Antes de generar: data-has-password="false"
+// Después de generar exitosamente: data-has-password="true"
+// Handler de copia: if (outputEl.dataset.hasPassword !== 'true') return
+```
+
+### ITEMS de navegación dentro de montarNavBottom()
+
+Si el array `ITEMS` estuviera a nivel de módulo, `t()` se evaluaría en tiempo de import — antes de que `initI18n()` completara, mostrando keys en lugar de texto. Solución: definir `ITEMS` dentro de `montarNavBottom()` para que `t()` evalúe siempre después del `await initI18n()` en `app.js`.
+
+### Riesgos identificados
+
+| # | Riesgo | Severidad | Mitigación |
+|---|--------|-----------|------------|
+| R1 | `t()` evaluada antes de `initI18n()` | Alto | ITEMS de nav definidos dentro de `montarNavBottom()` |
+| R2 | Copy guard rompe en idiomas no-ES | Medio | Reemplazado por `data-has-password` attribute |
+| R3 | Toggle de idioma no re-monta todas las vistas | Medio | `window.location.reload()` — recarga completa |
+| R4 | `auto` no borra `config.idioma` correctamente | Bajo | Destructuring elimina la key del objeto antes de persistir |
+
+---
+
+## 27. Referencias
 
 ### Estándares y especificaciones
 

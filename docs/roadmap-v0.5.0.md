@@ -4,6 +4,7 @@
 **Documento generado:** Mayo 2026 · **Actualizado:** 2026-06-08
 **Versión base:** 0.4.3 (v0.4.x completo ✅)
 **Versión objetivo:** 0.5.0
+**Estado:** ✅ COMPLETADO — 2026-06-08
 
 > ✅ **Alcance confirmado (2026-06-08):** La publicación de la Extension en CWS
 > desencadenó una revisión estratégica. v0.5.0 contiene exactamente dos features:
@@ -123,15 +124,15 @@ sin build step.
 
 ## Criterios de completitud
 
-- [ ] F5-A — Auto-lock funciona en mobile: background >X min → bloqueo inmediato al volver al foreground
-- [ ] F5-A — Selector en Settings guarda/carga `config.autoLock` en IndexedDB
-- [ ] F5-A — `destroy()` es idempotente — no produce error si se llama N veces
-- [ ] F5-B — Extension muestra todos los strings en EN al cambiar idioma del browser a inglés
-- [ ] F5-B — PWA detecta automáticamente el idioma del browser (ES / EN / PT-BR)
-- [ ] F5-B — Override manual en Settings persiste entre sesiones (IndexedDB)
-- [ ] F5-B — Contrato de keys aprobado por arquitecto antes de crear archivos de traducción
-- [ ] Versión bumpeada a 0.5.0 en `manifest.json` + `web/manifest.json`
-- [ ] PR mergeado a main
+- [x] F5-A — Auto-lock funciona en mobile: background >X min → bloqueo inmediato al volver al foreground
+- [x] F5-A — Selector en Settings guarda/carga `config.autoLock` en IndexedDB
+- [x] F5-A — `destroy()` es idempotente — no produce error si se llama N veces
+- [x] F5-B — Extension muestra todos los strings en EN al cambiar idioma del browser a inglés
+- [x] F5-B — PWA detecta automáticamente el idioma del browser (ES / EN / PT-BR)
+- [x] F5-B — Override manual en Settings persiste entre sesiones (IndexedDB)
+- [x] F5-B — Contrato de keys aprobado por arquitecto antes de crear archivos de traducción
+- [x] Versión bumpeada a 0.5.0 en `manifest.json` + `web/manifest.json`
+- [x] PR mergeado a main
 
 ---
 
@@ -156,7 +157,7 @@ v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
 v0.4.1 ✅  Ext: flujo "¿Olvidaste tu contraseña?" — escape hatch desde pantalla bloqueada
 v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispositivo
 v0.4.3 ✅  PWA: paridad con v0.4.1 Ext — flujo "¿Olvidaste tu contraseña?"
-v0.5.0 ⏳  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
+v0.5.0 ✅  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)  ← 2026-06-08
 v0.6.0 ⏳  Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
 v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)

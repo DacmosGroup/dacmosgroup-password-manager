@@ -1,6 +1,6 @@
 # CLAUDE.md — Dacmos Password Manager
 # Ruta: C:\DacmosGroup\04_Dev\PasswordManager\dacmosgroup-password-manager\CLAUDE.md
-# Última actualización: 2026-06-07
+# Última actualización: 2026-06-08
 # PREREQUISITO: C:\Users\dacmo\.claude\CLAUDE.md (L0) + C:\DacmosGroup\CLAUDE.md (L1)
 # Este archivo asume que ya leíste ambos. No repite convenciones globales ni mandato de seguridad.
 
@@ -151,17 +151,22 @@ Per-platform independent versioning:
 
 | Platform | Manifest | Estado |
 |---|---|---|
-| Chrome Extension | `manifest.json` | v0.4.1 — flujo "Olvidé mi contraseña" · en review CWS (submitted 2026-06-08) |
-| PWA | `web/manifest.json` | v0.4.3 — flujo "Olvidé mi contraseña" · LIVE en dpm.dacmosgroup.co ✅ |
+| Chrome Extension | `manifest.json` | v0.5.0 — i18n ES/EN/PT-BR + auto-lock · ZIP listo para CWS · v0.4.1 en review |
+| PWA | `web/manifest.json` | v0.5.0 — i18n ES/EN/PT-BR + auto-lock · LIVE en dpm.dacmosgroup.co ✅ (commit `03600f2`) |
 | APK Android (TWA) | GitHub Releases | v0.4.2 en IzzyOnDroid · en producción |
 
 **Estado auditoría:** Fases 1–4 completas (commit `4970463`, merge `01c8623`). Branch `fix/auditoria-remediaciones` cerrada.
 **Testing completado 2026-06-06:** Bloques 1–8 APROBADOS — sync round-trip Extension ↔ PWA en ambas direcciones.
 
-**Próximo hito — v0.5.0:**
-- Auto-lock timer funcional en PWA
-- Monetización $1–1.50/mes vía Stripe
-- Actualizar screenshots en CWS con nueva pantalla de desbloqueo
+**v0.5.0 COMPLETO (2026-06-08):**
+- F5-A: Auto-lock timer en PWA (visibilitychange + Date.now())
+- F5-B: i18n ES/EN/PT-BR — Extension (chrome.i18n MV3) + PWA (módulo custom `web/src/i18n/`)
+- ZIP CWS v0.5.0 generado: `dacmos-pm-v0.5.0-cws.zip` (144KB, 60 files, commit `03600f2`)
+
+**Próximo hito — v0.6.0:**
+- Capacitor wrapping — app nativa iOS + Android (hereda i18n de v0.5.0)
+- Biometría nativa (Capacitor)
+- Publicar en Play Store + App Store
 
 **Nota:** `client_id` en manifest.json es un identificador público OAuth2 — no es un secret. Su presencia en el repo es intencional.
 
