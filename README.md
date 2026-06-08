@@ -6,8 +6,8 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
-[![Extension](https://img.shields.io/badge/Extension-v0.3.1-blue)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
-[![PWA](https://img.shields.io/badge/PWA-v0.4.2-green)](https://dpm.dacmosgroup.co)
+[![Extension](https://img.shields.io/badge/Extension-v0.4.1-blue)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![PWA](https://img.shields.io/badge/PWA-v0.4.3-green)](https://dpm.dacmosgroup.co)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -83,13 +83,13 @@
 | F4.7 | Formato versionado del blob — habilita migración no destructiva a Argon2id | ✅ |
 | v0.4.1 | Remediación auditoría: importarVaultBackup (A-1), timeout GIS (M-1), errores OAuth (M-2), CSP sin unsafe-inline (M-3), fileId cache Drive (B-2), SW update flow (B-1) | ✅ |
 | v0.4.2 | Auditoría #3: 4 Críticos (C1–C4) + 4 Altos (A2–A5) resueltos. Flujo multi-dispositivo "Restaurar desde tu nube" en Extension y PWA. Version display en popup. 7 criterios de aceptación verificados (round-trip manual 2026-06-06). | ✅ |
+| v0.4.1 (Ext) / v0.4.3 (PWA) | Flujo "¿Olvidaste tu contraseña?" — escape hatch desde pantalla bloqueada para crear vault nuevo vacío. Principio ZK mantenido: datos cifrados anteriores irrecuperables por diseño. | ✅ |
 
-### ⏳ Fase 4 — App Nativa v0.5.0 (PENDIENTE)
+### ⏳ Fase 4 — Monetización + UX v0.5.0 (PENDIENTE)
 
-- Capacitor wrapping — misma PWA en shell nativo iOS + Android
-- Biometría Zero-Knowledge — Face ID / Fingerprint con Secure Enclave / Keystore
-- Sync per-item con Lamport ordering — elimina pérdida de datos en offline multi-device
-- Google Play Store + builds iOS via Codemagic
+- Auto-lock timer en PWA (paridad con Extension)
+- Integración Stripe — modelo de suscripción $1–1.50/mes LATAM
+- Actualizar screenshots en CWS con nueva pantalla de desbloqueo
 
 ### ⏳ Fase 5 — Autofill Nativo v0.6.0 (PENDIENTE)
 
@@ -107,7 +107,10 @@ v0.2.0 ✅  Paridad competitiva (F1.1-F1.6)
 v0.3.0 ✅  Sync BYOC — Google Drive + OneDrive
 v0.3.1 ✅  UX Polish — navegación, legibilidad, fixes autofill
 v0.4.0 ✅  PWA — vault en mobile via navegador, APK Android via TWA
-v0.5.0 ⏳  Capacitor — app nativa iOS + Android, biometría, Play Store
+v0.4.1 ✅  Ext: flujo "¿Olvidaste tu contraseña?" — escape hatch desde pantalla bloqueada
+v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispositivo
+v0.4.3 ✅  PWA: paridad con v0.4.1 Ext — flujo "¿Olvidaste tu contraseña?"
+v0.5.0 ⏳  Auto-lock PWA + integración Stripe (primer producto monetizado)
 v0.6.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.7.0 ⏳  Argon2id opcional + preparación de auditoría
 v1.0.0 ⏳  Auditoría Cure53 + listado público CWS + App Store + Play Store
@@ -141,13 +144,13 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ## 📦 Chrome Web Store
 
-v0.4.0 en revisión (submitted 2026-06-06) — visibilidad pública al aprobar. Instalación via enlace directo:
+**v0.4.0 PUBLICADA** ✅ (aprobada 2026-06-08) · v0.4.1 en revisión. Instalación via enlace directo:
 
 `https://chromewebstore.google.com/detail/dacmos-password-manager/aflgjjkallibohcebggkkjdlhdnainai`
 
 ---
 
-## 🔑 Funciones Principales v0.4.2
+## 🔑 Funciones Principales v0.4.3
 
 - **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
 - **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
@@ -165,6 +168,7 @@ v0.4.0 en revisión (submitted 2026-06-06) — visibilidad pública al aprobar. 
 - **PWA Mobile** — vault accesible desde cualquier browser mobile en `dpm.dacmosgroup.co`
 - **APK Android** — distribución directa via GitHub Releases (TWA, sin Play Store)
 - **SW update flow** — banner "Nueva versión disponible" sin forzar cierre de tabs
+- **¿Olvidaste tu contraseña?** — escape hatch desde pantalla bloqueada para crear vault nuevo vacío (principio ZK mantenido)
 
 ---
 
@@ -186,4 +190,4 @@ especializada en las cuatro mega-tendencias que dominan la industria:
 
 MIT License — ver [LICENSE](./LICENSE)
 
-Mayo 2026
+Junio 2026
