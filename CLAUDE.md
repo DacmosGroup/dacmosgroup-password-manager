@@ -151,7 +151,7 @@ Per-platform independent versioning:
 
 | Platform | Manifest | Estado |
 |---|---|---|
-| Chrome Extension | `manifest.json` | v0.5.0 — i18n ES/EN/PT-BR + auto-lock · ZIP listo para CWS · v0.4.1 en review |
+| Chrome Extension | `manifest.json` | v0.5.0 — i18n ES/EN/PT-BR + auto-lock · **SUBMITTED FOR REVIEW en CWS (2026-06-10)** · v0.4.1 sigue PUBLICADA ✅ |
 | PWA | `web/manifest.json` | v0.5.0 — i18n ES/EN/PT-BR + auto-lock · LIVE en dpm.dacmosgroup.co ✅ (commit `03600f2`) |
 | APK Android (TWA) | GitHub Releases | v0.4.2 en IzzyOnDroid · en producción |
 
@@ -160,8 +160,12 @@ Per-platform independent versioning:
 
 **v0.5.0 COMPLETO (2026-06-08):**
 - F5-A: Auto-lock timer en PWA (visibilitychange + Date.now())
-- F5-B: i18n ES/EN/PT-BR — Extension (chrome.i18n MV3) + PWA (módulo custom `web/src/i18n/`)
+- F5-B: i18n ES/EN/PT-BR — Extension (chrome.i18n MV3, sigue idioma de Chrome, SIN selector) + PWA (módulo custom `web/src/i18n/` CON selector en Settings)
 - ZIP CWS v0.5.0 generado: `dacmos-pm-v0.5.0-cws.zip` (144KB, 60 files, commit `03600f2`)
+
+**Submission CWS v0.5.0 (2026-06-10):** ZIP + 5 screenshots 1280×800 + listing trilingüe — en review.
+- Assets del store versionados en `docs/cws-assets/` (capturas crudas + finales, `make-composites.ps1`, `listing/{es,en,pt_BR}.md`) — regla: editar ahí ANTES de pegar en el dashboard
+- Al aprobar: publicar (si quedó staged, antes de 30 días) · borrar vault de la cuenta de pruebas `carjes2795@gmail.com` (recién entonces) · actualizar tablas de estado (workspace + master context)
 
 **Próximo hito — v0.6.0:**
 - Capacitor wrapping — app nativa iOS + Android (hereda i18n de v0.5.0)

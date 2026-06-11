@@ -91,7 +91,7 @@
 |---------|-------------|--------|
 | F5-A | Auto-lock timer en PWA — `visibilitychange` + `Date.now()`, paridad con Chrome Extension | ✅ |
 | F5-B | i18n ES / EN / PT-BR — Extension (`chrome.i18n` MV3) + PWA (módulo custom `web/src/i18n/`) | ✅ |
-| F5-B | Toggle de idioma en Settings — Automático \| Español \| English \| Português | ✅ |
+| F5-B | Toggle de idioma en Settings de la PWA — Automático \| Español \| English \| Português (la Extension sigue el idioma de Chrome automáticamente, sin selector) | ✅ |
 
 ### ⏳ Fase 6 — Capacitor + Autofill Nativo v0.6.0+ (PENDIENTE)
 
@@ -149,7 +149,7 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ## 📦 Chrome Web Store
 
-**v0.4.0 PUBLICADA** ✅ (aprobada 2026-06-08) · v0.4.1 en revisión · v0.5.0 ZIP listo para submission. Instalación via enlace directo:
+**v0.4.1 PUBLICADA** ✅ (aprobada 2026-06-09) · **v0.5.0 en review** (submitted 2026-06-10 con listing ES/EN/PT-BR). Instalación via enlace directo:
 
 `https://chromewebstore.google.com/detail/dacmos-password-manager/aflgjjkallibohcebggkkjdlhdnainai`
 
@@ -165,7 +165,7 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 - **Autocompletado** — login, checkout (tarjetas) y registro (identidades)
 - **URL matching robusto** — dominio base, subdominios y wildcards
 - **Auto-lock** — chrome.alarms (Extension) / visibilitychange + Date.now() (PWA), cero persistencia de clave
-- **i18n ES / EN / PT-BR** — detección automática del idioma del browser + toggle manual en Settings
+- **i18n ES / EN / PT-BR** — detección automática del idioma del browser; toggle manual en Settings (solo PWA)
 - **Sync Google Drive** — OAuth drive.appdata, vault cifrado opaco, Zero-Knowledge
 - **Sync OneDrive** — Microsoft Graph API, misma garantía de privacidad
 - **BYOC** — tú eliges el proveedor cloud; DacmosGroup no almacena nada
