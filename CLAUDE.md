@@ -162,6 +162,7 @@ Per-platform independent versioning:
 - F5-A: Auto-lock timer en PWA (visibilitychange + Date.now())
 - F5-B: i18n ES/EN/PT-BR — Extension (chrome.i18n MV3, sigue idioma de Chrome, SIN selector) + PWA (módulo custom `web/src/i18n/` CON selector en Settings)
 - ZIP CWS v0.5.0 generado: `dacmos-pm-v0.5.0-cws.zip` (144KB, 60 files, commit `03600f2`)
+- Builds empaquetados (todos los ZIP/CRX subidos a stores): `..\..\releases\` — carpeta local fuera del repo, ver su README (consolidados 2026-06-10)
 
 **Submission CWS v0.5.0 (2026-06-10):** ZIP + 5 screenshots 1280×800 + listing trilingüe — en review.
 - Assets del store versionados en `docs/cws-assets/` (capturas crudas + finales, `make-composites.ps1`, `listing/{es,en,pt_BR}.md`) — regla: editar ahí ANTES de pegar en el dashboard
