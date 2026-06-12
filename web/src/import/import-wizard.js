@@ -26,6 +26,8 @@ import {
   FORMATOS,
 } from './csv-importer.js'
 
+import { t } from '../i18n/i18n.js'
+
 // ── Estado interno del wizard ──
 // Vive en memoria solo durante el flujo activo; se limpia en cancelar/resetear.
 let _filasCSV       = null
@@ -116,7 +118,7 @@ async function manejarArchivoSeleccionado(e) {
     _filasCSV    = parsearCSV(texto)
 
     if (_filasCSV.length < 2) {
-      mostrarError('El archivo CSV está vacío o no contiene filas de datos.')
+      mostrarError(t('import.error.empty'))
       return
     }
 
@@ -128,15 +130,15 @@ async function manejarArchivoSeleccionado(e) {
 
     if (detectado && detectado !== 'generico') {
       const nombre = FORMATOS[detectado]?.nombre ?? detectado
-      elBadgeFormato.textContent = `✅ Detectado: ${nombre}`
+      elBadgeFormato.textContent = t('import.format.detected', { nombre })
       elBadgeFormato.className   = 'import-format-badge badge-detected'
       elSelectFormato.value      = detectado
     } else if (detectado === 'generico') {
-      elBadgeFormato.textContent = '⚠️ Formato genérico'
+      elBadgeFormato.textContent = t('import.format.generic')
       elBadgeFormato.className   = 'import-format-badge badge-generic'
       elSelectFormato.value      = 'generico'
     } else {
-      elBadgeFormato.textContent = '❓ No detectado — selecciona manualmente'
+      elBadgeFormato.textContent = t('import.format.unknown')
       elBadgeFormato.className   = 'import-format-badge badge-unknown'
       elSelectFormato.value      = ''
     }
@@ -144,7 +146,7 @@ async function manejarArchivoSeleccionado(e) {
     elGrupoAcciones.style.display = 'block'
 
   } catch (_err) {
-    mostrarError('Error al leer el archivo. Verifica que sea un CSV válido y vuelve a intentarlo.')
+    mostrarError(t('import.error.read'))
   }
 }
 
@@ -162,22 +164,22 @@ async function previsualizarImportacion() {
   ocultarError()
   elPanelPreview.classList.add('hidden')
 
-  if (!_formatoActual)                       { mostrarError('Selecciona el formato del archivo CSV.'); return }
-  if (!_filasCSV || _filasCSV.length < 2)   { mostrarError('No hay datos para importar.'); return }
+  if (!_formatoActual)                       { mostrarError(t('import.error.no.format')); return }
+  if (!_filasCSV || _filasCSV.length < 2)   { mostrarError(t('import.error.no.data')); return }
 
   const claveSesion = obtenerClave()
   if (!claveSesion) {
-    mostrarError('La sesión expiró. Bloquea y desbloquea el vault para continuar.')
+    mostrarError(t('import.error.session'))
     return
   }
 
-  elBtnPrevisualizar.textContent = 'Analizando...'
+  elBtnPrevisualizar.textContent = t('import.btn.analyzing')
   elBtnPrevisualizar.disabled    = true
 
   try {
     const candidatas = normalizarCredenciales(_filasCSV, _formatoActual)
     if (candidatas.length === 0) {
-      mostrarError('No se encontraron credenciales válidas en el archivo. Verifica el formato seleccionado.')
+      mostrarError(t('import.error.no.valid'))
       return
     }
 
@@ -190,20 +192,20 @@ async function previsualizarImportacion() {
     renderizarPreview(candidatas)
 
     if (_credAImportar.length > 0) {
-      const s = _credAImportar.length !== 1 ? 'es' : ''
-      elBtnConfirmar.textContent = `Importar ${_credAImportar.length} credencial${s}`
+      const n = _credAImportar.length
+      elBtnConfirmar.textContent = t(n === 1 ? 'import.btn.import.one' : 'import.btn.import.other', { count: n })
       elBtnConfirmar.disabled    = false
     } else {
-      elBtnConfirmar.textContent = 'Sin credenciales nuevas'
+      elBtnConfirmar.textContent = t('import.btn.none')
       elBtnConfirmar.disabled    = true
     }
 
     elPanelPreview.classList.remove('hidden')
 
   } catch (_err) {
-    mostrarError('Error al analizar el archivo. Intenta de nuevo.')
+    mostrarError(t('import.error.analyze'))
   } finally {
-    elBtnPrevisualizar.textContent = 'Previsualizar importación'
+    elBtnPrevisualizar.textContent = t('import.btn.preview')
     elBtnPrevisualizar.disabled    = false
   }
 }
@@ -213,10 +215,12 @@ async function previsualizarImportacion() {
 function renderizarPreview(candidatas) {
   const MAX_PREVIEW = 200
 
+  const nNuevas = _credAImportar.length
+  const nDup    = _credDuplicadas.length
   elResumen.innerHTML = `
-    <span class="resumen-nuevas">✅ ${_credAImportar.length} nueva${_credAImportar.length !== 1 ? 's' : ''}</span>
+    <span class="resumen-nuevas">${t(nNuevas === 1 ? 'import.preview.new.one' : 'import.preview.new.other', { count: nNuevas })}</span>
     <span class="resumen-sep">·</span>
-    <span class="resumen-dup">⊘ ${_credDuplicadas.length} duplicada${_credDuplicadas.length !== 1 ? 's' : ''} (se ignorarán)</span>
+    <span class="resumen-dup">${t(nDup === 1 ? 'import.preview.dup.one' : 'import.preview.dup.other', { count: nDup })}</span>
   `
 
   const clavesNuevas = new Set(_credAImportar.map(claveDedup))
@@ -238,8 +242,8 @@ function renderizarPreview(candidatas) {
       <td>${escapeHtml(cred.usuario)}</td>
       <td class="password-mask">••••••••</td>
       <td>${esNueva
-        ? '<span class="badge-nueva">Nueva</span>'
-        : '<span class="badge-dup">Duplicada</span>'
+        ? `<span class="badge-nueva">${t('import.row.new')}</span>`
+        : `<span class="badge-dup">${t('import.row.dup')}</span>`
       }</td>
     `
     elTbody.appendChild(tr)
@@ -249,7 +253,7 @@ function renderizarPreview(candidatas) {
     const tr = document.createElement('tr')
     tr.innerHTML = `
       <td colspan="5" class="preview-truncado">
-        ... y ${omitidas} credencial${omitidas !== 1 ? 'es' : ''} más (no mostrada${omitidas !== 1 ? 's' : ''} en preview)
+        ${t(omitidas === 1 ? 'import.preview.more.one' : 'import.preview.more.other', { count: omitidas })}
       </td>
     `
     elTbody.appendChild(tr)
@@ -262,12 +266,12 @@ async function confirmarImportacion() {
 
   const claveSesion = obtenerClave()
   if (!claveSesion) {
-    mostrarError('La sesión expiró. Bloquea y desbloquea el vault para continuar.')
+    mostrarError(t('import.error.session'))
     return
   }
 
   ocultarError()
-  elBtnConfirmar.textContent = 'Importando...'
+  elBtnConfirmar.textContent = t('import.btn.importing')
   elBtnConfirmar.disabled    = true
   elBtnCancelar.disabled     = true
 
@@ -299,22 +303,20 @@ async function confirmarImportacion() {
     await guardarVaultCifrado([...credActuales, ...nuevas], claveSesion)
 
   } catch (_err) {
-    mostrarError('Error al importar. Intenta de nuevo.')
+    mostrarError(t('import.error.import'))
     elBtnCancelar.disabled = false
-    const s = _credAImportar.length !== 1 ? 'es' : ''
-    elBtnConfirmar.textContent = `Importar ${_credAImportar.length} credencial${s}`
+    const n = _credAImportar.length
+    elBtnConfirmar.textContent = t(n === 1 ? 'import.btn.import.one' : 'import.btn.import.other', { count: n })
     elBtnConfirmar.disabled    = false
     return
   }
 
   // ── Éxito: mostrar reporte y cerrar panel ──
   const ignoradas = _credDuplicadas.length
-  let msg = importadas === 1
-    ? '✅ 1 credencial importada correctamente.'
-    : `✅ ${importadas} credenciales importadas correctamente.`
+  let msg = t(importadas === 1 ? 'import.success.one' : 'import.success.other', { count: importadas })
 
   if (ignoradas > 0) {
-    msg += ` ${ignoradas} duplicada${ignoradas !== 1 ? 's' : ''} ignorada${ignoradas !== 1 ? 's' : ''}.`
+    msg += t(ignoradas === 1 ? 'import.success.dup.one' : 'import.success.dup.other', { count: ignoradas })
   }
 
   elSuccessMsg.textContent = msg
