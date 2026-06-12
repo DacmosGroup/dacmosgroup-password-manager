@@ -85,6 +85,7 @@ export const strings = {
   'nav.health':     'Salud',
   'nav.generator':  'Generador',
   'nav.settings':   'Config',
+  'nav.lock':       'Bloquear',
   'nav.aria.label': 'Navegación principal',
 
   // ── Vault ─────────────────────────────────────────────────────────────────

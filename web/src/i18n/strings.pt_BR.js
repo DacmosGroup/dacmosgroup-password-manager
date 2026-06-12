@@ -85,6 +85,7 @@ export const strings = {
   'nav.health':     'Saúde',
   'nav.generator':  'Gerador',
   'nav.settings':   'Config',
+  'nav.lock':       'Bloquear',
   'nav.aria.label': 'Navegação principal',
 
   // ── Cofre ─────────────────────────────────────────────────────────────────

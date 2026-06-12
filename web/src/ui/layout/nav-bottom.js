@@ -17,6 +17,8 @@
 
 import { navegar, rutaActual } from '../router.js'
 import { t } from '../../i18n/i18n.js'
+import { limpiarSesion } from '../../storage/session.js'
+import * as autoLock from '../../auto-lock/auto-lock-manager.js'
 
 // Rutas donde la nav NO debe mostrarse (setup, unlock, form de credencial)
 const RUTAS_SIN_NAV = new Set(['#/setup', '#/unlock', '#/credential-form'])
@@ -64,6 +66,21 @@ export function montarNavBottom() {
 
     nav.appendChild(btn)
   })
+
+  const etiquetaLock = t('nav.lock')
+  const btnLock = document.createElement('button')
+  btnLock.className = 'nav-item nav-item--lock'
+  btnLock.setAttribute('type', 'button')
+  btnLock.setAttribute('aria-label', etiquetaLock)
+  btnLock.innerHTML = `
+    <span class="nav-item__icono" aria-hidden="true">🔒</span>
+    <span class="nav-item__etiqueta">${etiquetaLock}</span>`
+  btnLock.addEventListener('click', () => {
+    autoLock.destroy()
+    limpiarSesion()
+    navegar('#/unlock')
+  })
+  nav.appendChild(btnLock)
 
   _contenedor.appendChild(nav)
   document.body.appendChild(_contenedor)
