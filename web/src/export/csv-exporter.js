@@ -10,7 +10,12 @@
 // Encierra en comillas dobles si contiene: coma, comilla doble o salto de línea.
 // Las comillas dobles internas se duplican → "" representa una " dentro del campo.
 function escaparCampo(valor) {
-  const str = String(valor ?? '')
+  let str = String(valor ?? '')
+  // Neutralizar CSV formula injection (OWASP, M-2): los gestores de hojas de
+  // cálculo interpretan como fórmula cualquier campo que empiece con = + - @
+  // tab o CR. Prefijar comilla simple desactiva la evaluación; el parser
+  // RFC 4180 al re-importar trata el prefijo como dato (no rompe la carga).
+  if (/^[=+\-@\t\r]/.test(str)) str = "'" + str
   if (/[",\n\r]/.test(str)) return '"' + str.replace(/"/g, '""') + '"'
   return str
 }
@@ -56,7 +61,9 @@ export function generarCSVBitwarden(credenciales) {
     c.url      ?? '',
     c.usuario  ?? '',
     c.password ?? '',
-    c.claveTotp ?? '',  // secreto TOTP Base32 — vacío si la credencial no tiene 2FA
+    // Campo canónico `totp` (v0.5.1); fallback a `claveTotp` legacy durante
+    // la ventana de migración. Vacío si la credencial no tiene 2FA.
+    c.totp ?? c.claveTotp ?? '',
   ]))
   return [encabezado, ...filas].join('\r\n')
 }
