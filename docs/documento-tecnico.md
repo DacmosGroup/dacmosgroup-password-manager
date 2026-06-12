@@ -2482,6 +2482,12 @@ Application → Extension Storage → Local, o un log de diagnóstico temporal s
 credenciales en sesión post-normalización. Solo aplica a la Extension (origen de
 `claveTotp`); la PWA no tiene este campo.
 
+**D8 — QA resultado:** No aplicable en este ciclo. No existen vaults con TOTP
+creado pre-v0.5.1 en el entorno de prueba. El shim `normalizarTOTP()` fue verificado
+por Code vía test funcional unitario (commit `efcc8b9`). La verificación en DevTools
+queda como procedimiento documentado para cuando existan usuarios reales con TOTP
+legacy.
+
 ---
 
 ## 27. Referencias
