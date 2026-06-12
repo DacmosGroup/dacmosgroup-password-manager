@@ -8,7 +8,8 @@
  *   3. Navega a #/vault
  */
 
-import { desbloquearVault, cargarVaultDescifrado } from '../../crypto/engine.js'
+import { desbloquearVault, cargarVaultDescifrado, guardarVaultCifrado } from '../../crypto/engine.js'
+import { normalizarCredenciales, requiereConvergenciaTotp } from '../../schema/credential-schema.js'
 import { establecerClave, establecerCredenciales, limpiarSesion } from '../../storage/session.js'
 import { navegar } from '../router.js'
 import { idbStorage } from '../../storage/indexeddb-adapter.js'
@@ -111,10 +112,20 @@ export async function montar(contenedor) {
         return
       }
 
-      // Sesión exitosa: guardar clave y cargar credenciales en memoria
+      // Sesión exitosa: guardar clave y cargar credenciales en memoria.
+      // Normalizar al schema canónico (v0.5.1): migra `claveTotp` → `totp`
+      // en vaults sincronizados desde la Extension legacy.
       establecerClave(clave)
-      const credenciales = await cargarVaultDescifrado(clave)
+      const credsRaw = await cargarVaultDescifrado(clave)
+      const _convergerTotp = requiereConvergenciaTotp(credsRaw)
+      const credenciales = normalizarCredenciales(credsRaw)
       establecerCredenciales(credenciales)
+
+      // Convergencia lazy (B2, v0.5.1): si el vault traía `claveTotp` legacy,
+      // persistir el schema canónico una sola vez. Idempotente.
+      if (_convergerTotp) {
+        try { await guardarVaultCifrado(credenciales, clave) } catch (_) {}
+      }
 
       // Iniciar auto-lock (F5-A)
       const { config: cfg } = await idbStorage.get(['config'])

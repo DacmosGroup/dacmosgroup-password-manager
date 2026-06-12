@@ -10,6 +10,7 @@ import { desbloquearVault, guardarVaultCifrado, cargarVaultDescifrado } from '..
 import { t, walkI18n } from '../../i18n/t.js'
 import { generarCodigo, esBase32Valido, segundosRestantes } from '../../crypto/totp.js'
 import { analizarSaludLocal } from '../../health/password-health.js'
+import { normalizarCredenciales, requiereConvergenciaTotp } from '../../schema/credential-schema.js'
 import {
   TIPO_LOGIN, TIPO_TARJETA, TIPO_IDENTIDAD,
   resolverTipo,
@@ -87,7 +88,11 @@ async function desbloquear() {
       return
     }
 
-    credenciales = await cargarVaultDescifrado(claveSesion)
+    // Cargar y normalizar al schema canónico (v0.5.1): migra `claveTotp` → `totp`.
+    // requiereConvergenciaTotp se evalúa sobre el array crudo, antes de normalizar.
+    const credsRaw = await cargarVaultDescifrado(claveSesion)
+    const _convergerTotp = requiereConvergenciaTotp(credsRaw)
+    credenciales = normalizarCredenciales(credsRaw)
 
     chrome.runtime.sendMessage({
       tipo:         'VAULT_DESBLOQUEADO',
@@ -100,6 +105,14 @@ async function desbloquear() {
 
     renderizarLista(credenciales)
     programarAnalisisSalud(credenciales)
+
+    // Convergencia lazy (B2, v0.5.1): si el vault traía `claveTotp` legacy,
+    // persistir el schema canónico una sola vez. Dispara sync via onChanged →
+    // propaga el vault saneado a la nube. Idempotente: tras converger ningún
+    // credencial tiene `claveTotp`, así que el próximo unlock no re-dispara.
+    if (_convergerTotp) {
+      try { await guardarVaultCifrado(credenciales, claveSesion) } catch (_) {}
+    }
 
     if (window._abrirModalAlDesbloquear) {
       abrirModal()
@@ -145,7 +158,7 @@ function renderizarLista(lista) {
   credentialList.classList.remove('hidden')
   lista.forEach(cred => credentialList.appendChild(crearItemCredencial(cred)))
 
-  if (credenciales.some(c => c.claveTotp)) iniciarCountdown()
+  if (credenciales.some(c => c.totp)) iniciarCountdown()
   else detenerCountdown()
 }
 
@@ -166,7 +179,7 @@ function crearItemLogin(cred) {
     day: '2-digit', month: 'short', year: 'numeric',
   })
 
-  const badgeTotp = cred.claveTotp ? `
+  const badgeTotp = cred.totp ? `
     <div class="totp-badge" id="totp-badge-${cred.id}">
       <span class="totp-etiqueta">2FA</span>
       <span class="totp-codigo" id="totp-codigo-${cred.id}">······</span>
@@ -203,7 +216,7 @@ function crearItemLogin(cred) {
   li.querySelector('.btn-editar').addEventListener('click',   e => { e.stopPropagation(); abrirModalEdicion(cred.id) })
   li.querySelector('.btn-eliminar').addEventListener('click', e => { e.stopPropagation(); eliminarCredencial(cred.id) })
 
-  if (cred.claveTotp) {
+  if (cred.totp) {
     li.querySelector('.btn-copiar-totp').addEventListener('click', e => {
       e.stopPropagation()
       copiarTotp(cred.id)
@@ -323,7 +336,7 @@ async function actualizarBadgesTotp() {
   if (periodoNuevo) periodoUltimo = periodoActual
 
   for (const cred of credenciales) {
-    if (!cred.claveTotp) continue
+    if (!cred.totp) continue
 
     const barraEl  = document.getElementById(`totp-barra-${cred.id}`)
     const timerEl  = document.getElementById(`totp-timer-${cred.id}`)
@@ -340,7 +353,7 @@ async function actualizarBadgesTotp() {
 
     if (periodoNuevo || codigoEl.textContent === '······') {
       try {
-        const codigo = await generarCodigo(cred.claveTotp)
+        const codigo = await generarCodigo(cred.totp)
         codigoEl.textContent = `${codigo.slice(0, 3)} ${codigo.slice(3)}`
       } catch (_) {
         codigoEl.textContent = 'ERROR'
@@ -387,10 +400,10 @@ async function copiarAlPortapapeles(texto, btn, tituloOriginal) {
 
 async function copiarTotp(id) {
   const cred = credenciales.find(c => c.id === id)
-  if (!cred?.claveTotp) return
+  if (!cred?.totp) return
 
   try {
-    const codigo = await generarCodigo(cred.claveTotp)
+    const codigo = await generarCodigo(cred.totp)
     await copiarAlPortapapeles(
       codigo,
       document.querySelector(`.btn-copiar-totp[data-id="${id}"]`),

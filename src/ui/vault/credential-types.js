@@ -219,11 +219,12 @@ export function leerFormularioLogin(esBase32Valido) {
     return { error: t('cred.login_error_totp') }
   }
 
-  const claveTotp = totpRaw
+  // Campo canónico `totp` (v0.5.1). La Extension dejó de escribir `claveTotp`.
+  const totp = totpRaw
     ? totpRaw.toUpperCase().replace(/[\s=]/g, '')
     : undefined
 
-  return { tipo: TIPO_LOGIN, sitio, url, usuario, password, notas, claveTotp }
+  return { tipo: TIPO_LOGIN, sitio, url, usuario, password, notas, totp }
 }
 
 export function leerFormularioTarjeta() {
@@ -273,7 +274,7 @@ export function llenarFormularioLogin(cred) {
   set('inputNotas',    cred.notas)
   const totpEl = document.getElementById('inputTotp')
   if (totpEl) {
-    totpEl.value = cred.claveTotp || ''
+    totpEl.value = cred.totp || ''
     totpEl.type  = 'password'
   }
 }
