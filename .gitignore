@@ -2,9 +2,7 @@
 node_modules/
 npm-debug.log*
 
-# Artefacto de npm init generado al instalar Playwright para tests locales
-package.json
-package-lock.json
+# package.json y package-lock.json se rastrean desde v0.6.0 (Capacitor deps)
 
 # Archivos de sistema
 .DS_Store
@@ -36,11 +34,20 @@ CLAUDE.md
 *.keystore
 *.jks
 
-# Artefactos de compilación Android (generados por Gradle — no en el repo)
+# Artefactos de compilación Android/iOS (generados — no en el repo)
 app/build/
+android/app/build/
+android/.gradle/
+android/build/
+android/local.properties
 .gradle/
 build/
 local.properties
+
+# iOS — CocoaPods y Swift PM build cache
+ios/App/Pods/
+ios/.build/
+ios/App/.build/
 
 # Documentos de sesión Claude Code (planificación interna, no doc formal)
 docs/auditoria-remediaciones-*.md

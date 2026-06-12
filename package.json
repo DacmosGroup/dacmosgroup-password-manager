@@ -1,0 +1,36 @@
+{
+  "name": "dacmosgroup-password-manager",
+  "version": "0.4.2",
+  "description": "**Gestor de contraseñas Zero-Knowledge local-first — Chrome Extension + PWA Mobile · construido en público por [DacmosGroup.co](https://dacmosgroup.co)**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DacmosGroup/dacmosgroup-password-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DacmosGroup/dacmosgroup-password-manager/issues"
+  },
+  "homepage": "https://github.com/DacmosGroup/dacmosgroup-password-manager#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/ios": "^8.4.0",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
