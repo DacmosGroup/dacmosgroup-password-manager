@@ -116,6 +116,11 @@ export async function montar(contenedor) {
     idbStorage.get(['syncConfig', 'config']),
   ])
 
+  // Versión leída del manifest (fuente única de verdad — paridad con la
+  // Extension que usa chrome.runtime.getManifest().version). Evita el drift
+  // del literal hardcodeado que mostró v0.4.3 hasta v0.5.1.
+  const versionApp = await _leerVersionManifest()
+
   const configActual  = syncConfig.config  ?? {}
   const syncConf      = syncConfig.syncConfig ?? {}
   const proveedorSync = syncConf.proveedor ?? null
@@ -381,7 +386,7 @@ export async function montar(contenedor) {
       </div>
 
       <p class="settings__version-pie">
-        ${t('settings.version', { version: '0.4.3' })}
+        ${t('settings.version', { version: versionApp })}
       </p>
     </div>`
 
@@ -661,6 +666,23 @@ function _descargarArchivo(contenido, tipo, nombre) {
   a.download = nombre
   a.click()
   URL.revokeObjectURL(url)
+}
+
+/**
+ * Lee la versión de la PWA desde el manifest (fuente única de verdad).
+ * Paridad con la Extension (chrome.runtime.getManifest().version).
+ * Si el manifest no puede leerse, retorna '' — el footer omite el número
+ * sin romper el render (caso patológico: PWA sin manifest accesible).
+ */
+async function _leerVersionManifest() {
+  try {
+    const resp = await fetch('/manifest.json', { cache: 'no-cache' })
+    if (!resp.ok) return ''
+    const data = await resp.json()
+    return data.version ?? ''
+  } catch (_) {
+    return ''
+  }
 }
 
 /** Formatea bytes en una cadena legible (B, KB, MB) */
