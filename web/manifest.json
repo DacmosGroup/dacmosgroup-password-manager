@@ -2,7 +2,7 @@
   "name": "Dacmos Password Manager",
   "short_name": "Dacmos PM",
   "description": "Gestor de contraseñas Zero-Knowledge — DacmosGroup.co",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "id": "/",
   "start_url": "/",
   "scope": "/",
