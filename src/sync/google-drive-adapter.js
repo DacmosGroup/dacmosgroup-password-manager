@@ -88,6 +88,15 @@ export class GoogleDriveAdapter extends StorageAdapter {
     )
   }
 
+  // Limpia el fileId cacheado en syncConfig sin eliminar el resto de la config.
+  // Llamar cuando Drive retorna 404 sobre un fileId conocido — indica que el
+  // archivo fue borrado externamente. El próximo sync buscará el fileId en
+  // Drive desde cero y, si sigue sin existir, guardar() lo creará nuevo.
+  // (Port del fork PWA — F5.1-C, resuelve BUG-SYNC-404 en la Extension.)
+  async _invalidarFileId() {
+    await this._patchSyncConfig({ fileId: null })
+  }
+
   // Guarda el vault cifrado en Drive (crea o actualiza)
   async guardar(vaultCifrado) {
     const token  = await this.obtenerToken(false)
@@ -105,6 +114,9 @@ export class GoogleDriveAdapter extends StorageAdapter {
         },
         token
       )
+      // 404 sobre un fileId cacheado indica borrado externo — limpiar caché
+      // para que el próximo sync busque/cree el archivo desde cero en Drive.
+      if (resp.status === 404) await this._invalidarFileId()
       if (!resp.ok) throw new Error(`DRIVE_${resp.status}`)
     } else {
       // Crear archivo nuevo — multipart upload para enviar metadata + contenido en un request
@@ -148,6 +160,8 @@ export class GoogleDriveAdapter extends StorageAdapter {
       {},
       token
     )
+    // 404 sobre un fileId cacheado indica borrado externo — limpiar caché.
+    if (resp.status === 404) await this._invalidarFileId()
     if (!resp.ok) throw new Error(`DRIVE_${resp.status}`)
     return resp.json()
   }
@@ -163,6 +177,13 @@ export class GoogleDriveAdapter extends StorageAdapter {
       {},
       token
     )
+    // 404 sobre un fileId cacheado: el archivo fue borrado externamente.
+    // Invalidar el caché y reportar "no existe" → el sync-manager lo trata
+    // como primera subida en vez de quedar atascado en DRIVE_404 (BUG-SYNC-404).
+    if (resp.status === 404) {
+      await this._invalidarFileId()
+      return null
+    }
     if (!resp.ok) throw new Error(`DRIVE_${resp.status}`)
     const data = await resp.json()
     return data.modifiedTime ? new Date(data.modifiedTime).getTime() : null
