@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Versión 0.5.0 · Junio 2026**
+**Versión 0.5.1 · Junio 2026**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -501,6 +501,41 @@ async function bloquearVault() {
 }
 ```
 
+### Schema canónico de credencial (documentado en v0.5.1)
+
+> Añadido en v0.5.1 (hallazgo M-5 de la auditoría v0.5.0): la ausencia de un
+> schema documentado fue la causa raíz de que el campo TOTP se implementara con
+> dos nombres distintos entre superficies (`claveTotp` en Extension, `totp` en PWA).
+
+Cada credencial del array `credenciales` (dentro del vault cifrado) sigue este
+schema canónico:
+
+```javascript
+{
+  id:         string,   // UUID v4 — inmutable tras creación
+  tipo:       string,   // 'login' | 'tarjeta' | 'identidad'
+  sitio:      string,   // nombre visible
+  url:        string,   // para URL matching en autofill
+  usuario:    string,
+  password:   string,
+  totp:       string,   // secreto TOTP Base32 (RFC 6238). Campo canónico. Opcional.
+  notas:      string,
+  creado:     string,   // ISO 8601
+  modificado: string,   // ISO 8601
+}
+```
+
+Los tipos `tarjeta` e `identidad` reemplazan los campos de login por sus propios
+campos (`numero`/`titular`/`vencimiento`/`cvv` y `nombre`/`email`/`telefono`/…
+respectivamente), gestionados en `credential-types.js`.
+
+**Migración TOTP `claveTotp` → `totp`:** vaults creados en la Extension pre-v0.5.1
+pueden tener `claveTotp`. El módulo `credential-schema.js` normaliza al cargar
+(`normalizarTOTP`) con convergencia lazy: el primer unlock post-actualización
+persiste el campo canónico y descarta el legacy. No requiere bump de
+`BLOB_VERSION` — es migración a nivel de schema de aplicación, no del envelope
+criptográfico. Ver §28.
+
 ---
 
 ## 7. Autocompletado
@@ -730,6 +765,7 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 | Exposición en portapapeles | Medio | Limpieza automática configurable (default: 30 segundos) |
 | Session hijacking (Extensión) | Bajo | chrome.storage.session accesible solo por la extensión — aislamiento MV3 |
 | Tokens OAuth en sessionStorage (PWA) | Bajo | MSAL almacena tokens de Microsoft en sessionStorage — aislado por origen, no cifrado por el API; el cifrado es del perfil del browser en disco. Tokens de Google viven en memoria pura (nunca en storage). |
+| refresh_token OneDrive en `chrome.storage.local` (Extension) | Bajo | El adapter OneDrive de la Extension persiste un `refreshToken` de larga vida en `chrome.storage.local` (sin cifrar), que sobrevive al reinicio del browser. Mitigación: `chrome.storage.local` está aislado por extensión (MV3); extraerlo requiere acceso al perfil del SO. Contraste: el adapter Google mantiene el token solo en memoria. Documentado en v0.5.1 (hallazgo B-1). Evaluación de Capacitor Keychain diferida a v0.6.0. |
 | XSS en PWA | Medio | La PWA no tiene el aislamiento MV3 de múltiples contextos. Un XSS exitoso en `dpm.dacmosgroup.co` podría acceder a las variables de `session.js`. Mitigaciones: CSP sin `unsafe-inline`/`unsafe-eval` (desde v0.4.1), `escapeHtml()` centralizada en módulo compartido aplicada en todas las vistas, sin `eval()`. Permiso `activeTab` eliminado del manifest (v0.4.2, superficie reducida). |
 | Cambio de master password concurrente | Bajo | Flag `_cambioEnProgreso` (módulo) en ambos engines previene re-entrada en `cambiarMasterPassword()`; liberado en `finally` para evitar bloqueo permanente. |
 | Service Worker comprometido (PWA) | Medio | Un SW interceptor puede servir assets modificados a todos los clientes de ese origen. Mitigaciones: HTTPS obligatorio en Cloudflare Pages, SW servido desde el mismo origen (`'self'`), `worker-src` restringida en CSP, Workbox fijado a versión exacta (`7.0.0`). |
@@ -749,7 +785,7 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 
 | Deuda | Descripción | Impacto | Resolución |
 |-------|-------------|---------|------------|
-| `ultimaModificacion()` sin invalidación de fileId | `GoogleDriveAdapter.ultimaModificacion()` no invalida el fileId cacheado en IDB cuando Drive retorna 404. La autocorrección ocurre en el siguiente `guardar()` o `cargar()`, que sí implementan la invalidación. | Bajo — error visible en el sync, sin pérdida de datos | ✅ Resuelto en BUG-1 — commit `071391d` |
+| `ultimaModificacion()` sin invalidación de fileId | `GoogleDriveAdapter.ultimaModificacion()` no invalida el fileId cacheado cuando Drive retorna 404 → el sync queda atascado en `DRIVE_404` si el archivo remoto se borra externamente (BUG-SYNC-404). | Medio — sync atascado, workaround: desconectar/reconectar | **PWA:** ✅ Resuelto en BUG-1 (commit `071391d`). **Extension:** ✅ Resuelto en v0.5.1 (F5.1-C) — el fix solo existía en el fork PWA; corregido el drift invertido. Ver §28. |
 | Precache revision fields manuales | Los campos `revision` del precache en `web/service-worker.js` deben incrementarse manualmente por archivo al hacer deploy. Sin Workbox Inject Manifest no hay automatización. | Operacional — usuarios pueden usar assets desactualizados hasta que la cache expire (30 días TTL) | ✅ Resuelto en BUG-2 — `SW_DEPLOY_ID` inyectado por CI |
 | Import desde setup (Caso 1 — vault vacío) | `importarVaultBackup()` maneja correctamente el Caso 1 (sin vault previo) pero no hay ruta UI que lo dispare — Settings requiere sesión activa. El código es correcto; falta la UX de "Restaurar backup" en la pantalla de setup inicial. | UX — el import solo funciona si el usuario ya tiene un vault configurado. **Prioridad elevada:** la ausencia de Zona de Peligro en la PWA deja sin ruta de escape a usuarios con contraseña olvidada. | v0.5.0 — pantalla de setup con opción de restauración |
 
@@ -2204,11 +2240,22 @@ explícita de cambio en Settings. Tres idiomas: ES, EN, PT-BR.
 - Override usuario: campo `config.idioma` en IndexedDB
 - Toggle UI: vista Settings — prominente, con tres opciones visibles
 
-#### Contrato de strings compartido
+#### Contrato de strings — catálogos independientes por superficie
 
-Ambas plataformas usan las mismas keys. Los archivos de strings se mantienen en
-sincronía manual (Extension `_locales/` ↔ PWA `i18n/strings.*.js`). La disciplina
-es suficiente para 3 idiomas sin introducir un build step.
+> **Corrección (v0.5.1, hallazgo M-4 de la auditoría v0.5.0):** la afirmación
+> previa de que "ambas plataformas usan las mismas keys, solo cambia el separador"
+> es **incorrecta**. La verificación contra código vivo muestra:
+> - **Paridad intra-superficie: perfecta** — los 3 idiomas son consistentes dentro
+>   de cada superficie (Extension `_locales/`, PWA `i18n/strings.*.js`).
+> - **Paridad cross-superficie: inexistente** — los vocabularios de keys son
+>   distintos (no solo el separador `.` vs `_`); 179 de las keys de la PWA no
+>   tienen equivalente en la Extension y los conteos divergen.
+>
+> Parte de la divergencia es legítima (cada superficie tiene pantallas que la otra
+> no). No existe hoy un contrato de keys compartido ni verificación de paridad
+> cross-superficie. **La decisión de si v0.6.0 unifica los catálogos en un contrato
+> compartido o los mantiene independientes queda diferida a la arquitectura de
+> v0.6.0.**
 
 ### D4 — Roadmap completo actualizado
 
@@ -2292,7 +2339,7 @@ F5-B implementa internacionalización (ES/EN/PT-BR) en dos plataformas con mecan
 | Override | `config.idioma` en `chrome.storage.local` | `config.idioma` en IndexedDB |
 | Toggle UI | Settings (Extension) | Settings — prominente ✅ |
 
-Las keys son las mismas semánticamente en ambas plataformas; la diferencia es solo el separador. La sincronía es manual — sin build step.
+Las keys se mantienen en sincronía **dentro de cada superficie** (paridad de los 3 idiomas) de forma manual, sin build step. **No** existe un contrato de keys compartido entre superficies — ver la corrección M-4 en "Contrato de strings — catálogos independientes por superficie" (decisión de unificación diferida a v0.6.0).
 
 ### Módulo i18n PWA — inicialización
 
@@ -2353,6 +2400,87 @@ Si el array `ITEMS` estuviera a nivel de módulo, `t()` se evaluaría en tiempo 
 | R2 | Copy guard rompe en idiomas no-ES | Medio | Reemplazado por `data-has-password` attribute |
 | R3 | Toggle de idioma no re-monta todas las vistas | Medio | `window.location.reload()` — recarga completa |
 | R4 | `auto` no borra `config.idioma` correctamente | Bajo | Destructuring elimina la key del objeto antes de persistir |
+
+---
+
+## 28. Decisiones de Implementación — v0.5.1 (Saneamiento pre-v0.6.0)
+
+**Fecha:** 2026-06-11
+**Origen:** Auditoría interna v0.5.0 (`docs/auditoria-v0.5.0-hallazgos.md`).
+Ciclo de saneamiento que resuelve el cluster TOTP, paridad de sync Drive,
+CSV injection, i18n del wizard y correcciones documentales **antes** de que
+Capacitor (v0.6.0) herede el bundle PWA.
+
+### D1 — Campo canónico TOTP: `totp`
+
+El nombre canónico del secreto TOTP en el schema de credencial es `totp`.
+La Extension usaba `claveTotp`; la PWA ya usaba `totp` (y Capacitor la hereda).
+Migrar la Extension a `totp` toca menos código a largo plazo. Ver el schema
+completo en §6.
+
+### D2 — Migración: convergencia lazy activa en unlock (B2)
+
+`credential-schema.js::normalizarTOTP` normaliza `claveTotp → totp` al cargar
+(precedencia: gana `totp` si coexisten ambos, por ser determinista sin timestamp
+por-campo). Si algún credencial traía `claveTotp`, el chokepoint dispara un único
+`guardarVaultCifrado` de convergencia tras el unlock — el vault se sana en storage
+y se propaga a la nube vía sync. Idempotente: tras converger no queda `claveTotp`,
+el segundo unlock no re-dispara.
+
+**Propiedad crítica:** `BLOB_VERSION` permanece en 1. La migración es a nivel de
+schema de aplicación (sobre el array descifrado), no del envelope criptográfico —
+`serializarAAD()` no cambia. Riesgo de corrupción de vault: nulo por diseño.
+
+### D3 — Módulo `credential-schema.js` como chokepoint único
+
+La normalización vive en `src/schema/credential-schema.js` (+ fork PWA), **no** en
+`engine.js`: el engine es la única fuente de verdad de *cifrado*, no de *schema*.
+Aplicado en los chokepoints de carga — Extension `vault.js`, PWA `unlock.js`
+(el `setup.js` de la PWA crea vault vacío o delega el restore en `unlock.js`, por
+lo que `unlock.js` es el chokepoint efectivo). Incorporado al protocolo de forks
+(`verify-crypto-sync.sh`).
+
+### D4 — TOTP funcional en la PWA (A-2)
+
+La PWA almacenaba el secreto pero nunca generaba el código. v0.5.1 porta
+`totp.js` al fork PWA (módulo puro Web Crypto; produce códigos idénticos a la
+Extension) y añade el código en vivo + countdown + copia en la card del vault.
+
+### D5 — Adapters de sync: fix 404 + protocolo de forks (M-1/D6)
+
+`google-drive-adapter.js` de la Extension recibe el `_invalidarFileId()` + manejo
+de 404 que solo existía en el fork PWA (drift invertido — el fix estaba en el fork,
+no en el original). `verify-crypto-sync.sh` ahora verifica el contrato público
+StorageAdapter de los 4 adapters (Google Drive + OneDrive × 2 superficies) y ancla
+la presencia del fix 404 en ambas superficies. OneDrive es inmune (direcciona por
+path, no por fileId cacheado).
+
+### D6 — CSV formula injection + columna TOTP canónica (M-2/M-3)
+
+`escaparCampo()` (ambos exportadores) neutraliza campos que empiezan con `= + - @`
+tab o CR prefijando comilla simple (OWASP CSV Injection). La columna `login_totp`
+del export Bitwarden lee `totp` (canónico) con fallback a `claveTotp` legacy.
+
+### D7 — i18n del wizard de import (B-2)
+
+Los ~20 strings hardcoded del wizard de import de la PWA (`import-wizard.js`)
+pasan a `t()`. 29 keys nuevas `import.*` en ES/EN/PT-BR con variantes `.one/.other`.
+Paridad intra-superficie mantenida.
+
+### D8 — Documentación corregida
+
+§6 documenta el schema canónico de credencial (incluido `totp`). §10 desglosa la
+deuda de fileId Drive por superficie y añade el refresh_token de OneDrive a la
+tabla de amenazas. §26 corrige la afirmación inexacta de paridad de keys i18n
+cross-superficie (decisión de unificación diferida a v0.6.0).
+
+### Criterio de aceptación de migración (verificación de storage)
+
+Tras el primer unlock post-actualización en la Extension, ningún objeto credencial
+del vault debe conservar la propiedad `claveTotp`. Verificación: Chrome DevTools →
+Application → Extension Storage → Local, o un log de diagnóstico temporal sobre las
+credenciales en sesión post-normalización. Solo aplica a la Extension (origen de
+`claveTotp`); la PWA no tiene este campo.
 
 ---
 

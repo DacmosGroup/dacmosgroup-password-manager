@@ -6,8 +6,8 @@
 > sobre seguridad de la información aplicada.
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
-[![Extension](https://img.shields.io/badge/Extension-v0.5.0-blue)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
-[![PWA](https://img.shields.io/badge/PWA-v0.5.0-green)](https://dpm.dacmosgroup.co)
+[![Extension](https://img.shields.io/badge/Extension-v0.5.1-blue)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![PWA](https://img.shields.io/badge/PWA-v0.5.1-green)](https://dpm.dacmosgroup.co)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -92,6 +92,18 @@
 | F5-A | Auto-lock timer en PWA — `visibilitychange` + `Date.now()`, paridad con Chrome Extension | ✅ |
 | F5-B | i18n ES / EN / PT-BR — Extension (`chrome.i18n` MV3) + PWA (módulo custom `web/src/i18n/`) | ✅ |
 | F5-B | Toggle de idioma en Settings de la PWA — Automático \| Español \| English \| Português (la Extension sigue el idioma de Chrome automáticamente, sin selector) | ✅ |
+
+### ✅ Fase 5.1 — Saneamiento pre-v0.6.0 (COMPLETADA)
+
+Ciclo derivado de la auditoría interna v0.5.0 (`docs/auditoria-v0.5.0-hallazgos.md`).
+
+| Feature | Descripción | Estado |
+|---------|-------------|--------|
+| F5.1-A | Schema canónico TOTP (`totp`) + shim de lectura dual + convergencia lazy (migra `claveTotp` de la Extension; sin bump de `BLOB_VERSION`) | ✅ |
+| F5.1-B | Motor TOTP en la PWA — código en vivo + countdown (antes solo almacenaba el secreto) | ✅ |
+| F5.1-C | Fix BUG-SYNC-404 en el adapter Drive de la Extension + 4 adapters al protocolo de forks | ✅ |
+| F5.1-D | Neutralización de CSV formula injection (ambas superficies) + columna TOTP canónica | ✅ |
+| F5.1-E | i18n del wizard de import (29 keys ES/EN/PT-BR) | ✅ |
 
 ### ⏳ Fase 6 — Capacitor + Autofill Nativo v0.6.0+ (PENDIENTE)
 
@@ -186,7 +198,7 @@ especializada en las cuatro mega-tendencias que dominan la industria:
 
 ## 🔒 Política de Privacidad
 
-[Ver política de privacidad](https://dacmosgroup.co/politica-de-privacidad-dacmosgroup-password-manager)
+[Ver política de privacidad](https://dacmosgroup.co/politica-de-privacidad/password-manager/)
 
 ---
 

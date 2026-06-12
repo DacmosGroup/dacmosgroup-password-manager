@@ -412,7 +412,7 @@ Configuración → Exportar vault.
 
 **Repositorio:** [github.com/DacmosGroup/dacmosgroup-password-manager](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 
-**Política de privacidad:** [dacmosgroup.co/politica-de-privacidad-dacmosgroup-password-manager](https://dacmosgroup.co/politica-de-privacidad-dacmosgroup-password-manager)
+**Política de privacidad:** [dacmosgroup.co/politica-de-privacidad/password-manager](https://dacmosgroup.co/politica-de-privacidad/password-manager/)
 
 ---
 

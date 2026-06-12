@@ -97,15 +97,21 @@ Injected into all URLs at `document_idle`. Detects login forms by heuristic (pre
 ```js
 {
   id: crypto.randomUUID(),
+  tipo: 'login' | 'tarjeta' | 'identidad',
   sitio: string,
   url: string,
   usuario: string,
   password: string,
+  totp: string,   // secreto TOTP Base32 (RFC 6238) — campo canónico, opcional (v0.5.1)
   notas: string,
   creado: ISO8601,
   modificado: ISO8601,
 }
 ```
+
+> **Schema canónico TOTP (v0.5.1):** el campo es `totp` en ambas superficies.
+> Vaults de la Extension pre-v0.5.1 podían usar `claveTotp`; `src/schema/credential-schema.js`
+> normaliza al cargar (convergencia lazy, sin bump de `BLOB_VERSION`). Ver documento-tecnico §28.
 
 ### CSP Constraint
 
@@ -151,8 +157,8 @@ Per-platform independent versioning:
 
 | Platform | Manifest | Estado |
 |---|---|---|
-| Chrome Extension | `manifest.json` | v0.5.0 — i18n ES/EN/PT-BR + auto-lock · **SUBMITTED FOR REVIEW en CWS (2026-06-10)** · v0.4.1 sigue PUBLICADA ✅ |
-| PWA | `web/manifest.json` | v0.5.0 — i18n ES/EN/PT-BR + auto-lock · LIVE en dpm.dacmosgroup.co ✅ (commit `03600f2`) |
+| Chrome Extension | `manifest.json` | v0.5.1 — saneamiento (cluster TOTP, fix sync 404, CSV injection) · v0.5.0 PUBLICADA en CWS ✅ · **v0.5.1 pendiente de empaquetar/subir a CWS** |
+| PWA | `web/manifest.json` | v0.5.1 — saneamiento · pendiente deploy a dpm.dacmosgroup.co (Cloudflare Pages) |
 | APK Android (TWA) | GitHub Releases | v0.4.2 en IzzyOnDroid · en producción |
 
 **Estado auditoría:** Fases 1–4 completas (commit `4970463`, merge `01c8623`). Branch `fix/auditoria-remediaciones` cerrada.
@@ -164,14 +170,26 @@ Per-platform independent versioning:
 - ZIP CWS v0.5.0 generado: `dacmos-pm-v0.5.0-cws.zip` (144KB, 60 files, commit `03600f2`)
 - Builds empaquetados (todos los ZIP/CRX subidos a stores): `..\..\releases\` — carpeta local fuera del repo, ver su README (consolidados 2026-06-10)
 
-**Submission CWS v0.5.0 (2026-06-10):** ZIP + 5 screenshots 1280×800 + listing trilingüe — en review.
+**Submission CWS v0.5.0 (2026-06-10):** ZIP + 5 screenshots 1280×800 + listing trilingüe — **APROBADA y PUBLICADA 2026-06-11** ✅.
 - Assets del store versionados en `docs/cws-assets/` (capturas crudas + finales, `make-composites.ps1`, `listing/{es,en,pt_BR}.md`) — regla: editar ahí ANTES de pegar en el dashboard
-- Al aprobar: publicar (si quedó staged, antes de 30 días) · borrar vault de la cuenta de pruebas `carjes2795@gmail.com` (recién entonces) · actualizar tablas de estado (workspace + master context)
+- Post-aprobación: tablas de estado actualizadas 2026-06-11 ✅ · vault de la cuenta de pruebas `carjes2795@gmail.com` borrado 2026-06-11 ✅ (load-unpacked desinstalada del perfil de pruebas; reinstalada la versión CWS oficial — nunca tuvo sync a Drive)
+
+**v0.5.1 COMPLETO (2026-06-11) — saneamiento pre-v0.6.0:**
+- F5.1-A: schema canónico TOTP (`totp`) + shim de lectura dual + convergencia lazy (migra `claveTotp`, sin bump de `BLOB_VERSION`)
+- F5.1-B: motor TOTP en la PWA (port `totp.js`) + código en vivo + countdown — resuelve A-2 (la PWA solo almacenaba el secreto)
+- F5.1-C: fix BUG-SYNC-404 en el adapter Drive de la Extension + 4 adapters al protocolo de forks
+- F5.1-D: CSV formula injection neutralizada (ambas superficies) + columna TOTP canónica
+- F5.1-E: i18n del wizard de import (29 keys ES/EN/PT-BR)
+- F5.1-F: docs (§6 schema, §10 fileId/B-1, §26 i18n, §28 decisiones) · roadmap-v0.5.1.md
+- Origen: `docs/auditoria-v0.5.0-hallazgos.md` · branch `feature/v0.5.1` · verify-crypto-sync.sh exit 0 (5 secciones)
+- **Pendiente de publicación:** empaquetar Extension v0.5.1 → CWS · deploy PWA → Cloudflare Pages
 
 **Próximo hito — v0.6.0:**
-- Capacitor wrapping — app nativa iOS + Android (hereda i18n de v0.5.0)
+- Capacitor wrapping — app nativa iOS + Android (hereda el bundle PWA ya saneado)
 - Biometría nativa (Capacitor)
 - Publicar en Play Store + App Store
+- UX-LOCK-NAV (hallado 2026-06-11, QA de campo): paridad de UX en lock manual — en la extensión "Bloquear" está en la nav inferior del popup (1 tap); en la PWA solo existe en Configuración → sesión (3 taps). Añadir "Bloquear" a la nav inferior de la PWA (`web/src/ui/layout/nav-bottom.js`). Solo PWA → deploy directo vía Cloudflare Pages.
+- Backlog auditoría heredado: H-5 (deviceId opaco en blob), H-9 (logging de sync), evaluación Capacitor Keychain para refresh_token OneDrive (B-1), decisión de unificación de catálogos i18n cross-superficie (M-4).
 
 **Nota:** `client_id` en manifest.json es un identificador público OAuth2 — no es un secret. Su presencia en el repo es intencional.
 
@@ -179,10 +197,21 @@ Per-platform independent versioning:
 
 ## Fork Sync Protocol
 
-`web/src/crypto/engine.js` y `web/src/health/password-health.js` son forks manuales de sus contrapartes en la extensión. Al modificar cualquiera de los archivos fuente:
+Estos archivos son forks manuales de sus contrapartes en la extensión (verificados por `verify-crypto-sync.sh`):
+
+| Original (Extension) | Fork (PWA) | Nivel verificado |
+|---|---|---|
+| `src/crypto/engine.js` | `web/src/crypto/engine.js` | constantes + API surface |
+| `src/health/password-health.js` | `web/src/health/password-health.js` | constantes + API surface |
+| `src/crypto/totp.js` | `web/src/crypto/totp.js` | constantes + API surface (v0.5.1) |
+| `src/schema/credential-schema.js` | `web/src/schema/credential-schema.js` | API surface (v0.5.1) |
+| `src/sync/google-drive-adapter.js` | `web/src/sync/google-drive-adapter.js` | contrato StorageAdapter + fix 404 (v0.5.1) |
+| `src/sync/onedrive-adapter.js` | `web/src/sync/onedrive-adapter.js` | contrato StorageAdapter (v0.5.1) |
+
+Al modificar cualquier archivo fuente:
 
 1. Portar el mismo cambio al fork correspondiente en `web/src/`.
 2. Ejecutar `bash scripts/verify-crypto-sync.sh` y confirmar exit 0.
 3. Incluir ambos archivos en el mismo commit.
 
-Nunca commitear cambios a `src/crypto/engine.js` sin verificar que el fork PWA queda en sync. Un drift aquí produce vaults incompatibles entre plataformas.
+Nunca commitear cambios a un original sin verificar que el fork PWA queda en sync. Un drift en crypto/schema produce vaults incompatibles entre plataformas; un drift en los adapters reintroduce bugs como BUG-SYNC-404.
