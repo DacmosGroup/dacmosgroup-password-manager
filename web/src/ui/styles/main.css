@@ -399,6 +399,35 @@ textarea.input {
   flex-shrink: 0;
 }
 
+/* Bloque TOTP en la card (F5.1-B) — código en vivo + countdown + copiar */
+.card__totp {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+.card__totp-cod {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+.card__totp-time {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  min-width: 2.4em;
+}
+.card__totp-time--exp { color: var(--color-danger); }
+.card__totp-copy {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
 /* Botones de acción detrás de la card (revelados con swipe) */
 .card__acciones {
   position: absolute;

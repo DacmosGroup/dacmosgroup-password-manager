@@ -94,6 +94,7 @@ export const strings = {
   'vault.empty.text':          'Tu vault está vacío. Añade tu primera credencial.',
   'vault.no.results':          'Sin resultados para "{term}"',
   'vault.card.fallback':       'Sin nombre',
+  'vault.totp.copy':           'Copiar código TOTP',
   'vault.delete.confirm':      '¿Eliminar "{name}"? Esta acción no se puede deshacer.',
   'vault.banner.persistence':  '⚠️ Tu vault local puede borrarse si no abres la app durante 7+ días.',
   'vault.banner.sync.link':    'Configura la sincronización',

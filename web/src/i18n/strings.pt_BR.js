@@ -94,6 +94,7 @@ export const strings = {
   'vault.empty.text':          'Seu cofre está vazio. Adicione sua primeira credencial.',
   'vault.no.results':          'Sem resultados para "{term}"',
   'vault.card.fallback':       'Sem nome',
+  'vault.totp.copy':           'Copiar código TOTP',
   'vault.delete.confirm':      'Excluir "{name}"? Esta ação não pode ser desfeita.',
   'vault.banner.persistence':  '⚠️ Seu cofre local pode ser apagado se você não abrir o app por 7+ dias.',
   'vault.banner.sync.link':    'Configure a sincronização',

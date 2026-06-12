@@ -21,7 +21,12 @@ import { activarSwipe }         from '../components/swipe-card.js'
 import { estaInstalable, instalar } from '../onboarding/pwa-install.js'
 import { navegar }              from '../router.js'
 import { escapeHtml }           from '../../utils/escape.js'
+import { generarCodigo, segundosRestantes } from '../../crypto/totp.js'
 import { t }                    from '../../i18n/i18n.js'
+
+// ── Estado del countdown TOTP (F5.1-B) ──
+let _totpInterval = null
+let _totpPeriodo  = -1
 
 /** Monta la vista del vault en el contenedor dado */
 export async function montar(contenedor) {
@@ -145,9 +150,13 @@ function _renderLista(contenedor, credenciales, filtro) {
         <div class="card__info">
           <div class="card__sitio">${escapeHtml(cred.sitio || t('vault.card.fallback'))}</div>
           <div class="card__usuario">${escapeHtml(cred.usuario || cred.url || '')}</div>
-        </div>
-        <div class="card__badges">
-          ${cred.totp ? '<span class="badge badge--neutro">TOTP</span>' : ''}
+          ${cred.totp ? `
+          <div class="card__totp" data-totp-id="${escapeHtml(cred.id)}">
+            <span class="card__totp-cod" id="totp-cod-${escapeHtml(cred.id)}">······</span>
+            <span class="card__totp-time" id="totp-time-${escapeHtml(cred.id)}">--s</span>
+            <button class="card__totp-copy" type="button"
+                    aria-label="${t('vault.totp.copy')}" title="${t('vault.totp.copy')}">📋</button>
+          </div>` : ''}
         </div>
       </div>
       <div class="card__acciones" aria-hidden="true">
@@ -156,13 +165,84 @@ function _renderLista(contenedor, credenciales, filtro) {
       </div>
     </div>`).join('')
 
-  // Activar swipe en cada card renderizada
+  // Activar swipe en cada card renderizada + wiring de copia TOTP
   contenedor.querySelectorAll('.card').forEach(card => {
     activarSwipe(card, {
       onEditar:   (id) => _editarCredencial(id),
       onEliminar: (id) => _eliminarCredencial(id, contenedor, filtro),
     })
+
+    const btnCopy = card.querySelector('.card__totp-copy')
+    if (btnCopy) {
+      btnCopy.addEventListener('click', async (e) => {
+        e.stopPropagation()
+        const cred = obtenerCredenciales().find(c => c.id === card.dataset.id)
+        if (!cred?.totp) return
+        try {
+          const codigo = await generarCodigo(cred.totp)
+          await navigator.clipboard.writeText(codigo)
+          btnCopy.textContent = '✅'
+          setTimeout(() => { btnCopy.textContent = '📋' }, 1500)
+        } catch (_) {}
+      })
+    }
   })
+
+  // Countdown TOTP: arranca si hay credenciales con secreto; se detiene si no.
+  if (filtradas.some(c => c.totp)) _iniciarCountdownTotp()
+  else _detenerCountdownTotp()
+}
+
+// ── TOTP: countdown y generación de código en tiempo real (F5.1-B) ──
+// Mantiene paridad con la Extension (src/ui/vault/vault.js): un único
+// setInterval por segundo actualiza los badges existentes en el DOM por id.
+
+function _detenerCountdownTotp() {
+  if (_totpInterval !== null) {
+    clearInterval(_totpInterval)
+    _totpInterval = null
+  }
+}
+
+function _iniciarCountdownTotp() {
+  _detenerCountdownTotp()
+  _totpPeriodo = -1          // fuerza regeneración inmediata en el primer tick
+  _tickTotp()
+  _totpInterval = setInterval(_tickTotp, 1000)
+}
+
+async function _tickTotp() {
+  const restantes    = segundosRestantes()
+  const periodoActual = Math.floor(Date.now() / 1000 / 30)
+  const periodoNuevo  = periodoActual !== _totpPeriodo
+  if (periodoNuevo) _totpPeriodo = periodoActual
+
+  let encontrados = 0
+  for (const cred of obtenerCredenciales()) {
+    if (!cred.totp) continue
+
+    const codEl  = document.getElementById(`totp-cod-${cred.id}`)
+    const timeEl = document.getElementById(`totp-time-${cred.id}`)
+    if (!codEl || !timeEl) continue
+    encontrados++
+
+    timeEl.textContent = `${restantes}s`
+    timeEl.classList.toggle('card__totp-time--exp', restantes <= 5)
+
+    // Regenerar al cambiar de período o en el primer tick tras un render
+    if (periodoNuevo) {
+      try {
+        const codigo = await generarCodigo(cred.totp)
+        codEl.textContent = `${codigo.slice(0, 3)} ${codigo.slice(3)}`
+      } catch (_) {
+        codEl.textContent = 'ERROR'
+      }
+    }
+  }
+
+  // Auto-stop: si la vista cambió y ya no hay elementos TOTP en el DOM,
+  // detener el interval para no dejarlo corriendo en background.
+  if (encontrados === 0) _detenerCountdownTotp()
 }
 
 /** Navega al formulario de edición con la credencial seleccionada */

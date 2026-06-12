@@ -59,8 +59,11 @@ export function activarSwipe(card, manejadores) {
     // Ignorar botones que no sean el principal (botón izquierdo / primer dedo)
     if (e.button !== 0 && e.pointerType !== 'touch') return
     // Si el press cae sobre los botones de acción, no capturar — el click
-    // debe fluir naturalmente al botón sin ser redirigido a card por setPointerCapture
+    // debe fluir naturalmente al botón sin ser redirigido a card por setPointerCapture.
+    // La zona TOTP (código + copiar) se excluye igual: es interactiva y no debe
+    // disparar swipe ni tap-to-edit (F5.1-B).
     if (e.target.closest('.card__acciones')) return
+    if (e.target.closest('.card__totp')) return
     startX   = e.clientX
     currentX = e.clientX
     activo   = true

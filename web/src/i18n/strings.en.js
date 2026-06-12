@@ -94,6 +94,7 @@ export const strings = {
   'vault.empty.text':          'Your vault is empty. Add your first credential.',
   'vault.no.results':          'No results for "{term}"',
   'vault.card.fallback':       'Unnamed',
+  'vault.totp.copy':           'Copy TOTP code',
   'vault.delete.confirm':      'Delete "{name}"? This action cannot be undone.',
   'vault.banner.persistence':  '⚠️ Your local vault may be deleted if you don\'t open the app for 7+ days.',
   'vault.banner.sync.link':    'Set up sync',

@@ -36,6 +36,10 @@ EXT_ENGINE="$REPO_ROOT/src/crypto/engine.js"
 PWA_ENGINE="$REPO_ROOT/web/src/crypto/engine.js"
 EXT_HEALTH="$REPO_ROOT/src/health/password-health.js"
 PWA_HEALTH="$REPO_ROOT/web/src/health/password-health.js"
+EXT_TOTP="$REPO_ROOT/src/crypto/totp.js"
+PWA_TOTP="$REPO_ROOT/web/src/crypto/totp.js"
+EXT_SCHEMA="$REPO_ROOT/src/schema/credential-schema.js"
+PWA_SCHEMA="$REPO_ROOT/web/src/schema/credential-schema.js"
 
 ERRORES=0
 
@@ -93,7 +97,7 @@ check_exports() {
 # ═══════════════════════════════════════════════
 # 1. Verificar crypto engine
 # ═══════════════════════════════════════════════
-echo "[1/2] Crypto engine — constantes de seguridad y API surface"
+echo "[1/4] Crypto engine — constantes de seguridad y API surface"
 echo ""
 echo "  Constantes críticas:"
 
@@ -123,7 +127,7 @@ check_exports "$EXT_ENGINE" "$PWA_ENGINE"
 # 2. Verificar password-health
 # ═══════════════════════════════════════════════
 echo ""
-echo "[2/2] Password-health — constantes y API surface"
+echo "[2/4] Password-health — constantes y API surface"
 echo ""
 echo "  Constantes críticas:"
 
@@ -133,6 +137,30 @@ check_constante "Umbral entropía (bits)" \
 echo ""
 echo "  API surface (funciones exportadas):"
 check_exports "$EXT_HEALTH" "$PWA_HEALTH"
+
+# ═══════════════════════════════════════════════
+# 3. Verificar motor TOTP (fork desde v0.5.1)
+# ═══════════════════════════════════════════════
+echo ""
+echo "[3/4] Motor TOTP — constantes y API surface"
+echo ""
+echo "  Constantes críticas:"
+
+check_constante "Período TOTP (s)" \
+  "PERIODO\s*=" "$EXT_TOTP" "$PWA_TOTP"
+
+echo ""
+echo "  API surface (funciones exportadas):"
+check_exports "$EXT_TOTP" "$PWA_TOTP"
+
+# ═══════════════════════════════════════════════
+# 4. Verificar schema de credencial (fork desde v0.5.1)
+# ═══════════════════════════════════════════════
+echo ""
+echo "[4/4] Credential-schema — API surface"
+echo ""
+echo "  API surface (funciones exportadas):"
+check_exports "$EXT_SCHEMA" "$PWA_SCHEMA"
 
 # ═══════════════════════════════════════════════
 # Resultado final
