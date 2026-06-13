@@ -1,6 +1,6 @@
 # CLAUDE.md — Dacmos Password Manager
 # Ruta: C:\DacmosGroup\04_Dev\PasswordManager\dacmosgroup-password-manager\CLAUDE.md
-# Última actualización: 2026-06-08
+# Última actualización: 2026-06-12
 # PREREQUISITO: C:\Users\dacmo\.claude\CLAUDE.md (L0) + C:\DacmosGroup\CLAUDE.md (L1)
 # Este archivo asume que ya leíste ambos. No repite convenciones globales ni mandato de seguridad.
 
@@ -157,9 +157,9 @@ Per-platform independent versioning:
 
 | Platform | Manifest | Estado |
 |---|---|---|
-| Chrome Extension | `manifest.json` | v0.5.1 — saneamiento (cluster TOTP, fix sync 404, CSV injection) · v0.5.0 PUBLICADA en CWS ✅ · **v0.5.1 pendiente de empaquetar/subir a CWS** |
-| PWA | `web/manifest.json` | v0.5.1 — saneamiento · pendiente deploy a dpm.dacmosgroup.co (Cloudflare Pages) |
-| APK Android (TWA) | GitHub Releases | v0.4.2 en IzzyOnDroid · en producción |
+| Chrome Extension | `manifest.json` | v0.5.1 · v0.5.0 PUBLICADA en CWS ✅ · **v0.5.1 pendiente de empaquetar/subir a CWS** |
+| PWA | `web/manifest.json` | v0.5.1 LIVE en dpm.dacmosgroup.co ✅ (incluye UX-LOCK-NAV) |
+| Android (Capacitor) | `android/` · `app-release.aab` | **v0.6.0 COMPLETADO 2026-06-12** ✅ · bundleRelease firmado · Play Store: cuenta activa, verificación identidad pendiente |
 
 **Estado auditoría:** Fases 1–4 completas (commit `4970463`, merge `01c8623`). Branch `fix/auditoria-remediaciones` cerrada.
 **Testing completado 2026-06-06:** Bloques 1–8 APROBADOS — sync round-trip Extension ↔ PWA en ambas direcciones.
@@ -184,12 +184,23 @@ Per-platform independent versioning:
 - Origen: `docs/auditoria-v0.5.0-hallazgos.md` · branch `feature/v0.5.1` · verify-crypto-sync.sh exit 0 (5 secciones)
 - **Pendiente de publicación:** empaquetar Extension v0.5.1 → CWS · deploy PWA → Cloudflare Pages
 
-**Próximo hito — v0.6.0:**
-- Capacitor wrapping — app nativa iOS + Android (hereda el bundle PWA ya saneado)
-- Biometría nativa (Capacitor)
-- Publicar en Play Store + App Store
-- UX-LOCK-NAV (hallado 2026-06-11, QA de campo): paridad de UX en lock manual — en la extensión "Bloquear" está en la nav inferior del popup (1 tap); en la PWA solo existe en Configuración → sesión (3 taps). Añadir "Bloquear" a la nav inferior de la PWA (`web/src/ui/layout/nav-bottom.js`). Solo PWA → deploy directo vía Cloudflare Pages.
-- Backlog auditoría heredado: H-5 (deviceId opaco en blob), H-9 (logging de sync), evaluación Capacitor Keychain para refresh_token OneDrive (B-1), decisión de unificación de catálogos i18n cross-superficie (M-4).
+**v0.6.0 COMPLETADO (2026-06-12):**
+- UX-LOCK-NAV: botón "Bloquear" en nav-bottom PWA · deploy Cloudflare Pages ✅
+- Shell Capacitor v8: `android/` + `ios/` stub · `capacitor.config.ts` ✅
+- DpmKeyPlugin (Kotlin): `BiometricPrompt.CryptoObject` + Android Keystore · `wrap/unwrap/wrapToken/unwrapToken/deleteKey` ✅
+- `biometric-bridge.js`: puente JS↔DpmKeyPlugin · `configurarBiometria()` + `desbloquearConBiometria()` ✅
+- `exportarClaveRaw()` añadida a AMBOS forks de `engine.js` (verify-crypto-sync.sh exit 0) ✅
+- UI biométrica: botón en unlock-view + toggle en settings (ES/EN/PT-BR) ✅
+- `bundleRelease` firmado con keystore `keys/dacmos-pm-release.keystore` ✅
+- Play Store: cuenta activa (dacmosgroup@gmail.com) · verificación identidad en proceso ✅
+- Backlog diferido a v0.7.0: H-5 (deviceId en vault), H-9 (sync logging), B-1 (OneDrive token migration via MSAL), M-4 (i18n unification)
+
+**Próximo hito — v0.7.0:**
+- Android Autofill Service nativo
+- iOS Credential Provider (requiere macOS + Apple Developer $99)
+- H-5: embed `_deviceId` en vault cifrado
+- H-9: logging de eventos sync
+- Ver `docs/roadmap-v0.7.0.md`
 
 **Nota:** `client_id` en manifest.json es un identificador público OAuth2 — no es un secret. Su presencia en el repo es intencional.
 
