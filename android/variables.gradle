@@ -1,4 +1,6 @@
 ext {
+    kotlinVersion = '2.0.21'
+    androidxBiometricVersion = '1.2.0'
     minSdkVersion = 24
     compileSdkVersion = 36
     targetSdkVersion = 36
