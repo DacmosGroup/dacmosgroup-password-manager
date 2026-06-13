@@ -8,6 +8,7 @@
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
 [![Extension](https://img.shields.io/badge/Extension-v0.5.1-blue)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 [![PWA](https://img.shields.io/badge/PWA-v0.5.1-green)](https://dpm.dacmosgroup.co)
+[![Android](https://img.shields.io/badge/Android-v0.6.0-brightgreen)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -105,12 +106,22 @@ Ciclo derivado de la auditoría interna v0.5.0 (`docs/auditoria-v0.5.0-hallazgos
 | F5.1-D | Neutralización de CSV formula injection (ambas superficies) + columna TOTP canónica | ✅ |
 | F5.1-E | i18n del wizard de import (29 keys ES/EN/PT-BR) | ✅ |
 
-### ⏳ Fase 6 — Capacitor + Autofill Nativo v0.6.0+ (PENDIENTE)
+### ✅ Fase 6 — Capacitor Android v0.6.0 (COMPLETADA — 2026-06-12)
 
-- Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
-- iOS AutoFill Credential Provider Extension (Swift nativo)
-- Android Autofill Service + Credential Manager API (Kotlin nativo)
-- Apple App Store + Google Play Store
+| Feature | Descripción | Estado |
+|---------|-------------|--------|
+| UX-LOCK-NAV | Botón "Bloquear" en nav-bottom de la PWA (paridad Extension) | ✅ |
+| Capacitor v8 | Shell nativo Android + iOS stub | ✅ |
+| DpmKeyPlugin | `BiometricPrompt.CryptoObject` + Android Keystore — wrap_key nunca sale del hardware | ✅ |
+| biometric-bridge.js | Puente JS↔DpmKeyPlugin · configurar/desbloquear/desactivar biometría | ✅ |
+| UI biométrica | Botón unlock + toggle settings (ES/EN/PT-BR) | ✅ |
+| Play Store | `app-release.aab` firmado · cuenta activa · verificación identidad en proceso | ✅ |
+
+### ⏳ Fase 7 — Autofill Nativo v0.7.0 (PRÓXIMO)
+
+- Android Autofill Service (`DpmAutofillService.kt`) — aparece como opción de autocompletado del sistema
+- iOS Credential Provider Extension — requiere macOS + Apple Developer $99
+- Backlog v0.6.0 diferido: H-5 (deviceId en vault), H-9 (sync logging), M-4 (i18n unification), B-1 (OneDrive token)
 
 ---
 
@@ -126,7 +137,8 @@ v0.4.1 ✅  Ext: flujo "¿Olvidaste tu contraseña?" — escape hatch desde pant
 v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispositivo
 v0.4.3 ✅  PWA: paridad con v0.4.1 Ext — flujo "¿Olvidaste tu contraseña?"
 v0.5.0 ✅  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
-v0.6.0 ⏳  Capacitor — app nativa iOS + Android (hereda i18n de v0.5.0)
+v0.5.1 ✅  Saneamiento pre-v0.6.0 (TOTP canónico, BUG-SYNC-404, CSV injection, i18n wizard)
+v0.6.0 ✅  Capacitor Android — DpmKeyPlugin biometría + Play Store (iOS → v0.6.1)
 v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)
 v0.9.0 ⏳  Argon2id opcional + preparación auditoría
