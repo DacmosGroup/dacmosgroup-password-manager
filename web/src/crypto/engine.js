@@ -543,6 +543,39 @@ async function importarVaultBackup(backup, passwordMaestra, opcionesImport = {})
   return credencialesFinales.length;
 }
 
+// ── EXPORTAR CLAVE RAW PARA BIOMETRÍA (Capacitor/PWA) ──
+// Verifica la contraseña y retorna los bytes crudos de la clave AES-256.
+// Uso exclusivo de biometric-bridge.js para envolver la clave en el hardware
+// Keystore/Keychain. La clave de sesión (no-extractable) no se ve afectada.
+// Retorna null si la contraseña es incorrecta.
+async function exportarClaveRaw(passwordMaestra) {
+  const datos = await idbStorage.get(['sal', 'sal2', 'tokenVerificacion']);
+  if (!datos.sal) return null;
+
+  try {
+    const sal2       = new Uint8Array(base64ABuffer(datos.sal2));
+    const claveVerif = await derivarClave(passwordMaestra, sal2);
+    const token      = await descifrarConVersion(datos.tokenVerificacion, claveVerif);
+    if (token.verificacion !== 'DACMOSGROUP_VAULT_OK') return null;
+
+    const sal           = new Uint8Array(base64ABuffer(datos.sal));
+    const materialClave = await crypto.subtle.importKey(
+      'raw', stringABuffer(passwordMaestra), { name: 'PBKDF2' }, false, ['deriveKey']
+    );
+    const claveExportable = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: sal, iterations: PBKDF2_ITERACIONES, hash: PBKDF2_HASH },
+      materialClave,
+      { name: AES_ALGORITMO, length: AES_BITS },
+      true,
+      ['encrypt', 'decrypt'],
+    );
+    return new Uint8Array(await crypto.subtle.exportKey('raw', claveExportable));
+  } catch (error) {
+    if (error.message?.startsWith('VAULT_VERSION_INCOMPATIBLE')) throw error;
+    return null;
+  }
+}
+
 // ── EXPORTAR FUNCIONES PÚBLICAS ──
 export {
   configurarVault,
@@ -553,6 +586,7 @@ export {
   exportarVaultBackup,
   importarVaultBackup,
   detectarVersionBlob,
+  exportarClaveRaw,
   generarSal,
   bufferABase64,
   base64ABuffer,

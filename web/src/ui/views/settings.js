@@ -34,6 +34,12 @@ import { sincronizar }         from '../../sync/sync-manager.js'
 import { navegar }             from '../router.js'
 import * as autoLock           from '../../auto-lock/auto-lock-manager.js'
 import { initI18n, t }         from '../../i18n/i18n.js'
+import {
+  esBiometriaDisponible,
+  hayBiometriaConfigurada,
+  configurarBiometria,
+  desactivarBiometria,
+} from '../../crypto/biometric-bridge.js'
 
 // ── Modal seguro de contraseña (reemplaza prompt() nativo) ──
 
@@ -111,9 +117,11 @@ export async function montar(contenedor) {
     return
   }
 
-  const [persistencia, syncConfig] = await Promise.all([
+  const [persistencia, syncConfig, bioDisponible, bioConfigurada] = await Promise.all([
     verificarPersistencia(),
     idbStorage.get(['syncConfig', 'config']),
+    esBiometriaDisponible(),
+    hayBiometriaConfigurada(),
   ])
 
   // Versión leída del manifest (fuente única de verdad — paridad con la
@@ -374,6 +382,36 @@ export async function montar(contenedor) {
       <!-- ── Sesión ── -->
       <p class="seccion-titulo">${t('settings.section.session')}</p>
       <div class="settings__seccion tarjeta">
+
+        ${bioDisponible ? `
+        <div class="settings__fila" id="fila-biometria">
+          <div class="settings__fila-info">
+            <div class="settings__fila-titulo">${t('settings.biometrics.title')}</div>
+            <div class="settings__fila-descripcion">${t('settings.biometrics.desc')}</div>
+          </div>
+          <div class="settings__fila-accion">
+            ${bioConfigurada
+              ? `<button class="btn btn--pequeño btn--peligro" id="btn-desactivar-bio" type="button">${t('settings.biometrics.btn.disable')}</button>`
+              : `<button class="btn btn--pequeño btn--secundario" id="btn-activar-bio" type="button">${t('settings.biometrics.btn.enable')}</button>`
+            }
+          </div>
+        </div>
+        <div class="settings__fila oculto" id="panel-bio-confirm">
+          <div class="settings__fila-info" style="flex:1">
+            <label class="settings__fila-titulo" for="bio-pass-input">${t('settings.biometrics.confirm.label')}</label>
+            <div class="campo__wrapper" style="margin-top:6px">
+              <input type="password" id="bio-pass-input" class="input" autocomplete="current-password">
+            </div>
+            <div class="unlock__error oculto" id="bio-confirm-error" role="alert" style="margin-top:4px"></div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn btn--pequeño btn--secundario" id="btn-bio-cancelar" type="button">${t('settings.biometrics.confirm.cancel')}</button>
+              <button class="btn btn--pequeño btn--primario" id="btn-bio-confirmar" type="button">${t('settings.biometrics.confirm.btn')}</button>
+            </div>
+          </div>
+        </div>
+        <div class="unlock__error oculto" id="bio-exito" style="color:var(--color-primary);padding:8px 0 0 0"></div>
+        ` : ''}
+
         <div class="settings__fila">
           <div class="settings__fila-info">
             <div class="settings__fila-titulo">${t('settings.session.lock.title')}</div>
@@ -629,6 +667,65 @@ export async function montar(contenedor) {
       onLock: () => { limpiarSesion(); navegar('#/unlock') },
     })
   })
+
+  // ── Biometría ──
+  if (bioDisponible) {
+    const panelConfirm = contenedor.querySelector('#panel-bio-confirm')
+    const exitoEl      = contenedor.querySelector('#bio-exito')
+    const errorConfirm = contenedor.querySelector('#bio-confirm-error')
+
+    if (!bioConfigurada) {
+      contenedor.querySelector('#btn-activar-bio')?.addEventListener('click', () => {
+        panelConfirm.classList.remove('oculto')
+        contenedor.querySelector('#bio-pass-input').focus()
+      })
+    }
+
+    contenedor.querySelector('#btn-bio-cancelar')?.addEventListener('click', () => {
+      panelConfirm.classList.add('oculto')
+      contenedor.querySelector('#bio-pass-input').value = ''
+      errorConfirm.classList.add('oculto')
+    })
+
+    contenedor.querySelector('#btn-bio-confirmar')?.addEventListener('click', async () => {
+      const pass = contenedor.querySelector('#bio-pass-input').value
+      if (!pass) return
+      errorConfirm.classList.add('oculto')
+      const btn = contenedor.querySelector('#btn-bio-confirmar')
+      btn.disabled = true
+      try {
+        const resultado = await configurarBiometria(pass)
+        if (!resultado) {
+          errorConfirm.textContent = t('settings.biometrics.confirm.error')
+          errorConfirm.classList.remove('oculto')
+        } else {
+          panelConfirm.classList.add('oculto')
+          contenedor.querySelector('#btn-activar-bio')?.remove()
+          exitoEl.textContent = t('settings.biometrics.success')
+          exitoEl.classList.remove('oculto')
+        }
+      } catch (_) {
+        errorConfirm.textContent = t('auth.unlock.error.generic')
+        errorConfirm.classList.remove('oculto')
+      } finally {
+        btn.disabled = false
+        contenedor.querySelector('#bio-pass-input').value = ''
+      }
+    })
+
+    contenedor.querySelector('#btn-desactivar-bio')?.addEventListener('click', async () => {
+      await desactivarBiometria()
+      const fila = contenedor.querySelector('#fila-biometria')
+      if (fila) {
+        fila.querySelector('.settings__fila-accion').innerHTML =
+          `<button class="btn btn--pequeño btn--secundario" id="btn-activar-bio" type="button">${t('settings.biometrics.btn.enable')}</button>`
+        fila.querySelector('#btn-activar-bio').addEventListener('click', () => {
+          panelConfirm.classList.remove('oculto')
+          contenedor.querySelector('#bio-pass-input').focus()
+        })
+      }
+    })
+  }
 
   // ── Bloquear vault ──
   contenedor.querySelector('#btn-bloquear').addEventListener('click', () => {

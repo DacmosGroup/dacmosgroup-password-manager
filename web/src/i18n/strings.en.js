@@ -19,6 +19,11 @@ export const strings = {
   'auth.unlock.error.version':  'This vault was created with a newer version of Dacmos PM. Update the app to open it.',
   'auth.unlock.error.generic':  'Error unlocking. Reload the page and try again.',
 
+  // ── Auth — Biometrics ─────────────────────────────────────────────────────
+  'auth.biometrics.btn':              'Use biometrics',
+  'auth.biometrics.or':               'or use your password',
+  'auth.biometrics.error.invalidated':'Biometric setup changed. Enable it again in Settings.',
+
   // ── Auth — Forgot password ────────────────────────────────────────────────
   'auth.forgot.link':        'Forgot your password?',
   'auth.forgot.warning':     '⚠️ Creating a new vault will permanently delete all your credentials. Your local backup and cloud vault will also become inaccessible. This action cannot be undone.',
@@ -311,6 +316,17 @@ export const strings = {
   'settings.session.lock.title': 'Lock vault',
   'settings.session.lock.desc':  'Close session and clear credentials from memory',
   'settings.session.btn.lock':   'Lock',
+
+  // ── Settings — Biometrics ─────────────────────────────────────────────────
+  'settings.biometrics.title':          'Biometric unlock',
+  'settings.biometrics.desc':           'Use your fingerprint or Face ID to unlock without a password',
+  'settings.biometrics.btn.enable':     'Enable',
+  'settings.biometrics.btn.disable':    'Disable',
+  'settings.biometrics.confirm.label':  'Confirm your master password',
+  'settings.biometrics.confirm.btn':    'Confirm and enable',
+  'settings.biometrics.confirm.cancel': 'Cancel',
+  'settings.biometrics.confirm.error':  'Incorrect password',
+  'settings.biometrics.success':        'Biometric unlock enabled',
 
   // ── Password modal ────────────────────────────────────────────────────────
   'settings.modal.placeholder':   'Master password',

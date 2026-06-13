@@ -19,6 +19,11 @@ export const strings = {
   'auth.unlock.error.version':  'Este cofre foi criado com uma versão mais recente do Dacmos PM. Atualize o aplicativo para abri-lo.',
   'auth.unlock.error.generic':  'Erro ao desbloquear. Recarregue a página e tente novamente.',
 
+  // ── Auth — Biometria ──────────────────────────────────────────────────────
+  'auth.biometrics.btn':              'Usar biometria',
+  'auth.biometrics.or':               'ou use sua senha',
+  'auth.biometrics.error.invalidated':'A configuração biométrica mudou. Ative novamente em Ajustes.',
+
   // ── Auth — Esqueci a senha ────────────────────────────────────────────────
   'auth.forgot.link':        'Esqueceu sua senha?',
   'auth.forgot.warning':     '⚠️ Criar um novo cofre eliminará permanentemente todas as suas credenciais. Seu backup local e cofre na nuvem também ficarão inacessíveis. Esta ação não pode ser desfeita.',
@@ -311,6 +316,17 @@ export const strings = {
   'settings.session.lock.title': 'Bloquear cofre',
   'settings.session.lock.desc':  'Encerrar sessão e limpar credenciais da memória',
   'settings.session.btn.lock':   'Bloquear',
+
+  // ── Configurações — Biometria ─────────────────────────────────────────────
+  'settings.biometrics.title':          'Desbloqueio biométrico',
+  'settings.biometrics.desc':           'Use sua digital ou Face ID para desbloquear sem senha',
+  'settings.biometrics.btn.enable':     'Ativar',
+  'settings.biometrics.btn.disable':    'Desativar',
+  'settings.biometrics.confirm.label':  'Confirme sua senha mestra',
+  'settings.biometrics.confirm.btn':    'Confirmar e ativar',
+  'settings.biometrics.confirm.cancel': 'Cancelar',
+  'settings.biometrics.confirm.error':  'Senha incorreta',
+  'settings.biometrics.success':        'Desbloqueio biométrico ativado',
 
   // ── Modal de senha ────────────────────────────────────────────────────────
   'settings.modal.placeholder':   'Senha mestra',

@@ -15,15 +15,35 @@ import { navegar } from '../router.js'
 import { idbStorage } from '../../storage/indexeddb-adapter.js'
 import * as autoLock from '../../auto-lock/auto-lock-manager.js'
 import { t } from '../../i18n/i18n.js'
+import {
+  esBiometriaDisponible,
+  hayBiometriaConfigurada,
+  desbloquearConBiometria,
+  desactivarBiometria,
+} from '../../crypto/biometric-bridge.js'
 
 /** Monta la vista de desbloqueo en el contenedor dado */
 export async function montar(contenedor) {
+  const [bioDisponible, bioConfigurada] = await Promise.all([
+    esBiometriaDisponible(),
+    hayBiometriaConfigurada(),
+  ])
+  const mostrarBiometria = bioDisponible && bioConfigurada
+
   contenedor.innerHTML = `
     <div class="vista--centrada">
       <div class="tarjeta tarjeta--unlock">
         <div class="unlock__logo">🔐</div>
         <h1 class="unlock__titulo">${t('auth.unlock.title')}</h1>
         <p class="unlock__subtitulo">${t('auth.unlock.subtitle')}</p>
+
+        ${mostrarBiometria ? `
+        <button type="button" class="btn btn--primario btn--completo unlock__bio-btn" id="btn-bio">
+          👆 ${t('auth.biometrics.btn')}
+        </button>
+        <p class="unlock__bio-sep">${t('auth.biometrics.or')}</p>
+        <div class="unlock__error oculto" id="bio-error" role="alert"></div>
+        ` : ''}
 
         <form class="unlock__form" id="form-unlock" novalidate>
           <div class="campo">
@@ -34,7 +54,7 @@ export async function montar(contenedor) {
                      class="input"
                      placeholder="${t('auth.unlock.placeholder.full')}"
                      autocomplete="current-password"
-                     autofocus>
+                     ${mostrarBiometria ? '' : 'autofocus'}>
               <button type="button" class="campo__toggle" id="toggle-pass"
                       aria-label="${t('auth.unlock.aria.toggle')}">👁️</button>
             </div>
@@ -88,6 +108,31 @@ export async function montar(contenedor) {
     await navegar('#/setup')
   })
 
+  // ── Desbloqueo biométrico ──
+  if (mostrarBiometria) {
+    contenedor.querySelector('#btn-bio').addEventListener('click', async () => {
+      const bioErr = contenedor.querySelector('#bio-error')
+      bioErr.classList.add('oculto')
+      try {
+        const clave = await desbloquearConBiometria()
+        await _completarSesion(clave, contenedor)
+      } catch (e) {
+        if (e.message === 'USER_CANCELED') return
+        if (e.message === 'KEY_INVALIDATED') {
+          await desactivarBiometria()
+          bioErr.textContent = t('auth.biometrics.error.invalidated')
+          bioErr.classList.remove('oculto')
+          contenedor.querySelector('#btn-bio')?.remove()
+          contenedor.querySelector('.unlock__bio-sep')?.remove()
+          contenedor.querySelector('#unlock-password').setAttribute('autofocus', '')
+          return
+        }
+        bioErr.textContent = t('auth.unlock.error.generic')
+        bioErr.classList.remove('oculto')
+      }
+    })
+  }
+
   // ── Submit del formulario ──
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
@@ -112,29 +157,7 @@ export async function montar(contenedor) {
         return
       }
 
-      // Sesión exitosa: guardar clave y cargar credenciales en memoria.
-      // Normalizar al schema canónico (v0.5.1): migra `claveTotp` → `totp`
-      // en vaults sincronizados desde la Extension legacy.
-      establecerClave(clave)
-      const credsRaw = await cargarVaultDescifrado(clave)
-      const _convergerTotp = requiereConvergenciaTotp(credsRaw)
-      const credenciales = normalizarCredenciales(credsRaw)
-      establecerCredenciales(credenciales)
-
-      // Convergencia lazy (B2, v0.5.1): si el vault traía `claveTotp` legacy,
-      // persistir el schema canónico una sola vez. Idempotente.
-      if (_convergerTotp) {
-        try { await guardarVaultCifrado(credenciales, clave) } catch (_) {}
-      }
-
-      // Iniciar auto-lock (F5-A)
-      const { config: cfg } = await idbStorage.get(['config'])
-      autoLock.init({
-        limitMinutos: cfg?.autoLock ?? 5,
-        onLock: () => { limpiarSesion(); navegar('#/unlock') },
-      })
-
-      await navegar('#/vault')
+      await _completarSesion(clave, contenedor)
 
     } catch (error) {
       if (error.message?.startsWith('VAULT_VERSION_INCOMPATIBLE')) {
@@ -150,6 +173,26 @@ export async function montar(contenedor) {
 }
 
 // ── Helpers privados ──
+
+async function _completarSesion(clave, contenedor) {
+  establecerClave(clave)
+  const credsRaw = await cargarVaultDescifrado(clave)
+  const _convergerTotp = requiereConvergenciaTotp(credsRaw)
+  const credenciales = normalizarCredenciales(credsRaw)
+  establecerCredenciales(credenciales)
+
+  if (_convergerTotp) {
+    try { await guardarVaultCifrado(credenciales, clave) } catch (_) {}
+  }
+
+  const { config: cfg } = await idbStorage.get(['config'])
+  autoLock.init({
+    limitMinutos: cfg?.autoLock ?? 5,
+    onLock: () => { limpiarSesion(); navegar('#/unlock') },
+  })
+
+  await navegar('#/vault')
+}
 
 function _mostrarError(el, mensaje) {
   el.textContent = mensaje

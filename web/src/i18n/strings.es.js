@@ -19,6 +19,11 @@ export const strings = {
   'auth.unlock.error.version':  'Este vault fue creado con una versión más reciente de Dacmos PM. Actualiza la aplicación para abrirlo.',
   'auth.unlock.error.generic':  'Error al desbloquear. Recarga la página e intenta de nuevo.',
 
+  // ── Auth — Biometría ──────────────────────────────────────────────────────
+  'auth.biometrics.btn':              'Usar biometría',
+  'auth.biometrics.or':               'o usa tu contraseña',
+  'auth.biometrics.error.invalidated':'La configuración biométrica cambió. Actívala de nuevo en Ajustes.',
+
   // ── Auth — Olvidé contraseña ──────────────────────────────────────────────
   'auth.forgot.link':        '¿Olvidaste tu contraseña?',
   'auth.forgot.warning':     '⚠️ Crear un vault nuevo eliminará permanentemente todas tus credenciales. Tu backup local y vault en la nube también quedarán inaccesibles. Esta acción no se puede deshacer.',
@@ -311,6 +316,17 @@ export const strings = {
   'settings.session.lock.title': 'Bloquear vault',
   'settings.session.lock.desc':  'Cerrar sesión y limpiar credenciales de la memoria',
   'settings.session.btn.lock':   'Bloquear',
+
+  // ── Configuración — Biometría ─────────────────────────────────────────────
+  'settings.biometrics.title':          'Desbloqueo biométrico',
+  'settings.biometrics.desc':           'Activa tu huella o Face ID para desbloquear sin contraseña',
+  'settings.biometrics.btn.enable':     'Activar',
+  'settings.biometrics.btn.disable':    'Desactivar',
+  'settings.biometrics.confirm.label':  'Confirma tu contraseña maestra',
+  'settings.biometrics.confirm.btn':    'Confirmar y activar',
+  'settings.biometrics.confirm.cancel': 'Cancelar',
+  'settings.biometrics.confirm.error':  'Contraseña incorrecta',
+  'settings.biometrics.success':        'Desbloqueo biométrico activado',
 
   // ── Modal de contraseña (seguro) ──────────────────────────────────────────
   'settings.modal.placeholder':   'Contraseña maestra',
