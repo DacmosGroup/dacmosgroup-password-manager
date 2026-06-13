@@ -167,19 +167,19 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 **`https://dpm.dacmosgroup.co`** — disponible en iOS, Android y Desktop directamente desde el navegador, sin instalación.
 
-**Android:** también disponible como APK via GitHub Releases (distribución directa sin Play Store).
+**Android:** app nativa v0.6.0 en Google Play Store (en proceso de publicación · internal track activo).
 
 ---
 
 ## 📦 Chrome Web Store
 
-**v0.4.1 PUBLICADA** ✅ (aprobada 2026-06-09) · **v0.5.0 en review** (submitted 2026-06-10 con listing ES/EN/PT-BR). Instalación via enlace directo:
+**v0.5.0 PUBLICADA** ✅ (aprobada 2026-06-11) · **v0.5.1 en review** 🔄 (submitted 2026-06-11). Instalación via enlace directo:
 
 `https://chromewebstore.google.com/detail/dacmos-password-manager/aflgjjkallibohcebggkkjdlhdnainai`
 
 ---
 
-## 🔑 Funciones Principales v0.5.0
+## 🔑 Funciones Principales v0.6.0
 
 - **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
 - **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
@@ -194,7 +194,7 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 - **Sync OneDrive** — Microsoft Graph API, misma garantía de privacidad
 - **BYOC** — tú eliges el proveedor cloud; DacmosGroup no almacena nada
 - **PWA Mobile** — vault accesible desde cualquier browser mobile en `dpm.dacmosgroup.co`
-- **APK Android** — distribución directa via GitHub Releases (TWA, sin Play Store)
+- **App Android nativa** — Capacitor v0.6.0, Google Play Store · biometría (huella/Face ID) vía DpmKeyPlugin
 - **SW update flow** — banner "Nueva versión disponible" sin forzar cierre de tabs
 - **¿Olvidaste tu contraseña?** — escape hatch desde pantalla bloqueada para crear vault nuevo vacío (principio ZK mantenido)
 
