@@ -25,7 +25,8 @@
 
 ### PS-1 · Verificación de identidad Play Store  `[BLOQUEANTE EXTERNO]`
 - **Estado:** 🔄 **REENVIADA 2026-09-06** — esperando revisión de Google (1–3 días hábiles, aviso por correo a `dacmosgroup@gmail.com` + banner de Play Console). Documento: recibo ENSA de agosto 2026 (`ENSA Agosto 2026.jpeg`), nombre y dirección alineados campo por campo con el perfil. Rechazo previo: 2026-06-17, *"Proof of Address: document info does not match profile"*.
-- **Al aprobar:** completar "Verify your contact phone number" → subir AAB v0.6.0 al internal track.
+- **Al aprobar:** completar "Verify your contact phone number" → subir AAB al internal track.
+  - ⚠️ **NO subir el AAB v0.6.0 que ya está firmado hoy** — es anterior a H-5 (`3c29a2d`, 2026-09-06) y su fork PWA de `engine.js` no lleva `_deviceId`. Rebuild + re-firma desde `main` post-H-5 antes de subir. (D-1 no tiene este problema: su APK se construye sobre `main` actual y ya trae H-5.)
 - **Si se rechaza de nuevo:** plan B = estado de cuenta bancario (dirección con ciudad/provincia mejor formateada).
 - **Cuenta:** `dacmosgroup@gmail.com` · ID 6476802733577318173 · tipo **individual** (nombre legal: Alejandro Seijas).
 - **Qué desbloquea:** todo el track Android de v0.7.0 (internal testing → F7-A). No bloquea el resto del backlog; **D-1 es el hedge** si esto se demora o se rechaza de nuevo.
