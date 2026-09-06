@@ -38,7 +38,8 @@
 25. [Decisiones de Implementación — F5-A (Auto-lock PWA)](#25-decisiones-de-implementación--f5-a)
 26. [Decisiones de Implementación — F5-B (i18n ES/EN/PT-BR)](#26-decisiones-de-implementación--f5-b)
 27. [Referencias](#27-referencias)
-28. [Decisiones de Implementación — v0.6.0 Capacitor Android-first](#28-decisiones-de-implementación--v060)
+28. [Decisiones de Implementación — v0.5.1 (Saneamiento pre-v0.6.0)](#28-decisiones-de-implementación--v051-saneamiento-pre-v060)
+29. [Decisiones de Implementación — v0.6.0 Capacitor Android-first](#29-decisiones-de-implementación--v060-capacitor-android-first)
 
 ---
 
@@ -844,7 +845,7 @@ La misma PWA de v0.4.0 ejecuta dentro de un shell Capacitor v8 nativo:
 
 - WKWebView (iOS) / Chromium WebView (Android) — `crypto.subtle` intacta
 - `DpmKeyPlugin` propio (Kotlin/Swift) — `BiometricPrompt.CryptoObject` / Secure Enclave
-  (`@aparajita/capacitor-secure-storage` descartado — ver DA-2 en §28)
+  (`@aparajita/capacitor-secure-storage` descartado — ver DA-2 en §29)
 - Android-first: Play Store v0.6.0 · App Store cuando haya macOS + Apple Developer $99
 - Scope iOS diferido a v0.6.1
 
@@ -2515,23 +2516,6 @@ legacy.
 - **Chrome Extension Manifest V3**
   https://developer.chrome.com/docs/extensions/mv3/
 
----
-
-## 28. Decisiones de Implementación — v0.6.0 Capacitor Android-first
-
-**Fecha:** 2026-06-12
-
-| Decisión | Resolución |
-|---|---|
-| DA-1: TWA app/ | Eliminado. Reemplazado por `android/` generado por Capacitor CLI. |
-| DA-2: Plugin biometría | `DpmKeyPlugin` nativo propio (`BiometricPrompt.CryptoObject`). `@aparajita/capacitor-secure-storage` descartado — no expone `CryptoObject` en Android. La `wrap_key` nunca sale del hardware; JS recibe solo `{iv, ciphertext}`. |
-| DA-3: `_deviceId` | Dentro del vault cifrado — nunca en sync metadata en claro (consistencia ZK). Implementación base en `device-id.js`; embedding en vault diferido a v0.7.0 con H-9. |
-| DA-4: OneDrive token (B-1) | Diferido a v0.7.0 — el `refresh_token` lo gestiona MSAL en `sessionStorage`, no hay nada en IDB que migrar. |
-| DA-5: M-4, H-9 | Diferidos a v0.7.0. |
-| Scope | Android-first. iOS (v0.6.1/v0.7.0) requiere macOS + Apple Developer $99. |
-
-**Principio no negociable:** la `wrap_key` nunca sale del hardware. JS recibe `{iv, ciphertext}` o el `vault_key` descifrado — nunca la `wrap_key`. Ver §5 "Biometría en Capacitor" para el patrón completo.
-
 - **RFC 6238** — TOTP: Time-Based One-Time Password Algorithm
   https://datatracker.ietf.org/doc/html/rfc6238
 
@@ -2549,6 +2533,23 @@ legacy.
 - **chrome.alarms** — Timers persistentes en Service Workers MV3
 - **MutationObserver API** — Detección de cambios dinámicos en el DOM
 - **Workbox** — Service Worker para cache offline en PWA
+
+---
+
+## 29. Decisiones de Implementación — v0.6.0 Capacitor Android-first
+
+**Fecha:** 2026-06-12
+
+| Decisión | Resolución |
+|---|---|
+| DA-1: TWA app/ | Eliminado. Reemplazado por `android/` generado por Capacitor CLI. |
+| DA-2: Plugin biometría | `DpmKeyPlugin` nativo propio (`BiometricPrompt.CryptoObject`). `@aparajita/capacitor-secure-storage` descartado — no expone `CryptoObject` en Android. La `wrap_key` nunca sale del hardware; JS recibe solo `{iv, ciphertext}`. |
+| DA-3: `_deviceId` | Dentro del vault cifrado — nunca en sync metadata en claro (consistencia ZK). Implementación base en `device-id.js`; embedding en vault diferido a v0.7.0 con H-9. |
+| DA-4: OneDrive token (B-1) | Diferido a v0.7.0 — el `refresh_token` lo gestiona MSAL en `sessionStorage`, no hay nada en IDB que migrar. |
+| DA-5: M-4, H-9 | Diferidos a v0.7.0. |
+| Scope | Android-first. iOS (v0.6.1/v0.7.0) requiere macOS + Apple Developer $99. |
+
+**Principio no negociable:** la `wrap_key` nunca sale del hardware. JS recibe `{iv, ciphertext}` o el `vault_key` descifrado — nunca la `wrap_key`. Ver §5 "Biometría en Capacitor" para el patrón completo.
 
 ---
 

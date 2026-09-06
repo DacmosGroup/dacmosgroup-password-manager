@@ -2,7 +2,7 @@
 
 **Última actualización:** 2026-09-06 (Sprint 1 Planning)
 **Product Owner:** Alejandro Seijas
-**Fuente consolidada de:** `roadmap-v0.7.0.md` · backlog diferido de v0.6.0 (`documento-tecnico.md` §28) · canales de distribución de `DACMOSGROUP_MASTER_CONTEXT.md`
+**Fuente consolidada de:** `roadmap-v0.7.0.md` · backlog diferido de v0.6.0 (`documento-tecnico.md` §29) · canales de distribución de `DACMOSGROUP_MASTER_CONTEXT.md`
 
 > Lista única y ordenada. El orden = prioridad. La talla T-shirt (S/M/L) está
 > definida en `README.md`. Los roadmaps históricos (`roadmap-v0.2.0` … `roadmap-v0.6.0`)
