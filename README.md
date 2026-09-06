@@ -121,7 +121,7 @@ Ciclo derivado de la auditoría interna v0.5.0 (`docs/auditoria-v0.5.0-hallazgos
 
 - Android Autofill Service (`DpmAutofillService.kt`) — aparece como opción de autocompletado del sistema
 - iOS Credential Provider Extension — requiere macOS + Apple Developer $99
-- Backlog v0.6.0 diferido: H-5 (deviceId en vault), H-9 (sync logging), M-4 (i18n unification), B-1 (OneDrive token)
+- Backlog v0.6.0 diferido: H-9 (sync logging), M-4 (i18n unification), B-1 (OneDrive token) — H-5 (`_deviceId` en vault) ✅ hecho 2026-09-06
 
 ---
 

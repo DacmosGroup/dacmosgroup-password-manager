@@ -193,14 +193,14 @@ Per-platform independent versioning:
 - UI biométrica: botón en unlock-view + toggle en settings (ES/EN/PT-BR) ✅
 - `bundleRelease` firmado con keystore `keys/dacmos-pm-release.keystore` ✅
 - Play Store: cuenta activa (dacmosgroup@gmail.com) · verificación identidad en proceso ✅
-- Backlog diferido a v0.7.0: H-5 (deviceId en vault), H-9 (sync logging), B-1 (OneDrive token migration via MSAL), M-4 (i18n unification)
+- Backlog diferido en su momento a v0.7.0: H-5, H-9, B-1, M-4 — **ahora gestionado en `docs/scrum/product-backlog.md`**. H-5 (`_deviceId` en vault) ✅ hecho en Sprint 2 (2026-09-06, ver `documento-tecnico.md` §30).
 
-**Próximo hito — v0.7.0:**
-- Android Autofill Service nativo
-- iOS Credential Provider (requiere macOS + Apple Developer $99)
-- H-5: embed `_deviceId` en vault cifrado
-- H-9: logging de eventos sync
-- Ver `docs/roadmap-v0.7.0.md`
+**Pendiente — el orden vive en `docs/scrum/product-backlog.md`:**
+- D-1: distribución Android alternativa (APK → GitHub Releases + IzzyOnDroid) — Sprint 2
+- H-9: logging de eventos sync — Sprint 3
+- F7-A: Android Autofill Service nativo (gate de arquitectura + PS-1)
+- F7-B: iOS Credential Provider (requiere macOS + Apple Developer $99)
+- M-4, B-1: ver backlog
 
 **Nota:** `client_id` en manifest.json es un identificador público OAuth2 — no es un secret. Su presencia en el repo es intencional.
 
