@@ -25,11 +25,22 @@
 
 ### PS-1 · Verificación de identidad Play Store  `[BLOQUEANTE EXTERNO]`
 - **Estado:** RECHAZADA 2026-06-17. Motivo: *"Proof of Address: document info does not match profile"*.
-- **Acción del PO:** en payments.google.com, alinear la dirección del perfil de pagos
-  con el documento de prueba de domicilio (coincidencia exacta) antes de reenviar.
-  Intentos limitados → verificar datos primero.
-- **Qué desbloquea:** todo el track Android de v0.7.0 (internal testing → F7-A).
-- **Cuenta:** dacmosgroup@gmail.com · ID 6476802733577318173.
+- **Cuenta:** `dacmosgroup@gmail.com` · ID 6476802733577318173 · tipo **individual** (nombre legal: Alejandro Seijas).
+- **Qué desbloquea:** todo el track Android de v0.7.0 (internal testing → F7-A). No bloquea el resto del backlog; **D-1 es el hedge** si esto se demora o se rechaza de nuevo.
+- **Reenvíos limitados** → completar el diagnóstico antes de pulsar "Verificar ahora".
+
+**Causas más probables del rechazo (revisar primero):**
+1. El recibo eléctrico usado **no está a nombre de Alejandro Seijas** (cuenta individual → el documento debe ir a su nombre; si está a nombre de un familiar/propietario/empresa, hace falta otro: estado de cuenta bancario a su nombre).
+2. El recibo de junio **caducó** — los documentos de domicilio valen ~3 meses; hace falta uno reciente (< 90 días).
+3. La dirección del recibo ≠ la del perfil, campo por campo (acentos `Panamá`/`Panama`, `Calle 50` vs `C. 50`, corregimiento, código postal).
+
+**Checklist de reenvío:**
+- [ ] Fase A — `play.google.com/console` → banner de verificación **o** Configuración → Datos de la cuenta de desarrollador → Verificación de identidad. Anotar: motivo exacto del rechazo + dirección que muestra el perfil.
+- [ ] Fase A — `payments.google.com` → Configuración → dirección del perfil de pagos. Comparar con la anterior.
+- [ ] Fase B — Conseguir recibo de servicio **reciente** a nombre de Alejandro Seijas (o estado de cuenta bancario si el recibo no está a su nombre).
+- [ ] Fase C — Editar el perfil para que la dirección calce **exactamente** con el documento. Guardar.
+- [ ] Fase D — Subir el documento (PDF/foto a color, completo, 4 esquinas, fecha visible) → "Verificar ahora" → esperar 1–3 días hábiles.
+- [ ] Registrar resultado aquí y en el standup log.
 
 ---
 
@@ -100,3 +111,4 @@ cualquier app y navegador, sin abrir la app (paridad con Bitwarden/1Password).
 |---|---|
 | 2026-09-06 | Backlog creado. Consolidados roadmap-v0.7.0 + backlog diferido v0.6.0 (H-5, H-9, M-4, B-1) + D-1 (distribución alternativa). Priorización con PS-1 bloqueado: hardening desbloqueado primero, F7-A al fondo hasta desbloquear Play Store. |
 | 2026-09-06 | Rev. tras validación del arquitecto: D-1 sube a #2 (hedge contra 2º rechazo de PS-1); H-9 baja a #3 y se empareja con D-1 (sin usuarios Android externos no hay señal que loguear). F7-A marcado con GATE DE ARQUITECTURA — 3 huecos a cerrar antes de Planning: Digital Asset Links, guard de `onSaveRequest`, posible campo `packageNames[]` en schema. |
+| 2026-09-06 | PS-1: cuenta confirmada individual (Alejandro Seijas). Añadido checklist de reenvío de 4 fases + 3 causas probables del rechazo (documento no a su nombre / recibo caducado / dirección desalineada). |
