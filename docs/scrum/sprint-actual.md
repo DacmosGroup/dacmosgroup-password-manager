@@ -17,7 +17,7 @@ cifrado identificando su dispositivo de origen.
 
 | ID | Item | Talla | Estado |
 |---|---|---|---|
-| H-5 | `_deviceId` embebido en el payload cifrado del vault (`guardarVaultCifrado`), + misma API surface en el fork de la Extension | M | ⬜ TODO — **gate de arquitectura primero** |
+| H-5 | `_deviceId` embebido en el payload cifrado del vault, resuelto dentro del engine en ambos forks | M | ✅ DONE 2026-09-06 — código + verificación + docs (§30). Gate cerrado (brief v2). Cierre formal a confirmar con el arquitecto. |
 | D-1 | APK firmado (keystore `keys/dacmos-pm-release.keystore`) publicado en GitHub Releases + enviado a IzzyOnDroid | M | ⬜ TODO |
 
 ---
@@ -57,6 +57,8 @@ D-1 no tiene gate — es empaquetado y distribución.
 
 ```
 2026-09-06 — Planning. Sprint 2 confirmado por el PO (Goal + H-5 + D-1). Siguiente: llevar H-5 al arquitecto para el brief; implementación en sesión nueva de Code. D-1 puede arrancar en paralelo (sin gate). Bloqueos: ninguno. PS-1 reenviada, en revisión de Google (async).
+2026-09-06 — Code abre sesión H-5. Brief del arquitecto recibido (h5-decisiones-temp.md). Auditoría del código antes de implementar: 3 divergencias entre el brief y el código real, reportadas al chat del Project — NO se escribe código hasta que el arquitecto/PO resuelvan. (1) El payload cifrado YA es objeto `{ credenciales: [...] }` desde v0.4.0, no un array plano → cae la premisa de "cambio estructural mayor" y de la lectura dual-forma. (2) El sync per-item con `deviceId`+`lamportClock` de §15 NO está implementado; el sync vigente es blob monolítico LWW sin ningún `deviceId`. Única fuente de device id en el repo = `web/src/storage/device-id.js`, sin consumidores. (3) `guardarVaultCifrado` tiene 3+ call sites de escritura en la PWA (credential-form.js, vault.js, unlock.js); alimentar el param opcional solo desde un "chokepoint" deja `_deviceId: null` en cada edición normal. Bloqueos: gate de arquitectura reabierto por estas 3 divergencias.
+2026-09-06 — Brief v2 del arquitecto (gate cerrado). Ajuste posterior: `configurarVault` y `cambiarMasterPassword` también resuelven `_deviceId` (evitar regresión "campo presente → ausente" en cambio de master password). H-5 implementado: `_resolverDeviceId()` interno en ambos forks, sin parámetro; PWA → `device-id.js`, Extension → `null`. 3 commits en `feature/h5-deviceid`: (1) `docs:` cirugía §29/§27 + numeración + 4 refs vivas · (2) `feat(crypto):` H-5 + `tests/h5-verify.mjs` · (3) `docs:` §30 + §15 warning + §21 (Hallazgo vs Backlog H-5) + §29 DA-3 + nota asimetría `CLAUDE.md` + backlog (H-5 ✅, nuevo T-1). `verify-crypto-sync.sh` exit 0 · harness exit 0. Pendiente: confirmación de cierre del arquitecto + merge a main + subida de docs al Project DPM (Dacmos). D-1 sin tocar todavía.
 ```
 
 ---

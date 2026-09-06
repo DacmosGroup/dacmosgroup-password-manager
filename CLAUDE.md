@@ -226,3 +226,10 @@ Al modificar cualquier archivo fuente:
 3. Incluir ambos archivos en el mismo commit.
 
 Nunca commitear cambios a un original sin verificar que el fork PWA queda en sync. Un drift en crypto/schema produce vaults incompatibles entre plataformas; un drift en los adapters reintroduce bugs como BUG-SYNC-404.
+
+**Asimetría deliberada — `device-id.js` (H-5):** `web/src/storage/device-id.js` existe
+solo en la PWA y **no es una fila de esta tabla**. El fork Extension de `engine.js`
+no lo importa: `_resolverDeviceId()` resuelve a `null` porque la Extension no genera
+identidad de instalación (decisión de producto pendiente — `documento-tecnico.md`
+§29 DA-3 / §30). No es drift: `verify-crypto-sync.sh` compara la API surface
+exportada, que sigue idéntica.

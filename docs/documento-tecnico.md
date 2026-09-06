@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Versión 0.5.1 · Junio 2026**
+**Baseline 0.6.x · Última actualización 2026-09-06 (§30 — Backlog H-5)**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -40,6 +40,7 @@
 27. [Referencias](#27-referencias)
 28. [Decisiones de Implementación — v0.5.1 (Saneamiento pre-v0.6.0)](#28-decisiones-de-implementación--v051-saneamiento-pre-v060)
 29. [Decisiones de Implementación — v0.6.0 Capacitor Android-first](#29-decisiones-de-implementación--v060-capacitor-android-first)
+30. [Decisiones de Implementación — H-5 (`_deviceId` en el vault, Sprint 2)](#30-decisiones-de-implementación--h-5-_deviceid-en-el-vault-sprint-2)
 
 ---
 
@@ -888,7 +889,7 @@ export class StorageAdapter {
 
 Estrategia **LWW por timestamp** sobre un único blob de vault. Guardia anti-loop `_syncTs` para evitar sincronizaciones en cascada entre dispositivos.
 
-> **Limitación conocida del modelo LWW de blob único:** si dos dispositivos editan offline simultáneamente, el último en subir sobreescribe al otro. Este comportamiento es aceptable en v0.3.x y v0.4.0 donde el uso multi-dispositivo simultáneo offline es raro. Se resuelve definitivamente en v0.5.0 con sync per-item (ver Sección 14).
+> **Limitación conocida del modelo LWW de blob único:** si dos dispositivos editan offline simultáneamente, el último en subir sobreescribe al otro. Este comportamiento es aceptable donde el uso multi-dispositivo simultáneo offline es raro. El modelo per-item que lo resolvería está **esbozado pero no implementado** (ver §15) — el sync vigente sigue siendo este LWW de blob único.
 
 ### Seguridad Zero-Knowledge mantenida
 
@@ -1094,11 +1095,23 @@ orientado al usuario:
 
 ## 15. Arquitectura Sync Per-Item
 
-*(Implementación en v0.5.0 — documentada aquí como referencia arquitectural)*
+> ⚠️ **Diseño de referencia — NO implementado (verificado sep-2026).** El sync
+> vigente sigue siendo blob monolítico Last Write Wins (§12): `sync-manager.js`
+> sube el `vaultCifrado` completo, enriquecido solo con `{ sal, sal2,
+> tokenVerificacion }` (§19 BUG-1). No existe en el código `manifest.encrypted`,
+> ni archivos `.enc` por item, ni Lamport clock, ni tombstones. El `deviceId` +
+> `lamportClock` per-item que describe esta sección tampoco existe: la única
+> identidad de dispositivo real del proyecto es `web/src/storage/device-id.js`
+> (ver §30, H-5). Esta sección queda como candidato de backlog si en algún
+> momento se decide construir el modelo per-item; no se borra, se marca su
+> estado real.
+
+*(Diseño esbozado durante v0.5.0. La implementación nunca ocurrió — v0.5.0 cerró
+con blob monolítico + LWW.)*
 
 El modelo de sync de blob único (v0.3.x — v0.4.0) usa Last Write Wins sobre un solo archivo en Drive/OneDrive. Este modelo garantiza pérdida silenciosa de credenciales si dos dispositivos editan offline simultáneamente y luego sincronizan — un escenario inaceptable para un password manager.
 
-v0.5.0 introduce un modelo **per-item** que elimina este problema.
+El modelo **per-item** descrito abajo eliminaría este problema.
 
 ### Estructura de archivos en el proveedor cloud
 
@@ -1987,9 +2000,19 @@ Los commits 233ebcc y 266a024 (fix BUG-3 parcial) estaban solo en feature/v0.4.0
 
 ---
 
-### H-5 [ALTO — Non-repudiation] — Sin verificación de identidad del vault en sync
+### Hallazgo H-5 (auditoría) [ALTO — Non-repudiation] — Sin verificación de identidad del vault en sync
 
-El sync no puede confirmar que el vault en Drive "pertenece" a esta instalación. No existe identificador de instalación opaco en el blob. **Deuda técnica aceptada hasta v0.5.0** (sync per-item con deviceId opaco, ver Sección 15).
+> **Nomenclatura:** este es el *Hallazgo H-5* de la auditoría v0.4.1/v0.4.2 (mayo 2026).
+> No confundir con el *Backlog H-5* del Sprint 2 (sep-2026) — el item que embebe
+> `_deviceId` en el vault (§30). Cadenas iguales, sistemas de tracking distintos.
+
+El sync no puede confirmar que el vault en Drive "pertenece" a esta instalación.
+Estado (sep-2026): el identificador de instalación opaco (`_deviceId`) ya está
+embebido en el payload cifrado del vault vía el *Backlog H-5* (Sprint 2, §30), y
+por tanto **ya viaja dentro del blob sincronizado** (el sync monolítico sube el
+`vaultCifrado` completo). Lo que falta es la lógica en `sync-manager.js` que lo
+lea y lo compare tras descifrar — la verificación de identidad en sync sigue sin
+implementar.
 
 ---
 
@@ -2544,12 +2567,97 @@ legacy.
 |---|---|
 | DA-1: TWA app/ | Eliminado. Reemplazado por `android/` generado por Capacitor CLI. |
 | DA-2: Plugin biometría | `DpmKeyPlugin` nativo propio (`BiometricPrompt.CryptoObject`). `@aparajita/capacitor-secure-storage` descartado — no expone `CryptoObject` en Android. La `wrap_key` nunca sale del hardware; JS recibe solo `{iv, ciphertext}`. |
-| DA-3: `_deviceId` | Dentro del vault cifrado — nunca en sync metadata en claro (consistencia ZK). Implementación base en `device-id.js`; embedding en vault diferido a v0.7.0 con H-9. |
+| DA-3: `_deviceId` | Dentro del vault cifrado — nunca en sync metadata en claro (consistencia ZK). **Embedding hecho en Sprint 2 (Backlog H-5, sep-2026 — §30):** `_deviceId` se resuelve dentro del engine (PWA vía `device-id.js`; Extension → `null`) y se incluye en el payload cifrado en `configurarVault`, `guardarVaultCifrado` y `cambiarMasterPassword`. Sin bump de `BLOB_VERSION` (es contenido cifrado, no metadato del envelope). |
 | DA-4: OneDrive token (B-1) | Diferido a v0.7.0 — el `refresh_token` lo gestiona MSAL en `sessionStorage`, no hay nada en IDB que migrar. |
 | DA-5: M-4, H-9 | Diferidos a v0.7.0. |
 | Scope | Android-first. iOS (v0.6.1/v0.7.0) requiere macOS + Apple Developer $99. |
 
 **Principio no negociable:** la `wrap_key` nunca sale del hardware. JS recibe `{iv, ciphertext}` o el `vault_key` descifrado — nunca la `wrap_key`. Ver §5 "Biometría en Capacitor" para el patrón completo.
+
+---
+
+## 30. Decisiones de Implementación — H-5 (`_deviceId` en el vault, Sprint 2)
+
+**Fecha:** 2026-09-06 · **Sprint:** 2 · **Reemplaza:** §29 DA-3 ("diferido a v0.7.0 con H-9" — ya no aplica)
+
+Origen: gate de arquitectura del *Backlog H-5* (Sprint 2). El brief del arquitecto
+revisor pasó por dos versiones; esta sección consolida la v2, corregida tras la
+auditoría de código de Code.
+
+### D-1 — El payload cifrado ya es un objeto, no un array plano
+
+Premisa corregida del brief v1: desde v0.4.0 ambos forks cifran
+`cifrarConVersion({ credenciales }, clave)` y `cargarVaultDescifrado()` devuelve
+`vault.credenciales || []`. El contenido cifrado **ya es un objeto**. Añadir
+`_deviceId` es un campo más en ese objeto — compatible hacia atrás y hacia
+adelante sin lógica de lectura dual-forma ni convergencia. No existe en
+producción ninguna forma legada de array plano.
+
+### D-2 — `BLOB_VERSION` no cambia · sin migración
+
+`_deviceId` vive dentro de `datos` (contenido cifrado), no en los campos del AAD
+(`__version`, `kdf`, `kdfIterations` — §13). No toca `serializarAAD()`.
+`BLOB_VERSION` permanece en 1. Un vault sin `_deviceId` (legado, o recién creado
+antes de este cambio) se lee sin error; el campo aparece en el próximo guardado.
+
+### D-3 — Resolución dentro del engine, sin parámetro nuevo
+
+`guardarVaultCifrado()` **mantiene su firma** en ambos forks. El engine resuelve
+`_deviceId` internamente vía el helper `_resolverDeviceId()`:
+
+- **PWA** (`web/src/crypto/engine.js`): `_resolverDeviceId()` → `obtenerDeviceId()`
+  de `device-id.js` (UUID opaco persistido en IndexedDB). Cubre los 6 call sites
+  de escritura del vault sin tocar ninguno.
+- **Extension** (`src/crypto/engine.js`): `_resolverDeviceId()` → `null`. La
+  Extension no genera identidad de instalación (decisión de producto pendiente).
+  El dispositivo que re-cifra es el último escritor y no tiene id → `null` es el
+  valor correcto, no una pérdida.
+
+No es un parámetro opcional que ningún caller pasaría (misma "superficie sin uso
+real" que se evitó en otras decisiones). Paridad de **comportamiento** entre
+forks, no de firma con argumentos sin consumidor. `verify-crypto-sync.sh` compara
+la API surface exportada, no helpers internos ni imports — exit 0.
+
+### D-3b — Toda función que cifra y persiste el vault completo
+
+No solo `guardarVaultCifrado`. `configurarVault()` embebe `_deviceId` desde la
+creación. `cambiarMasterPassword()` lo re-resuelve al re-cifrar: un cambio de
+master password re-cifra un vault que ya podía tener `_deviceId` seteado — nunca
+puede dejar el campo pasar de "presente" a "ausente" en silencio (sería una
+regresión, no convergencia lazy).
+
+### D-4 — Relación con el sync y con H-9
+
+`device-id.js` es la **fuente canónica única** de identidad de dispositivo en el
+código. El sync per-item con `deviceId`/`lamportClock` por item (§15) **no está
+implementado** — es diseño de referencia. El sync vigente (blob monolítico LWW,
+§12/§19) sube el `vaultCifrado` completo, así que `_deviceId` ya viaja cifrado
+dentro del blob; lo que falta es que `sync-manager.js` lo lea y lo compare (ver
+Hallazgo H-5 de auditoría en §21). `syncLog[]` (Backlog H-9, Sprint 3) debe
+consumir `device-id.js` — no generar una segunda identidad.
+
+### Asimetría de forks documentada
+
+`device-id.js` existe solo en `web/` (PWA). No es una fila de la tabla Fork Sync
+Protocol de `CLAUDE.md` — esa tabla certifica pares que deben existir en ambos
+forks. La asimetría (Extension sin identidad de dispositivo) es deliberada, no
+drift.
+
+### Riesgo de release
+
+El AAB v0.6.0 ya firmado (pendiente de subir al internal track cuando apruebe
+PS-1) es un snapshot de `web/src/crypto/engine.js` **anterior** a H-5. No
+re-firmar ni resubir un AAB con H-5 antes de esa subida — se sube el AAB v0.6.0
+tal cual, y H-5 entra en el siguiente build Android.
+
+### Verificación
+
+- `verify-crypto-sync.sh` → exit 0 (constantes + API surface).
+- `tests/h5-verify.mjs` (harness Node temporal, stub de storage por superficie) →
+  exit 0: `_deviceId` embebido en `configurarVault`/`guardarVaultCifrado`/
+  `cambiarMasterPassword`; PWA = UUID v4 estable == deviceId en IDB; Extension =
+  `null`; `cargarVaultDescifrado()` sigue devolviendo array plano; `BLOB_VERSION`
+  = 1; blob legado sin `_deviceId` se lee sin romper.
 
 ---
 
