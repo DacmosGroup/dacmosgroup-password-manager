@@ -1,6 +1,6 @@
 # CLAUDE.md — Dacmos Password Manager
 # Ruta: C:\DacmosGroup\04_Dev\PasswordManager\dacmosgroup-password-manager\CLAUDE.md
-# Última actualización: 2026-06-12
+# Última actualización: 2026-06-13
 # PREREQUISITO: C:\Users\dacmo\.claude\CLAUDE.md (L0) + C:\DacmosGroup\CLAUDE.md (L1)
 # Este archivo asume que ya leíste ambos. No repite convenciones globales ni mandato de seguridad.
 
@@ -157,7 +157,7 @@ Per-platform independent versioning:
 
 | Platform | Manifest | Estado |
 |---|---|---|
-| Chrome Extension | `manifest.json` | v0.5.1 · v0.5.0 PUBLICADA en CWS ✅ · **v0.5.1 pendiente de empaquetar/subir a CWS** |
+| Chrome Extension | `manifest.json` | **v0.5.1 PUBLICADA en CWS ✅ (2026-06-13)** |
 | PWA | `web/manifest.json` | v0.5.1 LIVE en dpm.dacmosgroup.co ✅ (incluye UX-LOCK-NAV) |
 | Android (Capacitor) | `android/` · `app-release.aab` | **v0.6.0 COMPLETADO 2026-06-12** ✅ · bundleRelease firmado · Play Store: cuenta activa, verificación identidad pendiente |
 
@@ -182,7 +182,7 @@ Per-platform independent versioning:
 - F5.1-E: i18n del wizard de import (29 keys ES/EN/PT-BR)
 - F5.1-F: docs (§6 schema, §10 fileId/B-1, §26 i18n, §28 decisiones) · roadmap-v0.5.1.md
 - Origen: `docs/auditoria-v0.5.0-hallazgos.md` · branch `feature/v0.5.1` · verify-crypto-sync.sh exit 0 (5 secciones)
-- **Pendiente de publicación:** empaquetar Extension v0.5.1 → CWS · deploy PWA → Cloudflare Pages
+- **Extension v0.5.1 PUBLICADA en CWS ✅ (2026-06-13)** · PWA deploy Cloudflare Pages ✅
 
 **v0.6.0 COMPLETADO (2026-06-12):**
 - UX-LOCK-NAV: botón "Bloquear" en nav-bottom PWA · deploy Cloudflare Pages ✅

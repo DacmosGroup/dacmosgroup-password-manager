@@ -173,7 +173,7 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ## 📦 Chrome Web Store
 
-**v0.5.0 PUBLICADA** ✅ (aprobada 2026-06-11) · **v0.5.1 en review** 🔄 (submitted 2026-06-11). Instalación via enlace directo:
+**v0.5.1 PUBLICADA** ✅ (aprobada 2026-06-13). Instalación via enlace directo:
 
 `https://chromewebstore.google.com/detail/dacmos-password-manager/aflgjjkallibohcebggkkjdlhdnainai`
 
