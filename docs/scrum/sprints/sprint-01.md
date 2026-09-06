@@ -37,6 +37,13 @@ Ninguno — los 4 items comprometidos se completaron.
 1. **Sprints de una sesión son válidos pero raros.** SP1 cerró el mismo día porque era 100% docs. Los sprints de feature (SP2+) llevarán varias sesiones; el standup log pasa a ser la herramienta principal de continuidad.
 2. **`.gitattributes` pendiente.** Git avisó de conversión LF→CRLF en los archivos nuevos. No rompe nada, pero un `.gitattributes` normalizador evitaría ruido futuro. → candidato a item S en un sprint de housekeeping, no urgente.
 3. **Validar el modelo con el arquitecto antes de SP2.** El framework Scrum-lite lo propuso Claude Code; el protocolo del proyecto pide que la arquitectura la valide el chat del Project DPM. Acción del PO: subir `README.md` y pedir revisión.
+   → **HECHO 2026-09-06.** El arquitecto aprobó con 5 ajustes, aplicados en `README.md` Rev. 1 y `product-backlog.md`:
+   (a) roles — Code transcribe el orden del backlog, no lo decide;
+   (b) cadencia — estado "Sprint pausado" para ausencias >3 semanas;
+   (c) DoD — +2 líneas: subida a Project Claude + cobertura desktop/touch en items de UI;
+   (d) Sprint 2 = **H-5 + D-1** (no H-5 + H-9): H-9 no tiene señal que loguear sin usuarios Android externos; D-1 crea ese canal y es el hedge contra un 2º rechazo de PS-1;
+   (e) F7-A vuelve a discusión de arquitectura — 3 huecos: Digital Asset Links, guard de `onSaveRequest`, posible campo `packageNames[]`.
+   Además: el standup pasa a opcional en sesiones de mantenimiento puro.
 
 ---
 

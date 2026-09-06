@@ -1,6 +1,6 @@
 # Modelo Scrum-lite — Dacmos Password Manager
 
-**Adoptado:** 2026-09-06 (Sprint 1)
+**Adoptado:** 2026-09-06 (Sprint 1) · **Rev. 1:** 2026-09-06 tras validación del arquitecto revisor
 **Ámbito:** gestión de todo el trabajo de DPM a partir de v0.7.0.
 **Naturaleza:** Scrum adaptado a un equipo de una persona + asistentes Claude.
 No es Scrum de manual: se conservan los artefactos y el ritmo, se recortan las
@@ -28,7 +28,7 @@ Todos viven en `docs/scrum/`, versionados en git. No hay herramienta externa.
 | Archivo | Qué es | Quién lo mantiene |
 |---|---|---|
 | `README.md` | Este documento — las reglas del juego | PO (cambios de proceso) |
-| `product-backlog.md` | Lista única y ordenada de todo el trabajo pendiente, con prioridad y estimación T-shirt | Code, tras cada Planning y Review |
+| `product-backlog.md` | Lista única y ordenada de todo el trabajo pendiente, con prioridad y estimación T-shirt | Code, transcribiendo el orden que decidió el PO en Planning/Review |
 | `sprint-actual.md` | Sprint en curso: Goal, items comprometidos, DoD, standup log | Code, cada sesión |
 | `sprints/sprint-XX.md` | Archivo cerrado de cada sprint (Review + Retro) | Code, al cerrar el sprint |
 | `_templates/` | Plantillas de sprint-actual y de cierre | — |
@@ -48,14 +48,30 @@ del equipo. Por eso:
 - **Un solo sprint activo a la vez.** No se arranca el siguiente sin cerrar el actual
   (Review + Retro escritos).
 
+### Estado "Sprint pausado" — para las ausencias largas
+
+Si pasan **más de 3 semanas de calendario sin un standup nuevo**, el sprint no
+queda en limbo: se **congela explícitamente**. Al detectarlo (normalmente al
+retomar), lo primero es escribir en `sprint-actual.md`:
+
+```
+PAUSADO YYYY-MM-DD — Motivo: … | Items cerrados: … | Falta: … | Contexto para retomar: …
+```
+
+Al volver, el standup de reapertura parte de esa nota — no de reconstruir el
+contexto a mano. Si al retomar el Sprint Goal ya no tiene sentido, se cierra el
+sprint como "⚠️ parcial" y se replantea en un Planning nuevo.
+
 ---
 
 ## Ceremonias
 
 ### Sprint Planning — al inicio de cada sprint
 El PO elige el **Sprint Goal** y 2–4 items del `product-backlog.md`.
-Code escribe `sprint-actual.md` desde la plantilla y reordena el backlog.
-Si algún item tiene dudas de arquitectura → va primero al chat del Project DPM.
+Code escribe `sprint-actual.md` desde la plantilla y refleja en el backlog el
+orden que el PO decidió (transcribe la decisión, no la toma).
+Un item **no entra a Planning** si tiene preguntas de arquitectura abiertas —
+se resuelven antes en el chat del Project DPM (ver "Gate de arquitectura" abajo).
 
 ### Standup — al abrir cada sesión de trabajo
 Tres líneas al final de `sprint-actual.md`, sección "Standup log":
@@ -63,6 +79,10 @@ Tres líneas al final de `sprint-actual.md`, sección "Standup log":
 YYYY-MM-DD — Hecho: … | Siguiente: … | Bloqueos: …
 ```
 Sustituye al "¿dónde quedé?" de inicio de sesión.
+
+**Opcional en sesiones de mantenimiento puro** (sin cambio de estado del sprint:
+housekeeping, consulta, doc menor). Obligatorio en cualquier sesión que toque
+items del sprint — y muy especialmente en la primera sesión tras una pausa.
 
 ### Sprint Review — al cumplir el Sprint Goal
 - Verificación manual del incremento (el proyecto no tiene test suite automatizada).
@@ -89,6 +109,24 @@ proyecto en `.claude/CLAUDE.md`):
 - [ ] Roadmap / backlog: item marcado `✅ COMPLETADO fecha`
 - [ ] Commit de **documentación** separado del de código
 - [ ] Ningún archivo de estado del workspace quedó desactualizado (ver checklist en `.claude/CLAUDE.md`)
+- [ ] Docs actualizados subidos al Project DPM en Claude.ai (acción del PO — el arquitecto revisor trabaja con ese contexto)
+- [ ] Si el item toca UI/interacción: los criterios de aceptación cubren **desktop mouse + mobile touch Android** (+ Safari iOS si aplica) — regla de `protocolo-desarrollo.md`
+
+---
+
+## Gate de arquitectura — antes de meter un item a Planning
+
+Un item con preguntas de diseño abiertas **no se compromete a un sprint**. Se
+lleva primero al chat del Project DPM y no vuelve al backlog como "listo para
+sprint" hasta que el arquitecto revisor cierra:
+
+- Contratos de datos / cambios de schema (tocan `credential-schema.js` + ambos forks)
+- Guards de seguridad nuevos (cualquier cosa que sirva o escriba credenciales)
+- Integración con APIs del SO (Autofill, Credential Provider, Keystore)
+- Cualquier divergencia que Code reporte durante la propuesta de plan
+
+Esto es el ciclo por feature de `protocolo-desarrollo.md` (pasos 1–8) — Scrum no
+lo reemplaza, lo envuelve.
 
 ---
 

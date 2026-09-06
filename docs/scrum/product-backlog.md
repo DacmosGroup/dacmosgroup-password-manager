@@ -35,38 +35,62 @@
 
 ## Backlog priorizado
 
+Orden decidido por el PO tras la revisión del arquitecto (2026-09-06). El
+razonamiento: H-9 no tiene nada que loguear mientras no haya usuarios Android
+externos; D-1 crea ese canal, así que D-1 va antes que H-9 y H-9 se empareja
+con D-1 o justo después. H-5 sí tiene valor inmediato (Extension + PWA en
+producción con usuarios reales).
+
 | # | ID | Item | Talla | Depende de | Notas |
 |---|---|---|---|---|---|
-| 1 | **S-1..S-4** | Arranque Scrum + housekeeping repo | M | — | **Sprint 1 (en curso)** |
-| 2 | **H-5** | `_deviceId` embebido en el vault cifrado | M | — | Toca ambos forks de `engine.js`. `device-id.js` ya genera y persiste el UUID en IDB. Falta incluir `_deviceId` en el payload antes del `JSON.stringify` en `guardarVaultCifrado`. La Extension no lo usa pero debe exportar la misma API surface (`verify-crypto-sync.sh` verde). |
-| 3 | **H-9** | Logging de eventos sync | M | — | `syncLog[]` append-only en IDB: `{ timestamp, operación, resultado, _deviceId }`. Cubre subida/descarga/conflicto. Objetivo: diagnóstico de crashes de Play Store que llegan sin contexto. |
-| 4 | **D-1** | Distribución Android alternativa | M | — | APK firmado → IzzyOnDroid + GitHub Releases. Canal Android independiente de Play Store. De-riskea la dependencia de PS-1. |
-| 5 | **M-4** | Decisión de unificación i18n | S | — | Spike + ADR. Extension usa `_locales/{es,en,pt_BR}/messages.json` (formato Chrome); PWA/Capacitor usa `web/src/i18n/strings.*.js` (módulos JS). Opciones: A) mantener separados, B) source único JSON + generador, C) Capacitor hereda PWA y Extension mantiene `_locales`. |
-| 6 | **B-1** | OneDrive `refresh_token` → almacenamiento seguro | M | — | Spike primero. MSAL gestiona el token en `sessionStorage`, no IDB. Investigar `PublicClientApplication` con cache persistente / `INetworkModule` para mover el token al `DpmKeyPlugin` (Android Keystore). |
-| 7 | **F7-A** | Android Autofill Service nativo | L | PS-1 | Épica v0.7.0. Se divide antes de entrar a sprint. Ver desglose abajo. |
-| 8 | **F7-B** | iOS Credential Provider Extension | L | Mac + Apple Dev $99 | Diferida sin fecha. |
+| — | **S-1..S-4** | Arranque Scrum + housekeeping repo | M | — | ✅ Sprint 1 CERRADO 2026-09-06 |
+| 1 | **H-5** | `_deviceId` embebido en el vault cifrado | M | — | Toca ambos forks de `engine.js`. `device-id.js` ya genera y persiste el UUID en IDB. Falta incluir `_deviceId` en el payload antes del `JSON.stringify` en `guardarVaultCifrado`. La Extension no lo usa pero debe exportar la misma API surface (`verify-crypto-sync.sh` verde). Valor inmediato: Extension + PWA están en producción. |
+| 2 | **D-1** | Distribución Android alternativa | M | — | APK firmado → IzzyOnDroid + GitHub Releases. Canal Android independiente de Play Store. **Es el hedge contra un segundo rechazo de PS-1** — el arquitecto lo trata como el item más urgente, no como alternativa descartable. |
+| 3 | **H-9** | Logging de eventos sync | M | D-1 (para que tenga señal real) | `syncLog[]` append-only en IDB: `{ timestamp, operación, resultado, _deviceId }`. Cubre subida/descarga/conflicto. Entra emparejado con D-1 o inmediatamente después — antes de tener usuarios Android externos no hay nada que diagnosticar. |
+| 4 | **M-4** | Decisión de unificación i18n | S | — | Spike + ADR. Extension usa `_locales/{es,en,pt_BR}/messages.json` (formato Chrome); PWA/Capacitor usa `web/src/i18n/strings.*.js` (módulos JS). Opciones: A) mantener separados, B) source único JSON + generador, C) Capacitor hereda PWA y Extension mantiene `_locales`. |
+| 5 | **B-1** | OneDrive `refresh_token` → almacenamiento seguro | M | — | Spike primero. MSAL gestiona el token en `sessionStorage`, no IDB. Investigar `PublicClientApplication` con cache persistente / `INetworkModule` para mover el token al `DpmKeyPlugin` (Android Keystore). |
+| 6 | **F7-A** | Android Autofill Service nativo | L | PS-1 **+ gate de arquitectura** | Épica v0.7.0. **NO entra a Planning** hasta cerrar 3 huecos de seguridad/diseño en el chat del Project DPM (ver desglose abajo). |
+| 7 | **F7-B** | iOS Credential Provider Extension | L | Mac + Apple Dev $99 | Diferida sin fecha. |
 
 ---
 
-## Desglose de F7-A (épica — dividir en Planning cuando PS-1 se desbloquee)
+## Desglose de F7-A (épica — GATE DE ARQUITECTURA antes de Planning)
 
 **Objetivo:** el gestor aparece como opción de autocompletado del sistema Android en
 cualquier app y navegador, sin abrir la app (paridad con Bitwarden/1Password).
 
-Prerrequisitos (no son código):
+### Huecos que el arquitecto revisor debe cerrar ANTES de dividir en items de sprint
+
+1. **Verificación de asociación `packageName` ↔ dominio vía Digital Asset Links
+   (`assetlinks.json`).** [Seguro] El framework de Autofill no garantiza que una app
+   que declara un dominio realmente lo sea. Sin esta verificación, una app maliciosa
+   se anuncia como el dominio legítimo y el sistema le ofrece las credenciales. Es el
+   vector de phishing que Bitwarden/1Password mitigan explícitamente. La "paridad" no
+   está completa sin esto.
+2. **Guard del path de escritura (`onSaveRequest`).** [Probable] ¿Cómo se cifra una
+   credencial nueva capturada por autofill? ¿Pasa por `guardarVaultCifrado` con la
+   clave de sesión activa, o hay un buffer intermedio? Zero-Knowledge no-negociable →
+   no puede quedar implícito.
+3. **Posible campo de schema nuevo `packageNames: []`.** [Suposición] Para apps sin
+   app-links configurados donde el dominio web no basta para el matching. Si se
+   confirma, es cambio de schema que toca `credential-schema.js` + ambos forks →
+   decisión de arquitectura previa, no descubrimiento a mitad de implementación.
+
+### Prerrequisitos (no son código)
 1. PS-1 resuelta → cuenta activa para internal track
-2. AAB v0.6.0 subido al internal track → confirmar instala y corre
+2. AAB subido al internal track → confirmar instala y corre
 3. Biometría probada en dispositivo físico (el emulador no permite enroll real)
 4. Decidir: F7-A en el mismo proyecto Capacitor o módulo separado
 
-Sub-items candidatos:
+### Sub-items candidatos (a confirmar tras el gate)
 - `DpmAutofillService.kt` — `onFillRequest` / `onSaveRequest`
-- Heurística de matching por `packageName` + `webDomain` (paridad con la Extension)
+- Verificación Digital Asset Links en el matching
+- Heurística de matching por `packageName` + `webDomain` (+ `packageNames[]` si aplica)
 - Bridge JS→Kotlin para leer credenciales del vault descifrado en sesión
-- UI de selección de credencial (inline o actividad dedicada)
+- UI de selección de credencial (inline o actividad dedicada) — DoD de UI: desktop N/A, cubrir touch Android
 - `AndroidManifest.xml` + `res/xml/autofill_service.xml` + permiso `BIND_AUTOFILL_SERVICE`
-- Guardas de seguridad: solo sirve credenciales con sesión biométrica activa; no
-  persiste descifrado fuera de la sesión Capacitor; `autofillHints` correctos
+- Guardas: solo sirve credenciales con sesión biométrica activa; no persiste descifrado
+  fuera de la sesión Capacitor; `autofillHints` correctos; guard de `onSaveRequest`
 
 ---
 
@@ -75,3 +99,4 @@ Sub-items candidatos:
 | Fecha | Cambio |
 |---|---|
 | 2026-09-06 | Backlog creado. Consolidados roadmap-v0.7.0 + backlog diferido v0.6.0 (H-5, H-9, M-4, B-1) + D-1 (distribución alternativa). Priorización con PS-1 bloqueado: hardening desbloqueado primero, F7-A al fondo hasta desbloquear Play Store. |
+| 2026-09-06 | Rev. tras validación del arquitecto: D-1 sube a #2 (hedge contra 2º rechazo de PS-1); H-9 baja a #3 y se empareja con D-1 (sin usuarios Android externos no hay señal que loguear). F7-A marcado con GATE DE ARQUITECTURA — 3 huecos a cerrar antes de Planning: Digital Asset Links, guard de `onSaveRequest`, posible campo `packageNames[]` en schema. |
