@@ -3,8 +3,11 @@ import { idbStorage } from './indexeddb-adapter.js'
 /**
  * Retorna el identificador opaco de instalación, creándolo si no existe.
  * El deviceId se persiste en IDB y nunca cambia para esta instalación.
- * Uso: incluirlo en el vault cifrado para identificación de origen en sync
- * (H-5 — observabilidad diferida a v0.7.0 con H-9).
+ *
+ * Fuente canónica única de identidad de dispositivo. Consumido por
+ * engine.js (H-5): se embebe como _deviceId en el payload cifrado del
+ * vault en cada guardarVaultCifrado(). H-9 (syncLog, Sprint 3) debe
+ * consumir este mismo módulo — no generar una segunda identidad.
  */
 export async function obtenerDeviceId() {
   const datos = await idbStorage.get(['deviceId'])

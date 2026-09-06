@@ -1,14 +1,17 @@
 // ============================================================
 // Dacmos Password Manager — Motor de Cifrado (PWA)
 // Fork de src/crypto/engine.js para la Progressive Web App.
-// Única diferencia respecto al original: las llamadas a
-// chrome.storage.local se reemplazan por idbStorage (IndexedDB).
+// Diferencias legítimas respecto al original:
+//   - las llamadas a chrome.storage.local se reemplazan por idbStorage (IndexedDB)
+//   - import de device-id.js: _resolverDeviceId() consulta la identidad opaca
+//     de instalación (H-5); el fork Extension resuelve a null
 // Lógica de cifrado y constantes de seguridad: idénticas.
 // Estándar: AES-256-GCM + PBKDF2-SHA256 (OWASP 2024)
 // Motor: Web Crypto API nativa — sin librerías de terceros
 // ============================================================
 
 import { idbStorage } from '../storage/indexeddb-adapter.js'
+import { obtenerDeviceId } from '../storage/device-id.js'
 
 // ── Constantes de seguridad ──
 // DECISIÓN DE SEGURIDAD: 600,000 iteraciones PBKDF2 según OWASP 2024.
@@ -277,8 +280,12 @@ async function configurarVault(passwordMaestra) {
   const sal2 = generarSal(); // Segunda sal independiente para verificación
   const tokenVerificacion = await generarHashVerificacion(passwordMaestra, sal2);
 
-  // Vault vacío cifrado inicialmente (blob v1 con AAD)
-  const vaultVacio = await cifrarConVersion({ credenciales: [] }, clave);
+  // Vault vacío cifrado inicialmente (blob v1 con AAD).
+  // _deviceId embebido desde la creación (H-5) — mismo helper interno que
+  // guardarVaultCifrado. Cualquier función que cifra y persiste el vault
+  // completo resuelve _deviceId; no solo guardarVaultCifrado.
+  const _deviceId = await _resolverDeviceId();
+  const vaultVacio = await cifrarConVersion({ _deviceId, credenciales: [] }, clave);
 
   // Guardar en IndexedDB (PWA)
   await idbStorage.set({
@@ -325,9 +332,24 @@ async function desbloquearVault(passwordMaestra) {
   }
 }
 
-// Cifra y guarda el vault completo en storage
+// ── RESOLUCIÓN DE IDENTIDAD DE DISPOSITIVO (H-5) ──
+// Fork PWA: resuelve el UUID opaco de la instalación desde device-id.js
+// (persistido en IndexedDB, estable de por vida). Se consulta en cada
+// guardado — así los 6 call sites de escritura del vault embeben _deviceId
+// sin tocar ninguno. El fork Extension resuelve a null (no tiene device-id.js).
+// device-id.js es la fuente canónica única de identidad de dispositivo:
+// H-9 (syncLog) debe consumir este mismo módulo.
+async function _resolverDeviceId() {
+  return await obtenerDeviceId();
+}
+
+// Cifra y guarda el vault completo en storage.
+// El payload cifrado envuelve el array de credenciales junto a _deviceId
+// (identidad de instalación de origen, H-5). _deviceId NO entra al AAD: es
+// contenido cifrado, no metadato del envelope — por eso BLOB_VERSION no cambia.
 async function guardarVaultCifrado(credenciales, clave) {
-  const vaultCifrado = await cifrarConVersion({ credenciales }, clave);
+  const _deviceId = await _resolverDeviceId();
+  const vaultCifrado = await cifrarConVersion({ _deviceId, credenciales }, clave);
   await idbStorage.set({ vaultCifrado });
 }
 
@@ -368,8 +390,12 @@ async function cambiarMasterPassword(passwordActual, passwordNueva) {
   // Paso 5: Generar nuevo token de verificación (blob v1 con AAD)
   const tokenNuevo = await generarHashVerificacion(passwordNueva, sal2Nueva);
 
-  // Paso 6: Re-cifrar vault con nueva clave (blob v1 con AAD)
-  const vaultNuevo = await cifrarConVersion({ credenciales }, claveNueva);
+  // Paso 6: Re-cifrar vault con nueva clave (blob v1 con AAD).
+  // Re-resolver _deviceId (H-5): un cambio de master password re-cifra un
+  // vault que ya podía tener _deviceId seteado — nunca dejarlo pasar de
+  // "campo presente" a "campo ausente" en silencio.
+  const _deviceId = await _resolverDeviceId();
+  const vaultNuevo = await cifrarConVersion({ _deviceId, credenciales }, claveNueva);
 
   // Paso 7: Guardar todo atómicamente
   await idbStorage.set({

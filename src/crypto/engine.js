@@ -271,8 +271,12 @@ async function configurarVault(passwordMaestra) {
   const sal2 = generarSal(); // Segunda sal independiente para verificación
   const tokenVerificacion = await generarHashVerificacion(passwordMaestra, sal2);
 
-  // Vault vacío cifrado inicialmente (blob v1 con AAD)
-  const vaultVacio = await cifrarConVersion({ credenciales: [] }, clave);
+  // Vault vacío cifrado inicialmente (blob v1 con AAD).
+  // _deviceId embebido desde la creación (H-5) — mismo helper interno que
+  // guardarVaultCifrado. Cualquier función que cifra y persiste el vault
+  // completo resuelve _deviceId; no solo guardarVaultCifrado.
+  const _deviceId = await _resolverDeviceId();
+  const vaultVacio = await cifrarConVersion({ _deviceId, credenciales: [] }, clave);
 
   // Guardar en chrome.storage.local
   await new Promise((resolve) => {
@@ -326,9 +330,26 @@ async function desbloquearVault(passwordMaestra) {
   }
 }
 
-// Cifra y guarda el vault completo en storage
+// ── RESOLUCIÓN DE IDENTIDAD DE DISPOSITIVO (H-5) ──
+// La Chrome Extension no genera identidad opaca de instalación: resuelve
+// a null. El fork PWA reemplaza este helper por una consulta a device-id.js
+// (UUID persistido en IndexedDB). Diferencia de fork legítima — igual que
+// idbStorage; verify-crypto-sync.sh compara la API surface exportada, no
+// los helpers internos ni los imports.
+// Que la Extension genere su propio deviceId es una decisión de producto
+// pendiente (ver §28 DA-3). Hasta entonces, todo vault escrito desde la
+// Extension lleva _deviceId: null.
+async function _resolverDeviceId() {
+  return null;
+}
+
+// Cifra y guarda el vault completo en storage.
+// El payload cifrado envuelve el array de credenciales junto a _deviceId
+// (identidad de instalación de origen, H-5). _deviceId NO entra al AAD: es
+// contenido cifrado, no metadato del envelope — por eso BLOB_VERSION no cambia.
 async function guardarVaultCifrado(credenciales, clave) {
-  const vaultCifrado = await cifrarConVersion({ credenciales }, clave);
+  const _deviceId = await _resolverDeviceId();
+  const vaultCifrado = await cifrarConVersion({ _deviceId, credenciales }, clave);
   await new Promise((resolve) => {
     chrome.storage.local.set({ vaultCifrado }, resolve);
   });
@@ -373,8 +394,13 @@ async function cambiarMasterPassword(passwordActual, passwordNueva) {
   // Paso 5: Generar nuevo token de verificación (blob v1 con AAD)
   const tokenNuevo = await generarHashVerificacion(passwordNueva, sal2Nueva);
 
-  // Paso 6: Re-cifrar vault con nueva clave (blob v1 con AAD)
-  const vaultNuevo = await cifrarConVersion({ credenciales }, claveNueva);
+  // Paso 6: Re-cifrar vault con nueva clave (blob v1 con AAD).
+  // Re-resolver _deviceId (H-5): un cambio de master password re-cifra un
+  // vault que ya podía tener _deviceId seteado — nunca dejarlo pasar de
+  // "campo presente" a "campo ausente" en silencio. En la Extension resuelve
+  // a null (el dispositivo que re-cifra es el último escritor y no tiene id).
+  const _deviceId = await _resolverDeviceId();
+  const vaultNuevo = await cifrarConVersion({ _deviceId, credenciales }, claveNueva);
 
   // Paso 7: Guardar todo atómicamente
   await new Promise((resolve) => {
