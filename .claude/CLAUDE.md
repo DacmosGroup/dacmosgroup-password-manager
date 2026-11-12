@@ -158,7 +158,7 @@ primero la versión vieja (Claude.ai no versiona, acumula).
 
 | Archivo | Destino |
 |---|---|
-| `_KNOWLEDGE/DACMOSGROUP_MASTER_CONTEXT.md` | Project **DPM** + Project **General** |
+| `_KNOWLEDGE/DACMOSGROUP_MASTER_CONTEXT.md` | Project **DPM** |
 | `docs/scrum/README.md` | Project **DPM** (solo si cambió el modelo) |
 | `docs/scrum/product-backlog.md` | Project **DPM** |
 | `docs/scrum/sprint-actual.md` | Project **DPM** |

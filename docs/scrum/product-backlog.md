@@ -23,9 +23,11 @@
 
 ## Bloqueantes externos — propiedad del PO, no son trabajo de sprint
 
-### PS-1 · Verificación de identidad Play Store  `[BLOQUEANTE EXTERNO]`
-- **Estado:** 🔄 **REENVIADA 2026-09-06** — esperando revisión de Google (1–3 días hábiles, aviso por correo a `dacmosgroup@gmail.com` + banner de Play Console). Documento: recibo ENSA de agosto 2026 (`ENSA Agosto 2026.jpeg`), nombre y dirección alineados campo por campo con el perfil. Rechazo previo: 2026-06-17, *"Proof of Address: document info does not match profile"*.
-- **Al aprobar:** completar "Verify your contact phone number" → subir AAB al internal track.
+### PS-1 · Verificación de identidad Play Store  `[BLOQUEANTE EXTERNO]` — ✅ CERRADO 2026-09-07
+- **Estado:** ✅ **CERRADO 2026-09-07.** Identidad verificada (*"Your identity has been verified successfully"*, notificación Sep 7). Cuenta de desarrollador **completa**: tipo Personal · nombre legal, dirección y teléfono de contacto ✅ verificados · email `info@dacmosgroup.co` ✅ verificado. Banner "Finish setting up" desaparecido → **internal track habilitado.**
+- **Reenvío que lo destrabó:** comprobante de domicilio actualizado, 2026-09-06. Rechazo previo: 2026-06-17.
+- **Cuenta:** tipo individual.
+- **Único pendiente Android-Play:** subir un AAB al internal track — ver follow-up abajo.
   - ⚠️ **NO subir el AAB v0.6.0 que ya está firmado hoy** — es anterior a H-5 (`3c29a2d`, 2026-09-06) y su fork PWA de `engine.js` no lleva `_deviceId`. Rebuild + re-firma desde `main` post-H-5 antes de subir. (D-1 no tiene este problema: su APK se construye sobre `main` actual y ya trae H-5.)
 - **Si se rechaza de nuevo:** plan B = estado de cuenta bancario (dirección con ciudad/provincia mejor formateada).
 - **Cuenta:** `dacmosgroup@gmail.com` · ID 6476802733577318173 · tipo **individual** (nombre legal: Alejandro Seijas).
@@ -42,7 +44,9 @@
 - [x] Fase B — recibo ENSA agosto 2026 (emisión 29-ago, dentro de 60 días), a nombre completo del titular.
 - [x] Fase C — dirección del perfil calza campo por campo.
 - [x] Fase D — subido 2026-09-06 vía Home → Verify your identity → "Utility bill" → estado **Submitted**.
-- [ ] Registrar resultado de Google aquí y en el standup log del sprint activo.
+- [x] Registrar resultado de Google aquí y en el standup log del sprint activo — ✅ **APROBADO 2026-09-07**.
+
+**Follow-up desbloqueado por PS-1 (para Planning — decide el PO):** rebuild del AAB desde `main` post-H-5 (`versionCode 3`, `versionName 0.6.1` — ya reservado en `d1-decisiones-temp.md` §D1-1) + re-firma con el keystore de release + subida al internal track. Es trabajo de dev análogo a la Fase 1 de D-1, pero con un Goal distinto al de Sprint 2 ("fuera de Play Store") → ¿entra a Sprint 2 por scope, va a Sprint 3, o es sprint aparte? No necesita GitHub (solo keystore + Play Console, ambos disponibles).
 
 ---
 
@@ -65,6 +69,8 @@ producción con usuarios reales).
 | 6 | **F7-A** | Android Autofill Service nativo | L | PS-1 **+ gate de arquitectura** | Épica v0.7.0. **NO entra a Planning** hasta cerrar 3 huecos de seguridad/diseño en el chat del Project DPM (ver desglose abajo). |
 | 7 | **F7-B** | iOS Credential Provider Extension | L | Mac + Apple Dev $99 | Diferida sin fecha. |
 | 8 | **T-1** | `verify-crypto-sync.sh` no compara aridad de funciones | S | — | Mejora de tooling (sugerida por el arquitecto durante H-5). `check_exports` compara solo nombres exportados — cambiar la firma de una función forkeada (agregar/quitar parámetros) pasa el check sin detectarse. Sin driver urgente; al fondo. |
+| 9 | **SG-1** | Guards de subida del sync (G1–G4) | M | **Gate de arquitectura + aprobación del PO** | **Propuesto por el arquitecto (2026-11-10); NO aprobado.** Verificado en código por Code (el detalle técnico del hallazgo se mantiene en el Project DPM, no en este repo público). Propuesta: **G1** sal remota ≠ local → no subir en automático, pedir confirmación; **G2** el local encoge mucho o es ≈ vacío frente al remoto → confirmación; **G3** primera sync solo descarga (ya existe en la Extension; verificar la PWA); **G4** snapshot `vault.prev-<ts>.json` en appData antes de sobrescribir (anillo de 3). Restricción: el service worker de la Extension no tiene la clave AES, el guard usa solo lo que está en claro. Ambos forks. Origen: incidente 31-may/1-jun y pérdida de la bóveda del PO (auditoría del workspace, AUD-67). |
+| 10 | **ER-1** | Recuperación de emergencia de la maestra (kit de recuperación) | L | **Gate de arquitectura + aprobación del PO** | **Propuesto por el arquitecto (2026-11-10); NO aprobado.** Hoy la clave del vault **es** PBKDF2(contraseña, sal): no hay clave que envolver. Requiere jerarquía de claves (DEK aleatoria envuelta por KEK de contraseña y por KEK de recuperación impresa) = cambio de envelope, **bump de `BLOB_VERSION`** y regla de §23 (las 3 superficies deben **leer** v2 antes de que ninguna lo **produzca**: dos releases). Decisión abierta: v2 = DEK con Argon2id movido a v3, o ambos combinados. No habría evitado una sobrescritura, solo una contraseña olvidada. Workspace: P-34. |
 
 ---
 
@@ -115,4 +121,5 @@ cualquier app y navegador, sin abrir la app (paridad con Bitwarden/1Password).
 | 2026-09-06 | Backlog creado. Consolidados roadmap-v0.7.0 + backlog diferido v0.6.0 (H-5, H-9, M-4, B-1) + D-1 (distribución alternativa). Priorización con PS-1 bloqueado: hardening desbloqueado primero, F7-A al fondo hasta desbloquear Play Store. |
 | 2026-09-06 | Rev. tras validación del arquitecto: D-1 sube a #2 (hedge contra 2º rechazo de PS-1); H-9 baja a #3 y se empareja con D-1 (sin usuarios Android externos no hay señal que loguear). F7-A marcado con GATE DE ARQUITECTURA — 3 huecos a cerrar antes de Planning: Digital Asset Links, guard de `onSaveRequest`, posible campo `packageNames[]` en schema. |
 | 2026-09-06 | PS-1: cuenta confirmada individual (Alejandro Seijas). Añadido checklist de reenvío de 4 fases + 3 causas probables del rechazo (documento no a su nombre / recibo caducado / dirección desalineada). |
+| 2026-11-10 | Sesión de recuperación de accesos (sin código): añadidos **SG-1** (guards del sync) y **ER-1** (recuperación de emergencia), ambos **propuestos por el arquitecto y sin aprobar**; sin cambios de prioridad del resto. Contexto: D-1 sigue bloqueado por el PAT de GitHub. |
 | 2026-09-06 | **H-5 ✅ COMPLETADO** (Sprint 2). Gate de arquitectura resuelto en 2 rondas de brief: el payload cifrado ya era objeto `{ credenciales }` (no array plano), sync per-item de §15 nunca se implementó, resolución del `deviceId` interna al engine sin parámetro. Decisión consolidada en `documento-tecnico.md` §30. Nuevo item **T-1** (S) al fondo: `verify-crypto-sync.sh` no compara aridad. Cirugía de doc previa: §29 (v0.6.0) extraída de §27 Referencias, numeración corregida. |

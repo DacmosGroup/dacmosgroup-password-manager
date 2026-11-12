@@ -2645,10 +2645,14 @@ drift.
 
 ### Riesgo de release
 
-El AAB v0.6.0 ya firmado (pendiente de subir al internal track cuando apruebe
-PS-1) es un snapshot de `web/src/crypto/engine.js` **anterior** a H-5. No
-re-firmar ni resubir un AAB con H-5 antes de esa subida — se sube el AAB v0.6.0
-tal cual, y H-5 entra en el siguiente build Android.
+El AAB v0.6.0 ya firmado es un snapshot de `web/src/crypto/engine.js` **anterior**
+a H-5. **Corrección 2026-11-10:** el texto original de este apartado (redactado el
+2026-09-06, antes de que PS-1 se aprobara) decía que ese AAB se subía «tal cual» y que
+H-5 entraba en el siguiente build. Eso **ya no vale**: `product-backlog.md` (bloque PS-1,
+2026-09-07) manda lo contrario — **no subir el AAB v0.6.0**; rebuild desde `main`
+post-H-5 (`versionCode 3`, `versionName 0.6.1`, reservados en `d1-decisiones-temp.md`
+§D1-1) y re-firma con el keystore de release antes de subirlo al internal
+track. Prevalece el backlog, que es posterior.
 
 ### Verificación
 
