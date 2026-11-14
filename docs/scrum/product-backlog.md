@@ -30,7 +30,7 @@
 - **Único pendiente Android-Play:** subir un AAB al internal track — ver follow-up abajo.
   - ⚠️ **NO subir el AAB v0.6.0 que ya está firmado hoy** — es anterior a H-5 (`3c29a2d`, 2026-09-06) y su fork PWA de `engine.js` no lleva `_deviceId`. Rebuild + re-firma desde `main` post-H-5 antes de subir. (D-1 no tiene este problema: su APK se construye sobre `main` actual y ya trae H-5.)
 - **Si se rechaza de nuevo:** plan B = estado de cuenta bancario (dirección con ciudad/provincia mejor formateada).
-- **Cuenta:** `dacmosgroup@gmail.com` · ID 6476802733577318173 · tipo **individual** (nombre legal: Alejandro Seijas).
+- **Cuenta:** tipo **individual** (titular: Alejandro Seijas). Los identificadores de la cuenta no se documentan en el repo.
 - **Qué desbloquea:** todo el track Android de v0.7.0 (internal testing → F7-A). No bloquea el resto del backlog; **D-1 es el hedge** si esto se demora o se rechaza de nuevo.
 - **Reenvíos limitados** → completar el diagnóstico antes de pulsar "Verificar ahora".
 
@@ -40,8 +40,8 @@
 3. La dirección del recibo ≠ la del perfil, campo por campo (acentos `Panamá`/`Panama`, `Calle 50` vs `C. 50`, corregimiento, código postal).
 
 **Checklist de reenvío:**
-- [x] Fase A — perfil revisado: cuenta Personal, nombre legal ALEJANDRO ALBERTO SEIJAS HERNANDEZ, dirección ya alineada con el recibo.
-- [x] Fase B — recibo ENSA agosto 2026 (emisión 29-ago, dentro de 60 días), a nombre completo del titular.
+- [x] Fase A — perfil revisado: cuenta Personal, nombre legal completo del titular, dirección ya alineada con el recibo.
+- [x] Fase B — recibo de servicio público reciente (dentro de 60 días), a nombre completo del titular.
 - [x] Fase C — dirección del perfil calza campo por campo.
 - [x] Fase D — subido 2026-09-06 vía Home → Verify your identity → "Utility bill" → estado **Submitted**.
 - [x] Registrar resultado de Google aquí y en el standup log del sprint activo — ✅ **APROBADO 2026-09-07**.
