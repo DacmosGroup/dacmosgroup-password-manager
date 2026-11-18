@@ -256,6 +256,9 @@ export const strings = {
   'settings.csv.table.password': 'Contraseña',
   'settings.csv.table.status':   'Estado',
   'settings.csv.error.export':   'Error al exportar. Intenta de nuevo.',
+  'settings.csv.confirm.plaintext': 'Este archivo NO está cifrado. Cualquiera que lo abra verá tus contraseñas. Guárdalo solo en un lugar que controles y bórralo al terminar.\n\n¿Exportar de todos modos?',
+  'settings.export.saved':          'Archivo guardado.',
+  'settings.export.error.native':   'No se pudo guardar el archivo ({code}).',
 
   // ── Wizard de importación CSV (F5.1-E) ────────────────────────────────────
   'import.error.empty':        'El archivo CSV está vacío o no contiene filas de datos.',

@@ -256,6 +256,9 @@ export const strings = {
   'settings.csv.table.password': 'Password',
   'settings.csv.table.status':   'Status',
   'settings.csv.error.export':   'Error exporting. Try again.',
+  'settings.csv.confirm.plaintext': 'This file is NOT encrypted. Anyone who opens it will see your passwords. Save it only somewhere you control and delete it when you are done.\n\nExport anyway?',
+  'settings.export.saved':          'File saved.',
+  'settings.export.error.native':   'The file could not be saved ({code}).',
 
   // ── CSV import wizard (F5.1-E) ────────────────────────────────────────────
   'import.error.empty':        'The CSV file is empty or has no data rows.',

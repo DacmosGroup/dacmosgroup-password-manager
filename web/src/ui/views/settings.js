@@ -34,6 +34,7 @@ import { sincronizar }         from '../../sync/sync-manager.js'
 import { navegar }             from '../router.js'
 import * as autoLock           from '../../auto-lock/auto-lock-manager.js'
 import { initI18n, t }         from '../../i18n/i18n.js'
+import { esPlataformaNativa } from '../../platform.js'
 import {
   esBiometriaDisponible,
   hayBiometriaConfigurada,
@@ -476,15 +477,14 @@ export async function montar(contenedor) {
     try {
       const backup   = await exportarVaultBackup(password)
       const json     = JSON.stringify(backup, null, 2)
-      const blob     = new Blob([json], { type: 'application/json' })
-      const url      = URL.createObjectURL(blob)
-      const a        = document.createElement('a')
-      a.href         = url
-      a.download     = `dacmos-backup-${new Date().toISOString().slice(0,10)}.json`
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch (_) {
-      backupMsg.textContent = t('settings.backup.error.export')
+      const nombre   = `dacmos-backup-${new Date().toISOString().slice(0,10)}.json`
+      const res      = await _descargarArchivo(json, 'application/json', nombre)
+      _mostrarResultadoExport(backupMsg, res)
+    } catch (err) {
+      backupMsg.style.cssText = ''
+      backupMsg.textContent = err?.code
+        ? t('settings.export.error.native', { code: err.code })
+        : t('settings.backup.error.export')
       backupMsg.classList.remove('oculto')
     }
   })
@@ -538,13 +538,19 @@ export async function montar(contenedor) {
   contenedor.querySelector('#btn-exportar-csv-generico')?.addEventListener('click', async () => {
     const clave = obtenerClave()
     if (!clave) return
+    // D1-10: el CSV va sin cifrar → confirmación obligatoria (ambas plataformas)
+    if (!confirm(t('settings.csv.confirm.plaintext'))) return
     const csvMsg = contenedor.querySelector('#csv-msg')
     try {
       const credenciales = await cargarVaultDescifrado(clave)
       const csv = generarCSVGenerico(credenciales)
-      _descargarArchivo(csv, 'text/csv', `dacmos-export-${new Date().toISOString().slice(0,10)}.csv`)
-    } catch (_) {
-      csvMsg.textContent = t('settings.csv.error.export')
+      const res = await _descargarArchivo(csv, 'text/csv', `dacmos-export-${new Date().toISOString().slice(0,10)}.csv`)
+      _mostrarResultadoExport(csvMsg, res)
+    } catch (err) {
+      csvMsg.style.cssText = ''
+      csvMsg.textContent = err?.code
+        ? t('settings.export.error.native', { code: err.code })
+        : t('settings.csv.error.export')
       csvMsg.classList.remove('oculto')
     }
   })
@@ -552,13 +558,19 @@ export async function montar(contenedor) {
   contenedor.querySelector('#btn-exportar-csv-bitwarden')?.addEventListener('click', async () => {
     const clave = obtenerClave()
     if (!clave) return
+    // D1-10: el CSV va sin cifrar → confirmación obligatoria (ambas plataformas)
+    if (!confirm(t('settings.csv.confirm.plaintext'))) return
     const csvMsg = contenedor.querySelector('#csv-msg')
     try {
       const credenciales = await cargarVaultDescifrado(clave)
       const csv = generarCSVBitwarden(credenciales)
-      _descargarArchivo(csv, 'text/csv', `dacmos-bitwarden-${new Date().toISOString().slice(0,10)}.csv`)
-    } catch (_) {
-      csvMsg.textContent = t('settings.csv.error.export')
+      const res = await _descargarArchivo(csv, 'text/csv', `dacmos-bitwarden-${new Date().toISOString().slice(0,10)}.csv`)
+      _mostrarResultadoExport(csvMsg, res)
+    } catch (err) {
+      csvMsg.style.cssText = ''
+      csvMsg.textContent = err?.code
+        ? t('settings.export.error.native', { code: err.code })
+        : t('settings.csv.error.export')
       csvMsg.classList.remove('oculto')
     }
   })
@@ -754,8 +766,21 @@ export async function montar(contenedor) {
   })
 }
 
-/** Descarga un string como archivo en el navegador sin chrome.downloads */
-function _descargarArchivo(contenido, tipo, nombre) {
+/**
+ * Canal único de salida de archivos (D1-10).
+ *   - Android (Capacitor): DpmExportPlugin con el selector "Guardar como" del sistema;
+ *     el WebView no procesa <a download> sobre un blob.
+ *   - Navegador: descarga con <a download>, sin cambios respecto a versiones anteriores.
+ * Retorna { nativo, guardado }. En nativo, cancelar el selector da guardado: false
+ * (no es error). Los errores del plugin se propagan con err.code.
+ */
+async function _descargarArchivo(contenido, tipo, nombre) {
+  if (esPlataformaNativa()) {
+    const plugin = window.Capacitor?.Plugins?.DpmExport
+    if (!plugin) throw Object.assign(new Error('EXPORT_ESCRITURA_FALLIDA'), { code: 'EXPORT_ESCRITURA_FALLIDA' })
+    const { guardado } = await plugin.guardarArchivo({ nombre, mimeType: tipo, contenido })
+    return { nativo: true, guardado: guardado === true }
+  }
   const blob = new Blob([contenido], { type: tipo })
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
@@ -763,6 +788,19 @@ function _descargarArchivo(contenido, tipo, nombre) {
   a.download = nombre
   a.click()
   URL.revokeObjectURL(url)
+  return { nativo: false, guardado: true }
+}
+
+/**
+ * Aviso tras exportar. Solo en nativo hay confirmación real de escritura; en el
+ * navegador la descarga la gestiona el propio navegador y no se muestra nada
+ * (comportamiento anterior). Cancelar el selector no muestra nada.
+ */
+function _mostrarResultadoExport(msgEl, { nativo, guardado }) {
+  if (!nativo || !guardado) return
+  msgEl.style.cssText = 'background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);color:var(--color-success);'
+  msgEl.textContent   = t('settings.export.saved')
+  msgEl.classList.remove('oculto')
 }
 
 /**

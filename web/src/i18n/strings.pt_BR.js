@@ -256,6 +256,9 @@ export const strings = {
   'settings.csv.table.password': 'Senha',
   'settings.csv.table.status':   'Status',
   'settings.csv.error.export':   'Erro ao exportar. Tente novamente.',
+  'settings.csv.confirm.plaintext': 'Este arquivo NÃO está criptografado. Qualquer pessoa que o abrir verá suas senhas. Salve-o apenas em um lugar que você controla e apague-o ao terminar.\n\nExportar mesmo assim?',
+  'settings.export.saved':          'Arquivo salvo.',
+  'settings.export.error.native':   'Não foi possível salvar o arquivo ({code}).',
 
   // ── Assistente de importação CSV (F5.1-E) ─────────────────────────────────
   'import.error.empty':        'O arquivo CSV está vazio ou não contém linhas de dados.',
