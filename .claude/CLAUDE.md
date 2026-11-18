@@ -158,7 +158,6 @@ primero la versión vieja (Claude.ai no versiona, acumula).
 
 | Archivo | Destino |
 |---|---|
-| `_KNOWLEDGE/DACMOSGROUP_MASTER_CONTEXT.md` | Project **DPM** |
 | `docs/scrum/README.md` | Project **DPM** (solo si cambió el modelo) |
 | `docs/scrum/product-backlog.md` | Project **DPM** |
 | `docs/scrum/sprint-actual.md` | Project **DPM** |
@@ -172,5 +171,6 @@ Mantener también en el Project (referencia estable, re-subir solo si cambian):
 `docs/guia-usuario.md`, `_KNOWLEDGE/content/audiencia-target.md`.
 Quitar del Project los `roadmap-vX.X.md` de ciclos cerrados y los duplicados.
 
-Registrar la fecha de subida en la tabla "Sincronización con Claude.ai Projects"
-de `DACMOSGROUP_MASTER_CONTEXT.md`.
+El contexto maestro (`_KNOWLEDGE/DACMOSGROUP_MASTER_CONTEXT.md`) ya no se sube al Project:
+si cambió, `dg master` y subir el skill `dacmos-master-context` una vez (desde 2026-11-17).
+Registrar la fecha de subida en la tabla "Sincronización con Claude.ai Projects" de ese archivo.
