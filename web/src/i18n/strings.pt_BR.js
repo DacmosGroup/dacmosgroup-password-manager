@@ -259,7 +259,7 @@ export const strings = {
   'settings.csv.table.password': 'Senha',
   'settings.csv.table.status':   'Status',
   'settings.csv.error.export':   'Erro ao exportar. Tente novamente.',
-  'settings.csv.confirm.plaintext': 'Este arquivo NÃO está criptografado. Qualquer pessoa que o abrir verá suas senhas. Salve-o apenas em um lugar que você controla e apague-o ao terminar.\n\nExportar mesmo assim?',
+  'settings.csv.confirm.plaintext': 'Este arquivo NÃO está criptografado. Qualquer pessoa que o abrir verá suas senhas. Salve-o apenas em um lugar que você controla e apague-o ao terminar. Não o abra com apps que o enviem ou o analisem (assistentes de IA, visualizadores na nuvem).\n\nExportar mesmo assim?',
   'settings.export.saved':          'Arquivo salvo.',
   'settings.export.error.native':   'Não foi possível salvar o arquivo ({code}).',
 

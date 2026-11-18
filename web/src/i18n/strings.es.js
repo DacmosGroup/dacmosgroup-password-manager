@@ -259,7 +259,7 @@ export const strings = {
   'settings.csv.table.password': 'Contraseña',
   'settings.csv.table.status':   'Estado',
   'settings.csv.error.export':   'Error al exportar. Intenta de nuevo.',
-  'settings.csv.confirm.plaintext': 'Este archivo NO está cifrado. Cualquiera que lo abra verá tus contraseñas. Guárdalo solo en un lugar que controles y bórralo al terminar.\n\n¿Exportar de todos modos?',
+  'settings.csv.confirm.plaintext': 'Este archivo NO está cifrado. Cualquiera que lo abra verá tus contraseñas. Guárdalo solo en un lugar que controles y bórralo al terminar. No lo abras con apps que lo suban o lo analicen (asistentes de IA, visores en la nube).\n\n¿Exportar de todos modos?',
   'settings.export.saved':          'Archivo guardado.',
   'settings.export.error.native':   'No se pudo guardar el archivo ({code}).',
 
