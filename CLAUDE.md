@@ -159,7 +159,7 @@ Per-platform independent versioning:
 |---|---|---|
 | Chrome Extension | `manifest.json` | **v0.5.1 PUBLICADA en CWS ✅ (2026-06-13)** |
 | PWA | `web/manifest.json` | v0.5.1 LIVE en dpm.dacmosgroup.co ✅ (incluye UX-LOCK-NAV) |
-| Android (Capacitor) | `android/` · `app-release.aab` | **v0.6.0 COMPLETADO 2026-06-12** ✅ · bundleRelease firmado · Play Store: cuenta activa, verificación identidad pendiente |
+| Android (Capacitor) | `android/` · `app-release.aab` / `app-release.apk` | **v0.6.0 COMPLETADO 2026-06-12** · Play Store: PS-1 cerrado, internal track habilitado · **2026-11-17 (D-1):** APK **0.6.1 (vc 2)** firmado con `dacmos-pm` y probado por primera vez en teléfono real — la app nunca había arrancado (splash, corregido en `5b58423`; el AAB v0.6.0 tampoco arranca: no subirlo); **exportar backup/CSV no funciona en Android** → publicación en espera del arquitecto. Antes de cada build: `npx cap sync android` (los assets empaquetados estaban pre-H-5) |
 
 **Estado auditoría:** Fases 1–4 completas (commit `4970463`, merge `01c8623`). Branch `fix/auditoria-remediaciones` cerrada.
 **Testing completado 2026-06-06:** Bloques 1–8 APROBADOS — sync round-trip Extension ↔ PWA en ambas direcciones.
