@@ -105,6 +105,8 @@ export const strings = {
   'vault.banner.persistence':  '⚠️ Your local vault may be deleted if you don\'t open the app for 7+ days.',
   'vault.banner.sync.link':    'Set up sync',
   'vault.banner.close':        'Close notice',
+  'vault.banner.native':       '⚠️ Your vault lives only on this phone. If you uninstall the app, clear its data or lose the phone, it is gone. It does not move to a new phone by itself either: export an encrypted backup and keep it off the phone.',
+  'vault.banner.export.link':  'Export backup',
 
   // ── PWA (Service Worker) ──────────────────────────────────────────────────
   'pwa.update.text': 'New version available.',
@@ -193,6 +195,7 @@ export const strings = {
   'settings.section.backup':    'BACKUP',
   'settings.section.csv':       'EXPORT / IMPORT CSV',
   'settings.section.sync':      'SYNC',
+  'settings.sync.native.future': 'Sync is coming to Android in a future version. In the meantime, export an encrypted backup regularly.',
   'settings.section.storage':   'STORAGE',
   'settings.section.session':   'SESSION',
   'settings.version':           'Dacmos Password Manager · Zero-Knowledge · v{version}',
@@ -313,6 +316,7 @@ export const strings = {
   'settings.storage.protected': '✅ <strong>Protected storage</strong> — your vault will not be automatically deleted',
   'settings.storage.evictable': '⚠️ <strong>Evictable storage</strong> — <a href="#" id="link-activar-sync">enable sync</a> to protect your vault on iOS',
   'settings.storage.unknown':   'ℹ️ Persistence status not available in this browser',
+  'settings.storage.native':   '⚠️ <strong>Your vault lives only on this phone</strong> — Android automatic backups do not copy it. <a href="#" id="link-ir-exportar">Export an encrypted backup</a> and keep it off the phone.',
   'settings.storage.usage':     'Storage: {used} used of {quota} available',
 
   // ── Settings — Session ────────────────────────────────────────────────────

@@ -105,6 +105,8 @@ export const strings = {
   'vault.banner.persistence':  '⚠️ Seu cofre local pode ser apagado se você não abrir o app por 7+ dias.',
   'vault.banner.sync.link':    'Configure a sincronização',
   'vault.banner.close':        'Fechar aviso',
+  'vault.banner.native':       '⚠️ Seu vault fica apenas neste telefone. Se você desinstalar o app, apagar os dados dele ou perder o telefone, ele se perde. Ele também não passa sozinho para um telefone novo: exporte um backup criptografado e guarde-o fora do telefone.',
+  'vault.banner.export.link':  'Exportar backup',
 
   // ── PWA (Service Worker) ──────────────────────────────────────────────────
   'pwa.update.text': 'Nova versão disponível.',
@@ -193,6 +195,7 @@ export const strings = {
   'settings.section.backup':    'BACKUP',
   'settings.section.csv':       'EXPORTAR / IMPORTAR CSV',
   'settings.section.sync':      'SINCRONIZAÇÃO',
+  'settings.sync.native.future': 'A sincronização chegará ao Android em uma versão futura. Enquanto isso, exporte um backup criptografado regularmente.',
   'settings.section.storage':   'ARMAZENAMENTO',
   'settings.section.session':   'SESSÃO',
   'settings.version':           'Dacmos Password Manager · Zero-Knowledge · v{version}',
@@ -313,6 +316,7 @@ export const strings = {
   'settings.storage.protected': '✅ <strong>Armazenamento protegido</strong> — seu cofre não será excluído automaticamente',
   'settings.storage.evictable': '⚠️ <strong>Armazenamento evictável</strong> — <a href="#" id="link-activar-sync">ative a sincronização</a> para proteger seu cofre no iOS',
   'settings.storage.unknown':   'ℹ️ Status de persistência não disponível neste navegador',
+  'settings.storage.native':   '⚠️ <strong>Seu vault fica apenas neste telefone</strong> — os backups automáticos do Android não o copiam. <a href="#" id="link-ir-exportar">Exporte um backup criptografado</a> e guarde-o fora do telefone.',
   'settings.storage.usage':     'Armazenamento: {used} usados de {quota} disponíveis',
 
   // ── Configurações — Sessão ────────────────────────────────────────────────

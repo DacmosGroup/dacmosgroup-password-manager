@@ -23,6 +23,7 @@ import { navegar }              from '../router.js'
 import { escapeHtml }           from '../../utils/escape.js'
 import { generarCodigo, segundosRestantes } from '../../crypto/totp.js'
 import { t }                    from '../../i18n/i18n.js'
+import { esPlataformaNativa } from '../../platform.js'
 
 // ── Estado del countdown TOTP (F5.1-B) ──
 let _totpInterval = null
@@ -38,8 +39,11 @@ export async function montar(contenedor) {
 
   // Cargar estado de persistencia para el banner (F4.5)
   const datos = await idbStorage.get(['persistenciaEstado', 'bannerPersistenciaVisto'])
-  const mostrarBanner = datos.persistenciaEstado === 'rechazada'
-                     && !datos.bannerPersistenciaVisto
+  // D1-13: en Android el riesgo real no es la evicción del navegador sino
+  // desinstalar o perder el teléfono → se muestra siempre hasta descartarlo.
+  const nativo = esPlataformaNativa()
+  const mostrarBanner = !datos.bannerPersistenciaVisto
+                     && (nativo || datos.persistenciaEstado === 'rechazada')
 
   contenedor.innerHTML = `
     <div class="vista">
@@ -58,8 +62,8 @@ export async function montar(contenedor) {
       ${mostrarBanner ? `
       <div class="banner-persistencia" id="banner-persistencia" role="alert">
         <p>
-          ${t('vault.banner.persistence')}
-          <a href="#" id="banner-sync-link">${t('vault.banner.sync.link')}</a>
+          ${nativo ? t('vault.banner.native') : t('vault.banner.persistence')}
+          <a href="#" id="banner-sync-link">${nativo ? t('vault.banner.export.link') : t('vault.banner.sync.link')}</a>
         </p>
         <button class="banner-persistencia__cerrar" id="btn-banner-cerrar"
                 aria-label="${t('vault.banner.close')}">✕</button>

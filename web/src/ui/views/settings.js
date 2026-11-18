@@ -131,6 +131,7 @@ export async function montar(contenedor) {
   const versionApp = await _leerVersionManifest()
 
   const configActual  = syncConfig.config  ?? {}
+  const nativo        = esPlataformaNativa()
   const syncConf      = syncConfig.syncConfig ?? {}
   const proveedorSync = syncConf.proveedor ?? null
   const idiomaActual  = configActual.idioma ?? 'auto'
@@ -322,7 +323,18 @@ export async function montar(contenedor) {
         <div class="unlock__error oculto" id="csv-msg" role="alert"></div>
       </div>
 
-      <!-- ── 4. Sincronización ── -->
+      <!-- ── 4. Sincronización ──
+           D1-12: en Android no se renderiza (OAuth en WebView no es fiable y el
+           sync sin los guards de SG-1 no se habilita). Ver SY-1. -->
+      ${nativo ? `
+      <p class="seccion-titulo" id="seccion-sync">${t('settings.section.sync')}</p>
+      <div class="settings__seccion tarjeta">
+        <div class="settings__fila">
+          <div class="settings__fila-info">
+            <div class="settings__fila-descripcion">${t('settings.sync.native.future')}</div>
+          </div>
+        </div>
+      </div>` : `
       <p class="seccion-titulo" id="seccion-sync">${t('settings.section.sync')}</p>
       <div class="settings__seccion tarjeta">
         <!-- Google Drive -->
@@ -358,17 +370,19 @@ export async function montar(contenedor) {
           </div>
         </div>
         <div class="unlock__error oculto" id="sync-msg" role="alert"></div>
-      </div>
+      </div>`}
 
       <!-- ── 5. Almacenamiento (F4.5) ── -->
       <p class="seccion-titulo">${t('settings.section.storage')}</p>
       <div class="settings__seccion tarjeta">
         <div class="settings__estado-persistencia">
-          ${persistencia.persistente
-            ? t('settings.storage.protected')
-            : persistencia.soportada
-              ? t('settings.storage.evictable')
-              : t('settings.storage.unknown')
+          ${nativo
+            ? t('settings.storage.native')
+            : persistencia.persistente
+              ? t('settings.storage.protected')
+              : persistencia.soportada
+                ? t('settings.storage.evictable')
+                : t('settings.storage.unknown')
           }
         </div>
         ${persistencia.soportada ? `
@@ -654,6 +668,12 @@ export async function montar(contenedor) {
   contenedor.querySelector('#btn-desconectar-onedrive')?.addEventListener('click', async () => {
     await desconectarMicrosoft()
     await navegar('#/settings')
+  })
+
+  // ── Link a Exportar desde sección Almacenamiento (D1-13, solo nativo) ──
+  contenedor.querySelector('#link-ir-exportar')?.addEventListener('click', (e) => {
+    e.preventDefault()
+    contenedor.querySelector('#btn-exportar')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   })
 
   // ── Link a sync desde sección Almacenamiento (F4.5) ──

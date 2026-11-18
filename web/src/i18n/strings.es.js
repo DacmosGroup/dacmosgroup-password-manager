@@ -105,6 +105,8 @@ export const strings = {
   'vault.banner.persistence':  '⚠️ Tu vault local puede borrarse si no abres la app durante 7+ días.',
   'vault.banner.sync.link':    'Configura la sincronización',
   'vault.banner.close':        'Cerrar aviso',
+  'vault.banner.native':       '⚠️ Tu vault vive solo en este teléfono. Si desinstalas la app, borras sus datos o pierdes el teléfono, se pierde. Al cambiar de teléfono tampoco pasa solo: exporta un backup cifrado y guárdalo fuera del teléfono.',
+  'vault.banner.export.link':  'Exportar backup',
 
   // ── PWA (Service Worker) ──────────────────────────────────────────────────
   'pwa.update.text': 'Nueva versión disponible.',
@@ -193,6 +195,7 @@ export const strings = {
   'settings.section.backup':    'BACKUP',
   'settings.section.csv':       'EXPORTAR / IMPORTAR CSV',
   'settings.section.sync':      'SINCRONIZACIÓN',
+  'settings.sync.native.future': 'La sincronización llegará a Android en una versión futura. Mientras tanto, exporta un backup cifrado con regularidad.',
   'settings.section.storage':   'ALMACENAMIENTO',
   'settings.section.session':   'SESIÓN',
   'settings.version':           'Dacmos Password Manager · Zero-Knowledge · v{version}',
@@ -313,6 +316,7 @@ export const strings = {
   'settings.storage.protected': '✅ <strong>Almacenamiento protegido</strong> — tu vault no será borrado automáticamente',
   'settings.storage.evictable': '⚠️ <strong>Almacenamiento evictable</strong> — <a href="#" id="link-activar-sync">activa la sincronización</a> para proteger tu vault en iOS',
   'settings.storage.unknown':   'ℹ️ Estado de persistencia no disponible en este navegador',
+  'settings.storage.native':   '⚠️ <strong>Tu vault vive solo en este teléfono</strong> — no se copia con las copias automáticas de Android. <a href="#" id="link-ir-exportar">Exporta un backup cifrado</a> y guárdalo fuera del teléfono.',
   'settings.storage.usage':     'Almacenamiento: {used} usados de {quota} disponibles',
 
   // ── Configuración — Sesión ────────────────────────────────────────────────

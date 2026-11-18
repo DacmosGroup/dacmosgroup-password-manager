@@ -32,6 +32,7 @@ import { GoogleDriveAdapter }   from '../../sync/google-drive-adapter.js'
 import { OneDriveAdapter }      from '../../sync/onedrive-adapter.js'
 import { sincronizar }          from '../../sync/sync-manager.js'
 import { t }                    from '../../i18n/i18n.js'
+import { esPlataformaNativa }   from '../../platform.js'
 
 /** Monta la vista de setup en el contenedor dado */
 export async function montar(contenedor) {
@@ -53,13 +54,14 @@ function _montarEleccion(contenedor) {
             ${t('auth.setup.btn.create')}
           </button>
 
+          ${esPlataformaNativa() ? '' : `
           <div class="setup__divisor">
             <span>${t('auth.setup.restore.hint')}</span>
           </div>
 
           <button class="btn btn--secundario btn--completo" id="btn-restaurar">
             ${t('auth.setup.btn.restore')}
-          </button>
+          </button>`}
         </div>
 
         <p class="auth__nota-pie">${t('common.zk.footer')}</p>
@@ -70,7 +72,8 @@ function _montarEleccion(contenedor) {
     _montarCrear(contenedor)
   })
 
-  contenedor.querySelector('#btn-restaurar').addEventListener('click', () => {
+  // D1-12: "Restaurar desde tu nube" usa OAuth + sync → no existe en Android
+  contenedor.querySelector('#btn-restaurar')?.addEventListener('click', () => {
     _montarRestaurar(contenedor)
   })
 }
