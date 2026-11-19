@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Baseline 0.6.x · Última actualización 2026-09-06 (§30 — Backlog H-5)**
+**Baseline 0.6.x · Última actualización 2026-11-19 (§31 — D-1 + EX-1, APK 0.6.1)**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -37,10 +37,11 @@
 24. [Decisiones de Sesión — v0.5.0 Replanificación Estratégica](#24-decisiones-de-sesión--v050-replanificación-estratégica)
 25. [Decisiones de Implementación — F5-A (Auto-lock PWA)](#25-decisiones-de-implementación--f5-a)
 26. [Decisiones de Implementación — F5-B (i18n ES/EN/PT-BR)](#26-decisiones-de-implementación--f5-b)
-27. [Referencias](#27-referencias)
-28. [Decisiones de Implementación — v0.5.1 (Saneamiento pre-v0.6.0)](#28-decisiones-de-implementación--v051-saneamiento-pre-v060)
+27. [Decisiones de Implementación — v0.5.1 (Saneamiento pre-v0.6.0)](#27-decisiones-de-implementación--v051-saneamiento-pre-v060)
+28. [Referencias](#28-referencias)
 29. [Decisiones de Implementación — v0.6.0 Capacitor Android-first](#29-decisiones-de-implementación--v060-capacitor-android-first)
 30. [Decisiones de Implementación — H-5 (`_deviceId` en el vault, Sprint 2)](#30-decisiones-de-implementación--h-5-_deviceid-en-el-vault-sprint-2)
+31. [Decisiones de Implementación — D-1 + EX-1 (APK 0.6.1 fuera de Play Store, Sprint 2)](#31-decisiones-de-implementación--d-1--ex-1-apk-061-fuera-de-play-store-sprint-2)
 
 ---
 
@@ -537,7 +538,7 @@ pueden tener `claveTotp`. El módulo `credential-schema.js` normaliza al cargar
 (`normalizarTOTP`) con convergencia lazy: el primer unlock post-actualización
 persiste el campo canónico y descarta el legacy. No requiere bump de
 `BLOB_VERSION` — es migración a nivel de schema de aplicación, no del envelope
-criptográfico. Ver §28.
+criptográfico. Ver §27.
 
 ---
 
@@ -788,7 +789,7 @@ La verificación falla rápido con contraseña incorrecta sin exponer el vault.
 
 | Deuda | Descripción | Impacto | Resolución |
 |-------|-------------|---------|------------|
-| `ultimaModificacion()` sin invalidación de fileId | `GoogleDriveAdapter.ultimaModificacion()` no invalida el fileId cacheado cuando Drive retorna 404 → el sync queda atascado en `DRIVE_404` si el archivo remoto se borra externamente (BUG-SYNC-404). | Medio — sync atascado, workaround: desconectar/reconectar | **PWA:** ✅ Resuelto en BUG-1 (commit `071391d`). **Extension:** ✅ Resuelto en v0.5.1 (F5.1-C) — el fix solo existía en el fork PWA; corregido el drift invertido. Ver §28. |
+| `ultimaModificacion()` sin invalidación de fileId | `GoogleDriveAdapter.ultimaModificacion()` no invalida el fileId cacheado cuando Drive retorna 404 → el sync queda atascado en `DRIVE_404` si el archivo remoto se borra externamente (BUG-SYNC-404). | Medio — sync atascado, workaround: desconectar/reconectar | **PWA:** ✅ Resuelto en BUG-1 (commit `071391d`). **Extension:** ✅ Resuelto en v0.5.1 (F5.1-C) — el fix solo existía en el fork PWA; corregido el drift invertido. Ver §27. |
 | Precache revision fields manuales | Los campos `revision` del precache en `web/service-worker.js` deben incrementarse manualmente por archivo al hacer deploy. Sin Workbox Inject Manifest no hay automatización. | Operacional — usuarios pueden usar assets desactualizados hasta que la cache expire (30 días TTL) | ✅ Resuelto en BUG-2 — `SW_DEPLOY_ID` inyectado por CI |
 | Import desde setup (Caso 1 — vault vacío) | `importarVaultBackup()` maneja correctamente el Caso 1 (sin vault previo) pero no hay ruta UI que lo dispare — Settings requiere sesión activa. El código es correcto; falta la UX de "Restaurar backup" en la pantalla de setup inicial. | UX — el import solo funciona si el usuario ya tiene un vault configurado. **Prioridad elevada:** la ausencia de Zona de Peligro en la PWA deja sin ruta de escape a usuarios con contraseña olvidada. | v0.5.0 — pantalla de setup con opción de restauración |
 
@@ -1650,16 +1651,20 @@ construir el APK de Capacitor, verificar si la herramienta de build de
 Capacitor (Ionic Appflow o Codemagic) tiene la misma incompatibilidad.
 En entorno local, la solución directa es `./gradlew` con flags de firma.
 
-### Canales de distribución v0.4.0
+### Canales de distribución
+
+> Tabla actualizada en D-1 (2026-11-19). La versión original (v0.4.0, flujo TWA)
+> listaba un APK de GitHub Releases que nunca se publicó; el canal TWA quedó
+> obsoleto con Capacitor (§29) y se cerró en D-1 (§31).
 
 | Canal | Estado |
 |-------|--------|
-| `dpm.dacmosgroup.co` (PWA — todos los dispositivos) | ✅ Dominio activo |
-| GitHub Releases (`dacmos-pm-v0.4.0.apk`) | ✅ APK firmado |
-| IzzyOnDroid | 🔄 Pendiente submisión (2–7 días revisión) |
-| F-Droid main repo | ⏳ v0.4.x (requiere build reproducible) |
-| Google Play Store | ⏳ v0.5.0 ($25 Play Console) |
-| Apple App Store | ⏳ v0.6.0 ($99/año Developer Program) |
+| `dpm.dacmosgroup.co` (PWA — todos los dispositivos) | ✅ PWA 0.6.1 |
+| GitHub Releases (APK Capacitor firmado con `dacmos-pm`) | ✅ `v0.6.1` (vc 2) — D-1, §31 |
+| IzzyOnDroid | 🔄 Solicitud tras la Release `v0.6.1` (la envía el PO; revisión asíncrona) |
+| F-Droid main repo | ⏳ Requiere build reproducible (fuera de alcance de D-1) |
+| Google Play Store | ⏳ PS-1 cerrado (internal track habilitado); falta subir el AAB vc 3 / 0.6.1 |
+| Apple App Store | ⏳ Diferido ($99/año Developer Program + macOS) |
 
 ### Prerequisitos resueltos al cierre de F4.6
 
@@ -2430,7 +2435,7 @@ Si el array `ITEMS` estuviera a nivel de módulo, `t()` se evaluaría en tiempo 
 
 ---
 
-## 28. Decisiones de Implementación — v0.5.1 (Saneamiento pre-v0.6.0)
+## 27. Decisiones de Implementación — v0.5.1 (Saneamiento pre-v0.6.0)
 
 **Fecha:** 2026-06-11
 **Origen:** Auditoría interna v0.5.0 (`docs/auditoria-v0.5.0-hallazgos.md`).
@@ -2517,7 +2522,7 @@ legacy.
 
 ---
 
-## 27. Referencias
+## 28. Referencias
 
 ### Estándares y especificaciones
 
@@ -2573,6 +2578,10 @@ legacy.
 | Scope | Android-first. iOS (v0.6.1/v0.7.0) requiere macOS + Apple Developer $99. |
 
 **Principio no negociable:** la `wrap_key` nunca sale del hardware. JS recibe `{iv, ciphertext}` o el `vault_key` descifrado — nunca la `wrap_key`. Ver §5 "Biometría en Capacitor" para el patrón completo.
+
+> **Nota (2026-11-17, D-1):** el AAB v0.6.0 nunca arrancó en un dispositivo físico
+> (splash nativo sin ocultar). v0.6.0 se dio por completado sin prueba en
+> dispositivo; ver §31 (D1-9 y D1-14). Ese AAB no se distribuye.
 
 ---
 
@@ -2662,6 +2671,220 @@ track. Prevalece el backlog, que es posterior.
   `cambiarMasterPassword`; PWA = UUID v4 estable == deviceId en IDB; Extension =
   `null`; `cargarVaultDescifrado()` sigue devolviendo array plano; `BLOB_VERSION`
   = 1; blob legado sin `_deviceId` se lee sin romper.
+
+---
+
+## 31. Decisiones de Implementación — D-1 + EX-1 (APK 0.6.1 fuera de Play Store, Sprint 2)
+
+**Fecha:** 2026-09-06 (plan) · 2026-11-17/19 (implementación, prueba en dispositivo y cierre) · **Sprint:** 2
+
+Origen: item D-1 (APK firmado → GitHub Releases + IzzyOnDroid) y EX-1 (exportar
+backup/CSV en Android), aprobados por el arquitecto revisor y el PO en el chat del
+Project DPM. D1-1..D1-8 son del plan (2026-09-06); D1-9..D1-14 salen de la primera
+prueba en un teléfono real (2026-11-17) y de su segunda ronda (2026-11-18).
+
+### D1-1 — `versionCode` / `versionName`
+
+`versionCode` es un **contador secuencial único** en `build.gradle`:
+
+| Build | versionCode | versionName | Estado |
+|---|---|---|---|
+| AAB v0.6.0 (jun-2026, pre-H-5) | 1 | `0.6.0` | Firmado, **nunca se sube** (no arranca: D1-9) |
+| APK D-1 (post-H-5 + EX-1) | 2 | `0.6.1` | Release `v0.6.1` |
+| AAB Play, rebuild post-H-5 | 3 | `0.6.1` | Pendiente de subir al internal track |
+
+El contador **no** es un mecanismo de continuidad entre canales: Play App Signing
+re-firma con la clave de Google y el APK directo firma con `dacmos-pm`, así que
+Android trata ambas instalaciones como apps incompatibles (migrar de canal exige
+desinstalar). Es un **registro de secuencia de builds**, no un contrato de
+compatibilidad. `versionName 0.6.1` identifica el build de cara a soporte; `0.6.0`
+queda reservado al snapshot pre-H-5 que nunca se distribuye. Formato de datos
+(H-5 sin bump de `BLOB_VERSION`, §30) e identidad de artefacto son capas distintas.
+
+**PWA:** `web/manifest.json` pasa de 0.5.1 a **0.6.1** (aprobado 2026-11-18). El
+manifest lo comparten la PWA y la capa web del APK (el pie de Ajustes lee la
+versión de ahí), así que debe coincidir con el artefacto Android. **No existe una
+PWA 0.6.0.** La Extension sigue en 0.5.1: no se tocó (§23, versión por superficie).
+
+### D1-2 — `assetlinks.json`: fuera de alcance
+
+El fingerprint de `web/.well-known/assetlinks.json` es del keystore viejo
+(`dacmos-dpm`), no del de release (`dacmos-pm`). No afecta a D-1: un WebView de
+Capacitor no depende de Digital Asset Links para arrancar (el fallback a Custom
+Tabs es exclusivo de TWA). Se resuelve en el gate de F7-A (hueco #1): listar
+`dacmos-pm` y el fingerprint de Play App Signing, y retirar `dacmos-dpm` con una
+nota de auditoría.
+
+### D1-3 / D1-6 — Encaje de documentación y commits
+
+Renumeración mecánica previa: el orden físico era 28 (v0.5.1) → 27 (Referencias) →
+29 → 30; se intercambiaron los **labels** sin mover contenido (27 = v0.5.1,
+28 = Referencias) y se actualizaron la tabla de contenido y las referencias
+cruzadas. Tabla de canales de §18 parcheada en sitio. Commits atómicos por tipo de
+cambio: `feat(android)`, `fix(android)`, `chore`, `content(distribution)`,
+`feat/fix(web)`, `docs`.
+
+| Commit | Tipo | Contenido |
+|---|---|---|
+| `07dc866` | `feat(android):` | `versionCode 2` + `versionName 0.6.1` |
+| `5b58423` | `fix(android):` | splash nativo con `launchAutoHide: true` (D1-9) |
+| `8c9972d` | `chore:` | borrado de `twa-manifest.json` (D1-4) |
+| `66adb53` | `feat(android):` | `DpmExportPlugin` + `allowBackup="false"` + `dataExtractionRules` (D1-10, D1-13) |
+| `931b2c3` | `fix(web):` | canal único de exportación + confirmación del CSV (D1-10) |
+| `d955c29` | `feat(web):` | sync oculto en nativo, banner y Almacenamiento con el riesgo real (D1-12, D1-13) |
+| `a411ab1` | `fix(web):` | aviso del CSV: no abrirlo con apps que lo suban o analicen (D1-10) |
+| `d3a5c14` | `chore:` | `web/manifest.json` a 0.6.1 (D1-1) |
+| `1bb1934` | `content(distribution):` | `fastlane/metadata/**` es-ES / en-US / pt-BR |
+
+### D1-4 / D1-8 — Cierre del canal TWA
+
+`twa-manifest.json` eliminado tras un grep de todo el árbol (dos veces: 2026-09-06
+y 2026-11-17): ningún workflow, script, `.gitignore`, `package.json` ni
+`capacitor.config.ts` dependía de él. `docs/f4.6-keystore.md` lleva un banner de
+obsolescencia y la metadata del keystore real.
+
+### D1-5 — Credencial para publicar
+
+`gh release create` usa un PAT **fine-grained** limitado a este repositorio con
+`Contents: write` (y `Metadata: read` implícito). Nunca un PAT classic con scope
+`repo` (mínimo privilegio). El PAT se revoca al terminar D-1 o al vencer.
+
+### D1-7 — Toolchain
+
+El build exige JDK 21. `android/gradle.properties` fija `org.gradle.java.home` a la
+JetBrains Runtime de Android Studio (OpenJDK 21) desde `d7c4b4d`; `./gradlew` la
+lee sin configuración extra. Es una ruta absoluta de una máquina → **T-2** en el
+backlog (detección portable antes de llevar Android a CI). Build reproducible
+bit a bit: atado a F-Droid main, fuera de alcance (IzzyOnDroid acepta el binario
+firmado del desarrollador).
+
+### D1-9 — Splash (hallazgo de la primera prueba en dispositivo)
+
+Desde el shell inicial, `capacitor.config.ts` tenía `launchAutoHide: false` y el
+código web nunca llama a `SplashScreen.hide()`: **la app nunca había arrancado en
+un teléfono**, y el AAB v0.6.0 tampoco arranca. Decisión: `launchAutoHide: true` +
+`launchShowDuration: 500` como definitivo para D-1 (no toca `web/`). Ocultar el
+splash al terminar el init pasa al backlog como **UX-1**. Riesgo aceptado: posible
+destello entre splash y primera vista (cosmético).
+
+### D1-10 — EX-1: exportar backup y CSV en Android
+
+En el WebView de Capacitor, `<a download>` sobre un blob no hace nada (no hay
+`DownloadListener`), y fallaba en silencio. Sin backup, perder el teléfono es perder
+el vault. Opción elegida: **plugin nativo propio y separado, `DpmExportPlugin`**,
+con el selector "Guardar como" del sistema (Storage Access Framework,
+`ACTION_CREATE_DOCUMENT`). Se descartaron `@capacitor/filesystem` +
+`@capacitor/share` (dos dependencias, hoja de compartir en vez de "Guardar como",
+copia intermedia en la app; contradice DA-2) y meter el método en `DpmKeyPlugin`
+(mezcla E/S de archivos con la superficie criptográfica y agranda lo que hay que
+auditar al tocar el plugin de claves).
+
+Contrato (no negociable):
+
+```
+DpmExport.guardarArchivo({ nombre, mimeType: 'application/json' | 'text/csv', contenido })
+  → resolve { guardado: true }    escrito en el destino elegido
+  → resolve { guardado: false }   el usuario canceló el selector (no es error)
+  → reject  EXPORT_MIME_NO_PERMITIDO | EXPORT_ESCRITURA_FALLIDA
+```
+
+- Solo escritura: sin lectura, sin parámetro de ruta, sin devolver la URI a JS.
+- Lista blanca de 2 MIME; `OutputStream` en modo `"wt"` y cerrado siempre; nunca se
+  registra `contenido` en Logcat. Sin permisos de almacenamiento (SAF no los pide).
+- Web: `web/src/platform.js` (`esPlataformaNativa()`, vía `window.Capacitor`: la PWA
+  no tiene bundler). Se usa **solo** para decidir qué se muestra y qué canal de
+  salida se usa, **nunca como control de seguridad**. `_descargarArchivo` en
+  `settings.js` es el canal único: en nativo va por el plugin (aviso de éxito,
+  error con su código, cancelar sin aviso); en el navegador sigue con `<a download>`.
+- **CSV en Android: disponible**, por el mismo canal, con **confirmación
+  obligatoria en ambas plataformas**: el archivo va sin cifrar; guardarlo solo
+  donde el usuario controle, borrarlo al terminar y **no abrirlo con apps que lo
+  suban o lo analicen (asistentes de IA, visores en la nube)**. Esto último sale
+  de la prueba en dispositivo: el visor de archivos del teléfono ofrecía un
+  asistente de IA sobre el CSV.
+- Importar: `<input type="file">` funciona en Capacitor (su `WebChromeClient`
+  implementa `onShowFileChooser`); no hizo falta un segundo método nativo.
+- Guardar el backup en Drive **por elección del usuario** con el selector es
+  compatible con zero-knowledge: el archivo va cifrado y el usuario decide cuándo y
+  qué se guarda. No es sincronización (D1-12).
+
+### D1-11 — Biometría sin huella registrada
+
+La fila "Desbloqueo biométrico" solo aparece con `BIOMETRIC_STRONG` disponible
+(`CryptoObject` exige clase 3; el rostro de algunos teléfonos es clase 1). El
+comportamiento es correcto. El puente de `isAvailable()` devuelve solo un booleano,
+así que no se amplía `DpmKeyPlugin` por un texto: el mensaje "registra una huella"
+va al backlog como **UX-BIO-1**, y la ficha y las notas de versión aclaran que hace
+falta una huella registrada.
+
+### D1-12 — Sincronización oculta en Android
+
+Google bloquea OAuth en WebViews embebidos (`disallowed_useragent`) y el popup de
+MSAL no es fiable ahí. Aunque funcionara, el sync LWW sin los guards de **SG-1** no
+se habilita en una plataforma nueva. En nativo: la sección de sincronización de
+Ajustes no se renderiza (queda una fila "llegará en una versión futura") y el setup
+no ofrece "Restaurar desde tu nube" (mismo OAuth + sync; extensión confirmada por el
+arquitecto el 2026-11-18). Consecuencia comunicada en la ficha: para pasar un vault
+existente a Android, exportar el backup cifrado desde la PWA o la Extension e
+importarlo en la app. Backlog: **SY-1** (sync en Android con OAuth nativo), depende
+de SG-1.
+
+### D1-13 — Aviso de "7 días" y copias del sistema
+
+- El aviso de evicción (riesgo de navegador tipo ITP) no aplica al IndexedDB del
+  WebView, que vive en el directorio de datos de la app. En nativo se muestra el
+  riesgo real (desinstalar, borrar datos, perder o cambiar el teléfono) con enlace a
+  Exportar, con la misma lógica de descarte (`bannerPersistenciaVisto`); la fila de
+  Almacenamiento usa el mismo mensaje.
+- `android:allowBackup` venía en `true` (plantilla de Capacitor). Con `targetSdk 36`
+  (≥ 31), `allowBackup="false"` solo corta la copia a la nube, **no** la
+  transferencia al migrar de teléfono. Decisión: `allowBackup="false"` (Android
+  ≤ 11) **más** `android:dataExtractionRules` (Android 12+) con
+  `res/xml/data_extraction_rules.xml`, que excluye todos los dominios (`root`,
+  `file`, `database`, `sharedpref`, `external` y los `device_*`) en `cloud-backup`
+  y en `device-transfer`. El IndexedDB del WebView vive bajo `app_webview/`, dentro
+  de `root`. Razón: un gestor zero-knowledge no puede tener un flujo de datos a un
+  tercero que no declara, y esa restauración no sería fiable (la llave biométrica
+  del Keystore no viaja).
+- **Costo (comunicado en la ficha, las notas y el banner):** al cambiar de teléfono,
+  el vault solo pasa con un backup exportado.
+- **Verificación:** estática ✅ (`allowBackup=false` y `dataExtractionRules`
+  presentes en el manifest empaquetado del APK). En el teléfono: **no probada** (ni
+  `bmgr backupnow` ni la transferencia al migrar de teléfono); se corre la próxima
+  vez que haya un teléfono conectado por USB. Riesgo residual no probado:
+  herramientas de migración del fabricante (p. ej., Smart Switch).
+
+### D1-14 — Procedimiento de build y DoD de Android
+
+Procedimiento obligatorio para todo APK/AAB:
+
+1. `npx cap sync android` (los assets empaquetados estaban en la versión de junio,
+   pre-H-5, cuando se descubrió).
+2. Comparar el hash de `web/src/crypto/engine.js` con el de
+   `android/app/src/main/assets/public/src/crypto/engine.js`; si difieren, no se
+   compila.
+3. `./gradlew assembleRelease` (o `bundleRelease`) y verificar firma, `versionCode`
+   y `versionName` del artefacto.
+
+A la DoD general (`docs/scrum/README.md`) se agrega: **todo item que toque Android
+se da por terminado solo tras una prueba de humo en un dispositivo físico, con
+checklist registrado en el standup.** Es la corrección de proceso de D1-9. Cuando se
+resuelva T-2, el sync y la verificación del hash van al mismo script.
+
+### Verificación de EX-1
+
+- Smoke test local de la PWA (navegador y nativo simulado): navegador igual que
+  antes salvo la confirmación del CSV; en nativo, el plugin recibe el MIME correcto.
+- **DoD en un Samsung real con datos inventados (2026-11-18):** (1) exportar backup
+  → selector → guardado en Descargas y en Google Drive → aviso de éxito ✅;
+  (2) cancelar el selector sin error ✅; (3) ida y vuelta desinstalar → instalar →
+  crear vault → importar: credenciales y código TOTP correctos ✅; (4) CSV con
+  confirmación, legible ✅; (5) PWA tras el deploy, en escritorio y en el navegador
+  del teléfono: pie 0.6.1, backup igual que antes, CSV con la confirmación nueva,
+  sincronización y "Restaurar desde tu nube" visibles ✅.
+- APK final (tras el cambio a 0.6.1 del manifest): instalado encima, arranca, pie
+  0.6.1, aviso del CSV con el texto nuevo ✅.
+- 0 dependencias nuevas; `engine.js` y `DpmKeyPlugin` sin cambios.
 
 ---
 

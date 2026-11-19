@@ -7,8 +7,8 @@
 
 [![Estado](https://img.shields.io/badge/Estado-Publicado-green)](https://dacmosgroup.co)
 [![Extension](https://img.shields.io/badge/Extension-v0.5.1-blue)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
-[![PWA](https://img.shields.io/badge/PWA-v0.5.1-green)](https://dpm.dacmosgroup.co)
-[![Android](https://img.shields.io/badge/Android-v0.6.0-brightgreen)](https://github.com/DacmosGroup/dacmosgroup-password-manager)
+[![PWA](https://img.shields.io/badge/PWA-v0.6.1-green)](https://dpm.dacmosgroup.co)
+[![Android](https://img.shields.io/badge/Android-v0.6.1-brightgreen)](https://github.com/DacmosGroup/dacmosgroup-password-manager/releases/tag/v0.6.1)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow)](./LICENSE)
 
 ---
@@ -80,7 +80,7 @@
 | F4.3 | OAuth PKCE — Google Drive + OneDrive sin chrome.identity | ✅ |
 | F4.4 | UI responsive — mobile-first, touch-friendly | ✅ |
 | F4.5 | Persistencia robusta — navigator.storage.persist() + manejo eviction iOS | ✅ |
-| F4.6 | APK Android via TWA — distribución sin Play Store | ✅ |
+| F4.6 | APK Android via TWA — distribución sin Play Store | ⚠️ Nunca se publicó; el canal TWA quedó obsoleto con Capacitor (Fase 6) y se cerró en D-1 |
 | F4.7 | Formato versionado del blob — habilita migración no destructiva a Argon2id | ✅ |
 | v0.4.1 | Remediación auditoría: importarVaultBackup (A-1), timeout GIS (M-1), errores OAuth (M-2), CSP sin unsafe-inline (M-3), fileId cache Drive (B-2), SW update flow (B-1) | ✅ |
 | v0.4.2 | Auditoría #3: 4 Críticos (C1–C4) + 4 Altos (A2–A5) resueltos. Flujo multi-dispositivo "Restaurar desde tu nube" en Extension y PWA. Version display en popup. 7 criterios de aceptación verificados (round-trip manual 2026-06-06). | ✅ |
@@ -106,7 +106,11 @@ Ciclo derivado de la auditoría interna v0.5.0 (`docs/auditoria-v0.5.0-hallazgos
 | F5.1-D | Neutralización de CSV formula injection (ambas superficies) + columna TOTP canónica | ✅ |
 | F5.1-E | i18n del wizard de import (29 keys ES/EN/PT-BR) | ✅ |
 
-### ✅ Fase 6 — Capacitor Android v0.6.0 (COMPLETADA — 2026-06-12)
+### ✅ Fase 6 — Capacitor Android v0.6.0 (2026-06-12) → APK 0.6.1 (2026-11-19)
+
+> **Corrección (2026-11-17):** v0.6.0 se dio por completada sin prueba en un dispositivo físico.
+> El AAB v0.6.0 nunca arrancó en un teléfono (splash sin ocultar) y no se distribuye.
+> La primera versión Android que funciona es la **0.6.1** (ver `docs/documento-tecnico.md` §31).
 
 | Feature | Descripción | Estado |
 |---------|-------------|--------|
@@ -115,7 +119,9 @@ Ciclo derivado de la auditoría interna v0.5.0 (`docs/auditoria-v0.5.0-hallazgos
 | DpmKeyPlugin | `BiometricPrompt.CryptoObject` + Android Keystore — wrap_key nunca sale del hardware | ✅ |
 | biometric-bridge.js | Puente JS↔DpmKeyPlugin · configurar/desbloquear/desactivar biometría | ✅ |
 | UI biométrica | Botón unlock + toggle settings (ES/EN/PT-BR) | ✅ |
-| Play Store | `app-release.aab` firmado · cuenta activa · verificación identidad en proceso | ✅ |
+| Play Store | Cuenta verificada, internal track habilitado (PS-1). El AAB v0.6.0 no arranca: se sube el rebuild vc 3 / 0.6.1 | ⏳ |
+| D-1 | APK 0.6.1 firmado en GitHub Releases + solicitud a IzzyOnDroid · splash corregido · probado en un teléfono real | ✅ |
+| EX-1 | Exportar backup cifrado y CSV en Android con el selector "Guardar como" (`DpmExportPlugin`, sin dependencias) · datos fuera de las copias automáticas de Android | ✅ |
 
 ### ⏳ Fase 7 — Autofill Nativo v0.7.0 (PRÓXIMO)
 
@@ -138,7 +144,8 @@ v0.4.2 ✅  Auditoría #3 — 4 críticos + 4 altos resueltos, sync multi-dispos
 v0.4.3 ✅  PWA: paridad con v0.4.1 Ext — flujo "¿Olvidaste tu contraseña?"
 v0.5.0 ✅  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
 v0.5.1 ✅  Saneamiento pre-v0.6.0 (TOTP canónico, BUG-SYNC-404, CSV injection, i18n wizard)
-v0.6.0 ✅  Capacitor Android — DpmKeyPlugin biometría + Play Store (iOS → v0.6.1)
+v0.6.0 ✅  Capacitor Android — DpmKeyPlugin biometría (el AAB no arrancaba; ver 0.6.1)
+v0.6.1 ✅  APK Android fuera de Play Store (GitHub Releases + IzzyOnDroid) · exportar backup en Android
 v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)
 v0.9.0 ⏳  Argon2id opcional + preparación auditoría
@@ -167,7 +174,9 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 **`https://dpm.dacmosgroup.co`** — disponible en iOS, Android y Desktop directamente desde el navegador, sin instalación.
 
-**Android:** app nativa v0.6.0 en Google Play Store (en proceso de publicación · internal track activo).
+**Android:** APK **0.6.1** en [GitHub Releases](https://github.com/DacmosGroup/dacmosgroup-password-manager/releases/tag/v0.6.1) (IzzyOnDroid, en solicitud). Play Store: internal track habilitado, sin build subido todavía.
+
+> En Android, tus datos viven solo en el teléfono: no se copian con las copias automáticas de Android y la sincronización llega en una versión futura. Exporta un backup cifrado con regularidad (Ajustes → Exportar backup); al cambiar de teléfono, impórtalo en el nuevo.
 
 ---
 
@@ -179,13 +188,13 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 ---
 
-## 🔑 Funciones Principales v0.6.0
+## 🔑 Funciones Principales v0.6.1
 
 - **Vault cifrado** — AES-256-GCM, tipos Login, Tarjeta e Identidad
 - **Importar desde CSV** — Google PM, Bitwarden, LastPass, 1Password
 - **TOTP integrado** — generador 2FA con cuenta regresiva, gratis
 - **Password Health** — entropía, reutilización, HIBP k-anonymity
-- **Exportar** — CSV genérico y CSV compatible con Bitwarden
+- **Exportar** — backup cifrado, CSV genérico y CSV compatible con Bitwarden (en Android, con el selector "Guardar como"; el CSV pide confirmación porque va sin cifrar)
 - **Autocompletado** — login, checkout (tarjetas) y registro (identidades)
 - **URL matching robusto** — dominio base, subdominios y wildcards
 - **Auto-lock** — chrome.alarms (Extension) / visibilitychange + Date.now() (PWA), cero persistencia de clave
@@ -194,7 +203,7 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 - **Sync OneDrive** — Microsoft Graph API, misma garantía de privacidad
 - **BYOC** — tú eliges el proveedor cloud; DacmosGroup no almacena nada
 - **PWA Mobile** — vault accesible desde cualquier browser mobile en `dpm.dacmosgroup.co`
-- **App Android nativa** — Capacitor v0.6.0, Google Play Store · biometría (huella/Face ID) vía DpmKeyPlugin
+- **App Android nativa** — Capacitor, APK 0.6.1 en GitHub Releases · desbloqueo con huella (Android Keystore) vía DpmKeyPlugin · sin sincronización en esta versión
 - **SW update flow** — banner "Nueva versión disponible" sin forzar cierre de tabs
 - **¿Olvidaste tu contraseña?** — escape hatch desde pantalla bloqueada para crear vault nuevo vacío (principio ZK mantenido)
 

@@ -277,6 +277,26 @@ El generador crea contraseñas seguras usando el motor criptográfico del navega
 2. Selecciona el archivo `.json` de backup
 3. Ingresa la contraseña maestra del backup
 
+**En la app Android (0.6.1+):**
+- Al exportar se abre el selector **"Guardar como"** del teléfono. Por defecto abre
+  Descargas; con el menú **☰** puedes elegir otra ubicación, por ejemplo Google Drive.
+  El archivo va cifrado, así que guardarlo en Drive no expone tus datos.
+- Tus datos viven solo en el teléfono: **no se copian con las copias automáticas
+  de Android** y la sincronización llega a Android en una versión futura. Si
+  desinstalas la app, borras sus datos o pierdes el teléfono, solo el backup te
+  permite recuperarlos.
+- **Al cambiar de teléfono:** exporta el backup, instala la app en el nuevo, crea el
+  vault con la **misma contraseña maestra** e importa el backup.
+- **Para pasar a Android un vault que ya tienes** en la extensión o en la web:
+  exporta el backup cifrado desde ahí e impórtalo en la app.
+
+**Exportar CSV (sin cifrar):**
+El CSV contiene tus contraseñas en texto claro. Antes de exportarlo la app pide
+confirmación. Guárdalo solo en un lugar que controles, bórralo al terminar y
+**no lo abras con apps que lo suban o lo analicen**, como asistentes de IA o
+visores en la nube: algunos visores de archivos del teléfono ofrecen "preguntar
+sobre este archivo", y eso podría sacar tus contraseñas del dispositivo.
+
 ---
 
 ### 6.6 Sincronización multi-dispositivo

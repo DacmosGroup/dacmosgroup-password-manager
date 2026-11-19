@@ -111,7 +111,7 @@ Injected into all URLs at `document_idle`. Detects login forms by heuristic (pre
 
 > **Schema canónico TOTP (v0.5.1):** el campo es `totp` en ambas superficies.
 > Vaults de la Extension pre-v0.5.1 podían usar `claveTotp`; `src/schema/credential-schema.js`
-> normaliza al cargar (convergencia lazy, sin bump de `BLOB_VERSION`). Ver documento-tecnico §28.
+> normaliza al cargar (convergencia lazy, sin bump de `BLOB_VERSION`). Ver documento-tecnico §27.
 
 ### CSP Constraint
 
@@ -158,8 +158,8 @@ Per-platform independent versioning:
 | Platform | Manifest | Estado |
 |---|---|---|
 | Chrome Extension | `manifest.json` | **v0.5.1 PUBLICADA en CWS ✅ (2026-06-13)** |
-| PWA | `web/manifest.json` | v0.5.1 LIVE en dpm.dacmosgroup.co ✅ (incluye UX-LOCK-NAV) |
-| Android (Capacitor) | `android/` · `app-release.aab` / `app-release.apk` | **v0.6.0 COMPLETADO 2026-06-12** · Play Store: PS-1 cerrado, internal track habilitado · **2026-11-17 (D-1):** APK **0.6.1 (vc 2)** firmado con `dacmos-pm` y probado por primera vez en teléfono real — la app nunca había arrancado (splash, corregido en `5b58423`; el AAB v0.6.0 tampoco arranca: no subirlo); **exportar backup/CSV no funciona en Android** → publicación en espera del arquitecto. Antes de cada build: `npx cap sync android` (los assets empaquetados estaban pre-H-5) |
+| PWA | `web/manifest.json` | **v0.6.1** LIVE en dpm.dacmosgroup.co ✅ (2026-11-18: exportar por canal nativo en Android y confirmación del CSV; no existe PWA 0.6.0) |
+| Android (Capacitor) | `android/` · `app-release.aab` / `app-release.apk` | **APK 0.6.1 (vc 2) — Release `v0.6.1` en GitHub (D-1 ✅, 2026-11-19)** · firmado con `dacmos-pm` · exportar backup/CSV con `DpmExportPlugin` (SAF) · `allowBackup=false` + `dataExtractionRules` · sync oculto en Android (SY-1) · el AAB v0.6.0 no arranca (splash): no subirlo; Play espera el AAB vc 3 / 0.6.1 · **Antes de cada build:** `npx cap sync android` + hash de `engine.js` (§31 D1-14) · todo item de Android exige prueba en un teléfono real |
 
 **Estado auditoría:** Fases 1–4 completas (commit `4970463`, merge `01c8623`). Branch `fix/auditoria-remediaciones` cerrada.
 **Testing completado 2026-06-06:** Bloques 1–8 APROBADOS — sync round-trip Extension ↔ PWA en ambas direcciones.
@@ -180,7 +180,7 @@ Per-platform independent versioning:
 - F5.1-C: fix BUG-SYNC-404 en el adapter Drive de la Extension + 4 adapters al protocolo de forks
 - F5.1-D: CSV formula injection neutralizada (ambas superficies) + columna TOTP canónica
 - F5.1-E: i18n del wizard de import (29 keys ES/EN/PT-BR)
-- F5.1-F: docs (§6 schema, §10 fileId/B-1, §26 i18n, §28 decisiones) · roadmap-v0.5.1.md
+- F5.1-F: docs (§6 schema, §10 fileId/B-1, §26 i18n, §27 decisiones; antes §28, renumerada en D-1) · roadmap-v0.5.1.md
 - Origen: `docs/auditoria-v0.5.0-hallazgos.md` · branch `feature/v0.5.1` · verify-crypto-sync.sh exit 0 (5 secciones)
 - **Extension v0.5.1 PUBLICADA en CWS ✅ (2026-06-13)** · PWA deploy Cloudflare Pages ✅
 
