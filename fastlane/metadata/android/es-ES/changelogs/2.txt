@@ -1,0 +1,5 @@
+0.6.1 — primera versión publicada fuera de Play Store.
+- Exportar backup cifrado y CSV con el selector "Guardar como" de Android.
+- Los datos no salen del teléfono por las copias automáticas de Android: al cambiar de teléfono, exporta el backup e impórtalo.
+- Desbloqueo biométrico con huella (Android Keystore).
+- Sincronización con Drive/OneDrive: en una versión futura.

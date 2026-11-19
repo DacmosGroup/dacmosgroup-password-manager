@@ -1,0 +1,1 @@
+Gerenciador de senhas local-first e Zero-Knowledge, criptografia AES-256-GCM

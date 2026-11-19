@@ -1,0 +1,30 @@
+Dacmos Password Manager keeps your passwords encrypted on your own device, with no DacmosGroup accounts or servers.
+
+ZERO-KNOWLEDGE
+Your master password never leaves the device. Neither DacmosGroup nor anyone else can read your vault: if you forget the master password, the data cannot be recovered.
+
+ENCRYPTION
+- AES-256-GCM
+- PBKDF2-SHA256 with 600,000 iterations (OWASP 2024)
+- Native Web Crypto API, no third-party crypto libraries
+
+FEATURES
+- Fingerprint unlock (BiometricPrompt + Android Keystore)
+- TOTP (2FA) code generator with countdown
+- Password health: weak, reused and breached (k-anonymity lookup: only a hash prefix leaves the device)
+- Import CSV from Google Password Manager, Bitwarden, LastPass and 1Password
+- Export an encrypted backup and CSV with Android's "Save as" picker (Downloads, Drive or any location you choose)
+- Configurable auto-lock
+- Spanish, English and Portuguese (BR) interface
+
+YOUR BACKUP IS UP TO YOU
+Your passwords live only on your phone and nobody else can read them, not even us. That is why, if you lose your phone, only you can recover them: keep an encrypted backup (Settings → Export backup) in Drive or on your computer.
+- When you switch phones, export your encrypted backup and import it on the new one; the app does not copy your data through Android's automatic backups.
+- To bring an existing vault to Android, export the encrypted backup from the PWA or the extension and import it in the app.
+
+Notes:
+- Biometric unlock requires a registered fingerprint (face recognition on some phones does not meet the required security level).
+- Google Drive/OneDrive sync: available in the extension and the PWA; coming to Android in a future version.
+
+Open source (MIT): https://github.com/DacmosGroup/dacmosgroup-password-manager
+Made in Latin America by DacmosGroup.

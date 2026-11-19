@@ -1,0 +1,5 @@
+0.6.1 — first release outside Play Store.
+- Export an encrypted backup and CSV with Android's "Save as" picker.
+- Data never leaves the phone through Android's automatic backups: when you switch phones, export the backup and import it.
+- Fingerprint unlock (Android Keystore).
+- Drive/OneDrive sync: coming in a future version.

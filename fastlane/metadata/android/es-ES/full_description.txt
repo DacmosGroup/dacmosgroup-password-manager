@@ -1,0 +1,30 @@
+Dacmos Password Manager guarda tus contraseñas cifradas en tu propio dispositivo, sin cuentas ni servidores de DacmosGroup.
+
+MODELO ZERO-KNOWLEDGE
+Tu contraseña maestra nunca sale del dispositivo. Ni DacmosGroup ni nadie más puede leer tu bóveda: si olvidas la maestra, los datos no se pueden recuperar.
+
+CIFRADO
+- AES-256-GCM
+- PBKDF2-SHA256 con 600 000 iteraciones (OWASP 2024)
+- Web Crypto API nativa, sin librerías de criptografía de terceros
+
+FUNCIONES
+- Desbloqueo con huella (BiometricPrompt + Android Keystore)
+- Generador de códigos TOTP (2FA) con cuenta regresiva
+- Salud de contraseñas: débiles, reutilizadas y filtradas (consulta con k-anonimato: solo sale un prefijo del hash)
+- Importar CSV de Google Password Manager, Bitwarden, LastPass y 1Password
+- Exportar backup cifrado y CSV con el selector "Guardar como" de Android (Descargas, Drive u otra ubicación que elijas)
+- Bloqueo automático configurable
+- Interfaz en español, inglés y portugués (BR)
+
+TU BACKUP ES TAREA TUYA
+Tus contraseñas viven solo en tu teléfono y nadie más puede leerlas, ni siquiera nosotros. Por eso, si pierdes el teléfono, solo tú puedes recuperarlas: guarda un backup cifrado (Ajustes → Exportar backup) en Drive o en tu computadora.
+- Al cambiar de teléfono, exporta tu backup cifrado e impórtalo en el nuevo; la app no copia tus datos por las copias automáticas de Android.
+- Para pasar un vault existente a Android, exporta el backup cifrado desde la PWA o la extensión e impórtalo en la app.
+
+Notas:
+- El desbloqueo biométrico requiere una huella registrada (el reconocimiento facial de algunos teléfonos no tiene el nivel de seguridad necesario).
+- Sincronización con Google Drive/OneDrive: disponible en la extensión y en la PWA; en Android, en una versión futura.
+
+Código abierto (MIT): https://github.com/DacmosGroup/dacmosgroup-password-manager
+Hecho en Latinoamérica por DacmosGroup.
