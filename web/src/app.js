@@ -17,26 +17,38 @@ import { montarNavBottom }                from './ui/layout/nav-bottom.js'
 import { inicializarPwaInstall }          from './ui/onboarding/pwa-install.js'
 import { montarVistaInicial }             from './ui/router.js'
 import { initI18n, t }                   from './i18n/i18n.js'
+import { esPlataformaNativa }            from './platform.js'
+
+/** Marca en sessionStorage: la limpieza del SW en nativo ya recargó una vez. */
+const MARCA_RECARGA_SW = 'dpmSwLimpiezaRecargada'
 
 /* ── Registro del Service Worker ──────────────────────────────────────
    Solo se intenta si el navegador lo soporta (todos los modernos sí).
    El SW vive en la raíz (/service-worker.js) para tener scope '/'
-   y poder interceptar todas las rutas de la PWA. */
+   y poder interceptar todas las rutas de la PWA.
+   En el APK (Capacitor) NO se registra: los archivos ya van firmados dentro
+   de la app y un SW con caché CacheFirst servía el código de la versión
+   anterior tras actualizar el APK (D-1, 2026-11-19). */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // ── Service Worker ──
-    navigator.serviceWorker
-      .register('/service-worker.js')
-      .then(registro => {
-        console.log('SW registrado — scope:', registro.scope)
-        // Activar detección de actualizaciones disponibles
-        _configurarActualizacionSW(registro)
-      })
-      .catch(error => {
-        // El error de registro no es crítico — la PWA funciona sin SW
-        // (solo pierde las capacidades offline y de caché)
-        console.error('Error al registrar SW:', error)
-      })
+    if (esPlataformaNativa()) {
+      // Si la limpieza recarga la página, el arranque sigue en la recarga
+      if (await _limpiarServiceWorkerNativo()) return
+    } else {
+      navigator.serviceWorker
+        .register('/service-worker.js')
+        .then(registro => {
+          console.log('SW registrado — scope:', registro.scope)
+          // Activar detección de actualizaciones disponibles
+          _configurarActualizacionSW(registro)
+        })
+        .catch(error => {
+          // El error de registro no es crítico — la PWA funciona sin SW
+          // (solo pierde las capacidades offline y de caché)
+          console.error('Error al registrar SW:', error)
+        })
+    }
 
     // ── F4.3: inicializar MSAL en paralelo con el SW ──
     await inicializarMsal()
@@ -55,6 +67,50 @@ if ('serviceWorker' in navigator) {
   })
 } else {
   console.warn('Service Workers no disponibles en este navegador.')
+}
+
+/**
+ * Limpieza del Service Worker dentro del APK (D-1, decisión del arquitecto 2026-11-19).
+ *
+ * Desregistra cualquier SW y borra las cachés `dacmos-*` (Cache Storage). No toca
+ * IndexedDB: ahí vive el vault. Por eso la limpieza se hace aquí, con las APIs del
+ * propio WebView, y nunca desde Android (WebStorage.deleteAllData() borraría el vault).
+ *
+ * Si un SW controlaba la página, recarga UNA sola vez para que la vista salga del
+ * código del APK y no de la caché. La marca en sessionStorage evita el bucle; si
+ * sessionStorage no está disponible, no recarga (preferible a arriesgar un bucle).
+ *
+ * @returns {Promise<boolean>} true si se pidió la recarga
+ */
+async function _limpiarServiceWorkerNativo() {
+  try {
+    const habiaControlador = !!navigator.serviceWorker.controller
+    const registros = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(registros.map(r => r.unregister()))
+
+    if ('caches' in window) {
+      const claves = await caches.keys()
+      await Promise.all(claves.filter(c => c.startsWith('dacmos-')).map(c => caches.delete(c)))
+    }
+
+    if (habiaControlador) {
+      let yaRecargado = true
+      try {
+        yaRecargado = sessionStorage.getItem(MARCA_RECARGA_SW) === '1'
+        if (!yaRecargado) sessionStorage.setItem(MARCA_RECARGA_SW, '1')
+      } catch (_) {
+        yaRecargado = true
+      }
+      if (!yaRecargado) {
+        window.location.reload()
+        return true
+      }
+    }
+  } catch (error) {
+    // No es crítico: la app funciona igual, como mucho con la caché anterior
+    console.error('Error al limpiar el SW en nativo:', error)
+  }
+  return false
 }
 
 /**
