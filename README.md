@@ -192,8 +192,14 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 DPM se construye en público con un proceso de tres roles, y lo declaramos porque en un gestor de contraseñas la confianza depende de saber cómo se hace:
 
-- **Arquitectura humana.** Cada cambio parte de un diseño que una persona revisa y aprueba (decisiones documentadas en `docs/documento-tecnico.md` y `docs/decisions/`).
-- **Implementación con IA, solo de lo aprobado.** El código lo escribe [Claude Code](https://claude.com/claude-code) a partir de ese diseño, sin añadir alcance por su cuenta; los commits lo indican con `Co-Authored-By: Claude`.
+| Rol | Quién | Qué hace |
+|---|---|---|
+| Responsable del proyecto | Una persona | Decide qué se hace, aprueba cada diseño antes de implementarlo y prueba el resultado |
+| Arquitecto revisor | IA (Claude) | Propone la arquitectura de cada cambio y revisa la implementación |
+| Implementador | IA ([Claude Code](https://claude.com/claude-code)) | Escribe el código de lo aprobado, sin añadir alcance por su cuenta |
+
+- **Diseño asistido por IA, aprobado por una persona.** Cada cambio parte de una propuesta de arquitectura hecha con Claude (rol de arquitecto revisor) que el responsable del proyecto revisa y aprueba antes de implementar (decisiones en `docs/documento-tecnico.md` y `docs/decisions/`).
+- **Implementación con IA, solo de lo aprobado.** El código lo escribe Claude Code a partir de ese diseño aprobado; los commits lo indican con `Co-Authored-By: Claude`.
 - **Revisión y pruebas humanas.** Nada se publica sin revisión y prueba de una persona; todo cambio de Android se prueba en un teléfono real, con instalación limpia y con actualización.
 - **Cifrado sin librerías de terceros.** AES-256-GCM y PBKDF2 con la Web Crypto API nativa del navegador.
 - **Código abierto y verificable.** Licencia MIT; cualquiera puede revisar el código y comprobar que el APK publicado es el nuestro.

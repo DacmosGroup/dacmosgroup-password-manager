@@ -2953,9 +2953,12 @@ incompatible con un producto cuyo argumento central es la confianza.
 - **Obtainium** se documenta como herramienta de terceros (no canal oficial) en la guía
   de usuario y el README, con cómo verificar la huella del certificado. La garantía real
   es de Android: rechaza una actualización firmada con otra llave.
-- **Transparencia:** el README explica cómo se desarrolla DPM (arquitectura humana,
-  implementación con IA solo de lo aprobado, revisión y pruebas humanas en dispositivo,
-  Web Crypto nativa, código abierto, auditoría externa prevista para v1.0).
+- **Transparencia:** el README explica cómo se desarrolla DPM (tres roles: responsable
+  del proyecto, humano, que decide, aprueba y prueba; arquitecto revisor, IA; implementador,
+  IA; diseño asistido por IA y aprobado por una persona, implementación solo de lo aprobado,
+  pruebas humanas en dispositivo, Web Crypto nativa, código abierto, auditoría externa
+  prevista para v1.0). Corregido el 2026-11-19: la primera versión decía "arquitectura
+  humana", inexacto, porque la arquitectura la propone una IA y la aprueba una persona.
 - **DIST-1** (spike, prioridad baja, después de SW-1): evaluar otros canales (F-Droid
   principal, ligado a T-2 porque compila desde el código; Accrescent y otros) revisando
   la política de IA de cada uno.
