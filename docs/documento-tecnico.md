@@ -89,7 +89,7 @@ App Nativa (v0.6.0+):
 |------------|---------|-------|
 | **PWA** (`dpm.dacmosgroup.co`) | **v0.4.2** | Versión activa — incluye remediaciones de auditoría (Fases 1 y 2) |
 | **Chrome Extension** (Chrome Web Store) | **v0.3.1** | Ciclo de release independiente — próximo release será v0.4.0 CWS con remediaciones de Fase 2 |
-| **APK Android** (GitHub Releases + IzzyOnDroid) | **v0.4.2** | Generado via TWA — sigue la versión de la PWA |
+| **APK Android** (GitHub Releases) | **v0.4.2** | Generado via TWA — sigue la versión de la PWA *(tabla histórica; el APK vigente es 0.6.1 con Capacitor, ver §31)* |
 
 > **Nota:** La Chrome Extension y la PWA comparten el motor de cifrado (`engine.js`) pero tienen cadencias de release separadas. Un vault creado con la extensión v0.3.1 es plenamente compatible con la PWA v0.4.2 (backward compat garantizada — ver Sección 13).
 
@@ -1661,7 +1661,7 @@ En entorno local, la solución directa es `./gradlew` con flags de firma.
 |-------|--------|
 | `dpm.dacmosgroup.co` (PWA — todos los dispositivos) | ✅ PWA 0.6.1 |
 | GitHub Releases (APK Capacitor firmado con `dacmos-pm`) | ✅ `v0.6.1` (vc 2) — D-1, §31 |
-| IzzyOnDroid | 🔄 Solicitud tras la Release `v0.6.1` (la envía el PO; revisión asíncrona) |
+| IzzyOnDroid | ❌ Descartado (2026-11-19): su App Inclusion Policy no admite código con contribuciones de IA generativa — §31 D1-17 |
 | F-Droid main repo | ⏳ Requiere build reproducible (fuera de alcance de D-1) |
 | Google Play Store | ⏳ PS-1 cerrado (internal track habilitado); falta subir el AAB vc 3 / 0.6.1 |
 | Apple App Store | ⏳ Diferido ($99/año Developer Program + macOS) |
@@ -2678,7 +2678,7 @@ track. Prevalece el backlog, que es posterior.
 
 **Fecha:** 2026-09-06 (plan) · 2026-11-17/19 (implementación, prueba en dispositivo y cierre) · **Sprint:** 2
 
-Origen: item D-1 (APK firmado → GitHub Releases + IzzyOnDroid) y EX-1 (exportar
+Origen: item D-1 (APK firmado → GitHub Releases + IzzyOnDroid; IzzyOnDroid descartado en D1-17) y EX-1 (exportar
 backup/CSV en Android), aprobados por el arquitecto revisor y el PO en el chat del
 Project DPM. D1-1..D1-8 son del plan (2026-09-06); D1-9..D1-14 salen de la primera
 prueba en un teléfono real (2026-11-17) y de su segunda ronda (2026-11-18).
@@ -2924,6 +2924,41 @@ caché que escondía el código real y un CDN sin firmar.
   solo cambia el comportamiento en nativo y CSS sin efecto en el navegador.
 - Fuera de D-1: la PWA en producción también carga Workbox con `importScripts` desde
   el CDN de Google, sin verificación de integridad posible → **SW-1** en el backlog.
+
+### D1-17 — Canal fuera de Play Store: GitHub Releases (IzzyOnDroid descartado)
+
+**Hallazgo (2026-11-19, al preparar la solicitud):** el repositorio de IzzyOnDroid en
+GitLab está archivado (las solicitudes pasaron a Codeberg) y su App Inclusion Policy
+(`izzyondroid.org/docs/general/AppInclusionPolicy/`, consultada el 2026-11-19) abre con
+*"We are strongly opposed to apps which are fully or in part created by generative AI
+tools."* Solo admite texto de LLM en la documentación (*"the code itself should be free
+of it"*) y usos de solo lectura (investigación, depuración, consultas). Además: *"Any lack
+of transparency discovered by us, can lead to the project being degraded to rejected
+state."*
+
+**Decisión (arquitecto y PO, 2026-11-19):** DPM queda fuera de esa política (su código
+lo implementa Claude Code a partir de una arquitectura aprobada por un humano). No se
+presenta la solicitud: ni declarándolo (sería pedir una excepción a una regla publicada)
+ni sin declararlo (sería ocultarlo). Declarar cómo se desarrolla DPM puede cerrar de
+forma permanente los canales con una regla así; se acepta, porque esconderlo es
+incompatible con un producto cuyo argumento central es la confianza.
+
+- **D-1 se cierra con la Release `v0.6.1`.** DoD reformulada: *canal fuera de Play:
+  GitHub Releases, con APK firmado, SHA-256 del archivo y huella SHA-256 del certificado
+  de firma publicados en las notas de la Release.* Sin una tienda que verifique, el
+  usuario necesita con qué comprobar que el APK es el nuestro (la Release `v0.6.1` ya
+  publica ambos valores).
+- **`fastlane/metadata` se mantiene** tal cual (formato estándar de F-Droid), sin ícono
+  ni capturas hasta que exista un canal destino.
+- **Obtainium** se documenta como herramienta de terceros (no canal oficial) en la guía
+  de usuario y el README, con cómo verificar la huella del certificado. La garantía real
+  es de Android: rechaza una actualización firmada con otra llave.
+- **Transparencia:** el README explica cómo se desarrolla DPM (arquitectura humana,
+  implementación con IA solo de lo aprobado, revisión y pruebas humanas en dispositivo,
+  Web Crypto nativa, código abierto, auditoría externa prevista para v1.0).
+- **DIST-1** (spike, prioridad baja, después de SW-1): evaluar otros canales (F-Droid
+  principal, ligado a T-2 porque compila desde el código; Accrescent y otros) revisando
+  la política de IA de cada uno.
 
 ### Verificación de EX-1
 

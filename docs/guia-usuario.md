@@ -134,6 +134,30 @@ Para instalar desde el código fuente:
 
 6. El ícono de DacmosGroup aparecerá en la barra de Chrome
 
+### Opción C — App Android (APK)
+
+La app Android se publica en [GitHub Releases](https://github.com/DacmosGroup/dacmosgroup-password-manager/releases)
+(fuera de Play Store). Cada Release publica dos valores para comprobar que el archivo es el nuestro:
+
+- **SHA-256 del archivo:** compruébalo en tu computadora antes de pasar el APK al teléfono.
+  - Windows (PowerShell): `Get-FileHash .\dacmos-pm-v0.6.1.apk -Algorithm SHA256`
+  - macOS / Linux: `shasum -a 256 dacmos-pm-v0.6.1.apk`
+- **Huella SHA-256 del certificado de firma:** debe ser
+  `B9:3E:FD:CB:9F:C0:3D:59:1A:84:50:D2:65:03:7C:1F:78:23:6A:BB:5C:84:BE:67:58:F0:50:CE:F0:1C:E3:FC`.
+  - Con las herramientas de Android (`build-tools` del SDK):
+    `apksigner verify --print-certs dacmos-pm-v0.6.1.apk` → línea *certificate SHA-256 digest*.
+  - En el teléfono, apps de terceros como AppVerifier muestran la huella de una app instalada.
+
+Si alguno de los dos valores no coincide, **no instales el archivo**.
+
+**Actualizaciones automáticas (opcional):** [Obtainium](https://github.com/ImranR98/Obtainium) es una
+herramienta de terceros que sigue las Releases de un repositorio de GitHub y te avisa de las versiones
+nuevas. Agrega la URL `https://github.com/DacmosGroup/dacmosgroup-password-manager`. No es un canal
+oficial de DacmosGroup: la garantía de fondo la da Android, que rechaza una actualización firmada con
+otra llave distinta de la del APK que ya tienes instalado.
+
+> Antes de cambiar de teléfono o de canal de instalación, exporta tu backup cifrado (ver 6.5).
+
 ---
 
 ## 5. Primeros Pasos

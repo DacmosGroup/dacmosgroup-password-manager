@@ -120,7 +120,7 @@ Ciclo derivado de la auditoría interna v0.5.0 (`docs/auditoria-v0.5.0-hallazgos
 | biometric-bridge.js | Puente JS↔DpmKeyPlugin · configurar/desbloquear/desactivar biometría | ✅ |
 | UI biométrica | Botón unlock + toggle settings (ES/EN/PT-BR) | ✅ |
 | Play Store | Cuenta verificada, internal track habilitado (PS-1). El AAB v0.6.0 no arranca: se sube el rebuild vc 3 / 0.6.1 | ⏳ |
-| D-1 | APK 0.6.1 firmado en GitHub Releases + solicitud a IzzyOnDroid · splash corregido · probado en un teléfono real | ✅ |
+| D-1 | APK 0.6.1 firmado en GitHub Releases, con SHA-256 del archivo y del certificado publicados · splash corregido · probado en un teléfono real | ✅ |
 | EX-1 | Exportar backup cifrado y CSV en Android con el selector "Guardar como" (`DpmExportPlugin`, sin dependencias) · datos fuera de las copias automáticas de Android | ✅ |
 
 ### ⏳ Fase 7 — Autofill Nativo v0.7.0 (PRÓXIMO)
@@ -145,7 +145,7 @@ v0.4.3 ✅  PWA: paridad con v0.4.1 Ext — flujo "¿Olvidaste tu contraseña?"
 v0.5.0 ✅  Auto-lock PWA + i18n ES/EN/PT-BR (Extension + PWA)
 v0.5.1 ✅  Saneamiento pre-v0.6.0 (TOTP canónico, BUG-SYNC-404, CSV injection, i18n wizard)
 v0.6.0 ✅  Capacitor Android — DpmKeyPlugin biometría (el AAB no arrancaba; ver 0.6.1)
-v0.6.1 ✅  APK Android fuera de Play Store (GitHub Releases + IzzyOnDroid) · exportar backup en Android
+v0.6.1 ✅  APK Android fuera de Play Store (GitHub Releases) · exportar backup en Android
 v0.7.0 ⏳  Autofill nativo — iOS Credential Provider + Android Autofill Service
 v0.8.0 ⏳  Monetización — lifetime $29 + Stripe (cuando haya tracción medible)
 v0.9.0 ⏳  Argon2id opcional + preparación auditoría
@@ -174,7 +174,7 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 
 **`https://dpm.dacmosgroup.co`** — disponible en iOS, Android y Desktop directamente desde el navegador, sin instalación.
 
-**Android:** APK **0.6.1** en [GitHub Releases](https://github.com/DacmosGroup/dacmosgroup-password-manager/releases/tag/v0.6.1) (IzzyOnDroid, en solicitud). Play Store: internal track habilitado, sin build subido todavía.
+**Android:** APK **0.6.1** en [GitHub Releases](https://github.com/DacmosGroup/dacmosgroup-password-manager/releases/tag/v0.6.1). Cada Release publica el SHA-256 del archivo y la huella del certificado de firma para que puedas verificarlo (ver `docs/guia-usuario.md`). Para recibir actualizaciones automáticas puedes usar [Obtainium](https://github.com/ImranR98/Obtainium), una herramienta de terceros que sigue las Releases de este repo. Play Store: internal track habilitado, sin build subido todavía.
 
 > En Android, tus datos viven solo en el teléfono: no se copian con las copias automáticas de Android y la sincronización llega en una versión futura. Exporta un backup cifrado con regularidad (Ajustes → Exportar backup); al cambiar de teléfono, impórtalo en el nuevo.
 
@@ -187,6 +187,17 @@ git clone https://github.com/DacmosGroup/dacmosgroup-password-manager.git
 `https://chromewebstore.google.com/detail/dacmos-password-manager/aflgjjkallibohcebggkkjdlhdnainai`
 
 ---
+
+## 🧭 Cómo se desarrolla DPM
+
+DPM se construye en público con un proceso de tres roles, y lo declaramos porque en un gestor de contraseñas la confianza depende de saber cómo se hace:
+
+- **Arquitectura humana.** Cada cambio parte de un diseño que una persona revisa y aprueba (decisiones documentadas en `docs/documento-tecnico.md` y `docs/decisions/`).
+- **Implementación con IA, solo de lo aprobado.** El código lo escribe [Claude Code](https://claude.com/claude-code) a partir de ese diseño, sin añadir alcance por su cuenta; los commits lo indican con `Co-Authored-By: Claude`.
+- **Revisión y pruebas humanas.** Nada se publica sin revisión y prueba de una persona; todo cambio de Android se prueba en un teléfono real, con instalación limpia y con actualización.
+- **Cifrado sin librerías de terceros.** AES-256-GCM y PBKDF2 con la Web Crypto API nativa del navegador.
+- **Código abierto y verificable.** Licencia MIT; cualquiera puede revisar el código y comprobar que el APK publicado es el nuestro.
+- **Auditoría externa** prevista para v1.0.
 
 ## 🔑 Funciones Principales v0.6.1
 

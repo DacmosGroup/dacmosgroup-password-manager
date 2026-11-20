@@ -196,7 +196,7 @@ Per-platform independent versioning:
 - Backlog diferido en su momento a v0.7.0: H-5, H-9, B-1, M-4 — **ahora gestionado en `docs/scrum/product-backlog.md`**. H-5 (`_deviceId` en vault) ✅ hecho en Sprint 2 (2026-09-06, ver `documento-tecnico.md` §30).
 
 **Pendiente — el orden vive en `docs/scrum/product-backlog.md`:**
-- D-1: distribución Android alternativa (APK → GitHub Releases + IzzyOnDroid) — Sprint 2
+- D-1: ✅ cerrado 2026-11-19 — APK en GitHub Releases (`v0.6.1`); IzzyOnDroid descartado por su política de IA (§31 D1-17); otros canales en DIST-1
 - H-9: logging de eventos sync — Sprint 3
 - F7-A: Android Autofill Service nativo (gate de arquitectura + PS-1)
 - F7-B: iOS Credential Provider (requiere macOS + Apple Developer $99)
