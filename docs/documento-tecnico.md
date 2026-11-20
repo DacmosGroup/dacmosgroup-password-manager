@@ -2735,6 +2735,8 @@ cambio: `feat(android)`, `fix(android)`, `chore`, `content(distribution)`,
 | `a411ab1` | `fix(web):` | aviso del CSV: no abrirlo con apps que lo suban o analicen (D1-10) |
 | `d3a5c14` | `chore:` | `web/manifest.json` a 0.6.1 (D1-1) |
 | `1bb1934` | `content(distribution):` | `fastlane/metadata/**` es-ES / en-US / pt-BR |
+| `242f7f7` | `fix(web):` | barra inferior tapada por los botones del sistema en Android (D1-15) |
+| `b152ec6` | `fix(web):` | sin service worker dentro del APK (D1-16) |
 
 ### D1-4 / D1-8 — Cierre del canal TWA
 
@@ -2871,6 +2873,58 @@ se da por terminado solo tras una prueba de humo en un dispositivo físico, con
 checklist registrado en el standup.** Es la corrección de proceso de D1-9. Cuando se
 resuelva T-2, el sync y la verificación del hash van al mismo script.
 
+**Ampliación (2026-11-19, tras D1-16):** la prueba en el teléfono cubre los **dos
+caminos de instalación** —limpia (desinstalar e instalar) y **actualización**
+(instalar encima de la versión anterior)— y en ambos se verifica algo que solo trae
+el build nuevo (un texto o el pie de versión). Para el camino de actualización se usa
+un build intermedio con un marcador temporal sin commitear (p. ej., el pie
+`0.6.1-B`), firmado con la misma llave: A limpia → B encima (aparece el marcador) →
+final encima de B (desaparece; reabrir sin bucles).
+
+### D1-15 — Barra inferior bajo los botones del sistema (edge-to-edge)
+
+Con `targetSdk 36`, Android dibuja la app también bajo la barra de navegación del
+sistema, y el WebView puede informar `env(safe-area-inset-bottom)` = 0. La barra
+inferior quedaba tapada por los botones ◁ ○ |||. Arreglo solo de CSS (`242f7f7`):
+`--safe-bottom` usa primero `--safe-area-inset-bottom`, que inyecta el plugin
+`SystemBars` (núcleo de `@capacitor/android`, no es una dependencia npm nueva), y si
+no existe, `env()` como antes; la altura de la barra suma ese margen
+(`box-sizing: border-box`). En el navegador no cambia (verificado con Puppeteer en
+viewport móvil).
+
+### D1-16 — Sin service worker dentro del APK
+
+**Hallazgo (2026-11-19, confirmado en el teléfono):** `app.js` registraba el service
+worker de la PWA también en Capacitor. Ese SW carga Workbox desde
+`storage.googleapis.com` y sirve scripts y estilos con CacheFirst; su `SW_DEPLOY_ID`
+solo se inyecta en `deploy-pwa.yml`, así que en el APK era siempre `'dev'`. Al
+actualizar el APK instalándolo encima, el WebView seguía sirviendo el JS/CSS de la
+versión anterior, incluido `engine.js`; solo una instalación limpia traía el código
+nuevo. Rompía la premisa de que el APK firmado es el código que corre.
+
+**Decisión (arquitecto, 2026-11-19): opción (a).** En nativo (`esPlataformaNativa()`)
+no se registra el SW; se desregistra cualquier registro existente, se borran las
+cachés `dacmos-*` y se recarga **una sola vez** si había un SW controlando la página
+(marca en `sessionStorage`; si no está disponible, no recarga). En el APK los
+archivos ya van firmados dentro de la app: el SW no aporta nada offline y añadía una
+caché que escondía el código real y un CDN sin firmar.
+
+- **Prohibido limpiar desde Android** (`WebStorage.deleteAllData()` o similar): borra
+  IndexedDB, que es donde está el vault. La limpieza usa solo Cache Storage y la API
+  de registros del SW.
+- Sin "kill switch" en `service-worker.js`: el único teléfono afectado era el de
+  pruebas del PO (el APK no se había distribuido) y se resolvió con una instalación
+  limpia.
+- Se descartó (b), un `SW_DEPLOY_ID` propio en el build de Android: mantenía la
+  dependencia externa y sumaba un paso de build que hay que recordar.
+- La DoD de EX-1 sigue valiendo: el export exitoso prueba que corría el JS nuevo (el
+  viejo no tenía camino al plugin) y la ida y vuelta fue con instalación limpia. Se
+  invalida solo la comprobación del 18-nov "APK instalado encima → texto nuevo".
+- **La PWA 0.6.1 se desplegó dos veces** (`d3a5c14` y `b152ec6`): el segundo deploy
+  solo cambia el comportamiento en nativo y CSS sin efecto en el navegador.
+- Fuera de D-1: la PWA en producción también carga Workbox con `importScripts` desde
+  el CDN de Google, sin verificación de integridad posible → **SW-1** en el backlog.
+
 ### Verificación de EX-1
 
 - Smoke test local de la PWA (navegador y nativo simulado): navegador igual que
@@ -2882,8 +2936,14 @@ resuelva T-2, el sync y la verificación del hash van al mismo script.
   confirmación, legible ✅; (5) PWA tras el deploy, en escritorio y en el navegador
   del teléfono: pie 0.6.1, backup igual que antes, CSV con la confirmación nueva,
   sincronización y "Restaurar desde tu nube" visibles ✅.
-- APK final (tras el cambio a 0.6.1 del manifest): instalado encima, arranca, pie
-  0.6.1, aviso del CSV con el texto nuevo ✅.
+- ~~APK final (tras el cambio a 0.6.1 del manifest): instalado encima, arranca, pie
+  0.6.1, aviso del CSV con el texto nuevo ✅.~~ **Invalidado (D1-16):** con el SW
+  dentro del APK, instalar encima no demostraba qué código corría.
+- **APK final (`b152ec6`), prueba A/B (2026-11-19):** A con instalación limpia →
+  barra completa, aviso del CSV con los asistentes de IA, export de backup ✅, pie
+  0.6.1; B (marcador `0.6.1-B`) encima de A → aparece el marcador ✅; A encima de B →
+  desaparece, reabrir sin bucle ✅; PWA en incógnito tras el redeploy: el SW se sigue
+  registrando ✅.
 - 0 dependencias nuevas; `engine.js` y `DpmKeyPlugin` sin cambios.
 
 ---

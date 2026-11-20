@@ -111,7 +111,7 @@ proyecto en `.claude/CLAUDE.md`):
 - [ ] Ningún archivo de estado del workspace quedó desactualizado (ver checklist en `.claude/CLAUDE.md`)
 - [ ] Docs actualizados subidos al Project DPM en Claude.ai (acción del PO — el arquitecto revisor trabaja con ese contexto)
 - [ ] Si el item toca UI/interacción: los criterios de aceptación cubren **desktop mouse + mobile touch Android** (+ Safari iOS si aplica) — regla de `protocolo-desarrollo.md`
-- [ ] **Si el item toca Android:** se da por terminado solo tras una prueba de humo en un **dispositivo físico**, con checklist registrado en el standup. Antes del build: `npx cap sync android` + hash de `engine.js` igual en `web/` y en los assets empaquetados (`documento-tecnico.md` §31, D1-14)
+- [ ] **Si el item toca Android:** se da por terminado solo tras una prueba de humo en un **dispositivo físico**, con checklist registrado en el standup, en los **dos caminos de instalación** (limpia y actualización encima de la versión anterior), verificando en ambos algo que solo trae el build nuevo. Antes del build: `npx cap sync android` + hash de `engine.js` igual en `web/` y en los assets empaquetados (`documento-tecnico.md` §31, D1-14)
 
 ---
 
