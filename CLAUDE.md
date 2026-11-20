@@ -1,6 +1,6 @@
 # CLAUDE.md — Dacmos Password Manager
 # Ruta: C:\DacmosGroup\04_Dev\PasswordManager\dacmosgroup-password-manager\CLAUDE.md
-# Última actualización: 2026-06-13
+# Última actualización: 2026-11-19 (D-1 cerrado: APK 0.6.1 en GitHub Releases, PWA 0.6.1, §27/§28 renumeradas, §31) · antes 2026-06-13
 # PREREQUISITO: C:\Users\dacmo\.claude\CLAUDE.md (L0) + C:\DacmosGroup\CLAUDE.md (L1)
 # Este archivo asume que ya leíste ambos. No repite convenciones globales ni mandato de seguridad.
 
