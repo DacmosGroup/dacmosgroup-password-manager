@@ -17,7 +17,8 @@ ceremonias a lo que aporta valor a un solo-founder con disponibilidad irregular.
 | **Equipo de desarrollo** | Claude Code (VS Code) | Implementa exactamente lo aprobado. Ejecuta el Definition of Done. Mantiene docs y backlog al día |
 
 > Mantiene el protocolo existente del proyecto: Claude Code **nunca propone
-> arquitectura propia**, solo implementa lo aprobado en el chat del Project.
+> arquitectura propia**, solo implementa lo aprobado en el chat del Project
+> (o, fuera de las áreas de gate, lo aprobado por el PO — ver "Puerta según riesgo").
 
 ---
 
@@ -109,7 +110,7 @@ proyecto en `.claude/CLAUDE.md`):
 - [ ] Roadmap / backlog: item marcado `✅ COMPLETADO fecha`
 - [ ] Commit de **documentación** separado del de código
 - [ ] Ningún archivo de estado del workspace quedó desactualizado (ver checklist en `.claude/CLAUDE.md`)
-- [ ] Docs actualizados subidos al Project DPM en Claude.ai (acción del PO — el arquitecto revisor trabaja con ese contexto)
+- [ ] Docs pusheados y repo sincronizado en el Project DPM de Claude.ai (acción del PO — el arquitecto revisor lee el repo por GitHub; desde 2026-11-25 ya no se suben a mano)
 - [ ] Si el item toca UI/interacción: los criterios de aceptación cubren **desktop mouse + mobile touch Android** (+ Safari iOS si aplica) — regla de `protocolo-desarrollo.md`
 - [ ] **Si el item toca Android:** se da por terminado solo tras una prueba de humo en un **dispositivo físico**, con checklist registrado en el standup, en los **dos caminos de instalación** (limpia y actualización encima de la versión anterior), verificando en ambos algo que solo trae el build nuevo. Antes del build: `npx cap sync android` + hash de `engine.js` igual en `web/` y en los assets empaquetados (`documento-tecnico.md` §31, D1-14)
 
@@ -125,6 +126,12 @@ sprint" hasta que el arquitecto revisor cierra:
 - Guards de seguridad nuevos (cualquier cosa que sirva o escriba credenciales)
 - Integración con APIs del SO (Autofill, Credential Provider, Keystore)
 - Cualquier divergencia que Code reporte durante la propuesta de plan
+
+**Puerta según riesgo (desde 2026-11-25, decisión del PO).** El gate es
+obligatorio solo para: criptografía, sync, permisos (Android/extensión),
+distribución y firma, y dependencias o CDN nuevos. El resto (p. ej. builds,
+CSS/UX menores, tooling) lo implementa Code con el OK del PO, lo registra en el
+standup log y el arquitecto lo revisa después. Ante la duda, pasa por el gate.
 
 Esto es el ciclo por feature de `protocolo-desarrollo.md` (pasos 1–8) — Scrum no
 lo reemplaza, lo envuelve.

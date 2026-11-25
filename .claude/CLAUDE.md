@@ -151,25 +151,20 @@ Ejecutar en orden al final de cada sesión con cambios, antes de push.
 - [ ] `memory/project-products.md` — versiones y estado actual del producto
 - [ ] `memory/project-dpm-scrum.md` — estado del sprint activo + próximo
 
-### 3. Claude AI — subida manual al Project DPM
+### 3. Claude AI — Project DPM (desde 2026-11-25: repo conectado por GitHub)
 
-Subir los archivos que fueron modificados en esta sesión. Al reemplazar, borrar
-primero la versión vieja (Claude.ai no versiona, acumula).
+El Project DPM lee el repo por la integración de GitHub (Contexto) y la carpeta
+local `_KNOWLEDGE\DPM`. **Ya no se suben docs del repo a mano.** Al cerrar:
 
-| Archivo | Destino |
-|---|---|
-| `docs/scrum/README.md` | Project **DPM** (solo si cambió el modelo) |
-| `docs/scrum/product-backlog.md` | Project **DPM** |
-| `docs/scrum/sprint-actual.md` | Project **DPM** |
-| `docs/scrum/sprints/sprint-XX.md` | Project **DPM** (al cerrar un sprint) |
-| `docs/documento-tecnico.md` | Project **DPM** |
-| `CLAUDE.md` (root del repo) | Project **DPM** |
-| `README.md` (root del repo) | Project **DPM** |
+1. Push de lo commiteado (repo público: leer el diff antes).
+2. El PO pulsa **sincronizar** el repo en Contexto del Project (la copia no se
+   actualiza sola). Lo no pusheado no lo ve el arquitecto: los briefs
+   `*-decisiones-temp.md` y los resultados de prueba se siguen pegando en el chat.
+3. Si se crea un doc nuevo que el arquitecto debe leer (p. ej. `sprints/sprint-XX.md`),
+   confirmar que entra en la selección de archivos de GitHub del Project.
 
-Mantener también en el Project (referencia estable, re-subir solo si cambian):
-`docs/protocolo-desarrollo.md`, `docs/decisions/ADR-001-stack-mobile.md`,
-`docs/guia-usuario.md`, `_KNOWLEDGE/content/audiencia-target.md`.
-Quitar del Project los `roadmap-vX.X.md` de ciclos cerrados y los duplicados.
+Solo queda subido a mano lo que no vive en el repo: `_KNOWLEDGE/content/audiencia-target.md`.
+No duplicar en Contexto archivos que ya trae GitHub (dos versiones = una atrasada).
 
 El contexto maestro (`_KNOWLEDGE/DACMOSGROUP_MASTER_CONTEXT.md`) ya no se sube al Project:
 si cambió, `dg master` y subir el skill `dacmos-master-context` una vez (desde 2026-11-17).
