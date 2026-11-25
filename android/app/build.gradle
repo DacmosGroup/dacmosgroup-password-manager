@@ -8,6 +8,30 @@ if (localPropsFile.exists()) {
     localPropsFile.withReader('UTF-8') { reader -> localProps.load(reader) }
 }
 
+// AAB-1 (Sprint 3, §32): el AAB de Play se firma con la clave de SUBIDA (`dacmos-upload`);
+// el APK de GitHub Releases sigue firmado con `dacmos-pm`, que Google tiene como clave de
+// firma de la app (PEPK). Para que un olvido no firme el AAB con `dacmos-pm` (casi
+// irreversible en Play), el build se niega a seguir en vez de caer a un valor por defecto:
+//   AAB:  ./gradlew bundleRelease -Pdpm.signing=upload
+//   APK:  ./gradlew assembleRelease          (sin la propiedad)
+def dpmSigning = (project.findProperty('dpm.signing') ?: '').toString()
+def requestedTasks = gradle.startParameter.taskNames.collect { it.tokenize(':').last().toLowerCase() }
+def isReleaseTask = { String t, String prefix -> t.startsWith(prefix) && !t.contains('debug') }
+def bundleRequested   = requestedTasks.any { isReleaseTask(it, 'bundle') }
+def assembleRequested = requestedTasks.any { isReleaseTask(it, 'assemble') }
+if (dpmSigning && dpmSigning != 'upload') {
+    throw new GradleException("dpm.signing='${dpmSigning}' no es valido: el unico valor admitido es 'upload'.")
+}
+if (bundleRequested && dpmSigning != 'upload') {
+    throw new GradleException('AAB de release sin -Pdpm.signing=upload: el AAB de Play se firma con la clave de subida, nunca con dacmos-pm (documento-tecnico, seccion 32).')
+}
+if (assembleRequested && dpmSigning == 'upload') {
+    throw new GradleException('-Pdpm.signing=upload solo vale para el AAB (bundleRelease): el APK de GitHub se firma con dacmos-pm.')
+}
+if (dpmSigning == 'upload' && !localProps['UPLOAD_KEYSTORE_PATH']) {
+    throw new GradleException('Falta UPLOAD_KEYSTORE_PATH (y UPLOAD_KEYSTORE_PASSWORD, UPLOAD_KEY_ALIAS, UPLOAD_KEY_PASSWORD) en local.properties.')
+}
+
 android {
     namespace = "co.dacmosgroup.dpm"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -15,7 +39,7 @@ android {
         applicationId "co.dacmosgroup.dpm"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
+        versionCode 3
         versionName "0.6.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -31,10 +55,19 @@ android {
             keyAlias      localProps['KEY_ALIAS']         ?: ''
             keyPassword   localProps['KEY_PASSWORD']      ?: ''
         }
+        // Solo se define al pedir el AAB: sin la propiedad, el build no depende del keystore de subida.
+        if (dpmSigning == 'upload') {
+            upload {
+                storeFile     file(localProps['UPLOAD_KEYSTORE_PATH'])
+                storePassword localProps['UPLOAD_KEYSTORE_PASSWORD'] ?: ''
+                keyAlias      localProps['UPLOAD_KEY_ALIAS']         ?: ''
+                keyPassword   localProps['UPLOAD_KEY_PASSWORD']      ?: ''
+            }
+        }
     }
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig dpmSigning == 'upload' ? signingConfigs.upload : signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
