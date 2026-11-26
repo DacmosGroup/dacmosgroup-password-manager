@@ -34,6 +34,7 @@ canal y probar la PWA servida en un **preview por rama** antes del merge.
 
 ```
 2026-11-26 — Sprint 3 cerrado. Siguiente: Planning del Sprint 4 (PO). Bloqueos: ninguno.
+2026-11-26 — Mantenimiento entre sprints (arquitecto): T-2 ampliado a `text=auto eol=lf` para `web/**` y `src/**` (`dfeb909`; renormalize sin cambios, binarios intactos, 0 archivos con CRLF). SC-1: datos del gate reunidos y enviados al arquitecto (reproducción, carga, opciones del paquete, advisories, inventario de terceros); sin reemplazo hasta cerrar el gate. Siguiente: Planning del Sprint 4 (PO; el arquitecto propone SC-1 primero). Bloqueos: gate de SC-1.
 ```
 
 ---
