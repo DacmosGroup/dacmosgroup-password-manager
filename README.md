@@ -119,7 +119,7 @@ Ciclo derivado de la auditoría interna v0.5.0 (`docs/auditoria-v0.5.0-hallazgos
 | DpmKeyPlugin | `BiometricPrompt.CryptoObject` + Android Keystore — wrap_key nunca sale del hardware | ✅ |
 | biometric-bridge.js | Puente JS↔DpmKeyPlugin · configurar/desbloquear/desactivar biometría | ✅ |
 | UI biométrica | Botón unlock + toggle settings (ES/EN/PT-BR) | ✅ |
-| Play Store | Cuenta verificada, internal track habilitado (PS-1). El AAB v0.6.0 no arranca: se sube el rebuild vc 3 / 0.6.1 | ⏳ |
+| Play Store | AAB 0.6.1 (vc 3) en pruebas internas desde 2026-11-25, sin acceso público. Play firma con la misma clave que el APK de GitHub: se puede pasar de un canal al otro sin desinstalar. Producción requiere antes pruebas cerradas | 🔄 |
 | D-1 | APK 0.6.1 firmado en GitHub Releases, con SHA-256 del archivo y del certificado publicados · splash corregido · probado en un teléfono real | ✅ |
 | EX-1 | Exportar backup cifrado y CSV en Android con el selector "Guardar como" (`DpmExportPlugin`, sin dependencias) · datos fuera de las copias automáticas de Android | ✅ |
 
