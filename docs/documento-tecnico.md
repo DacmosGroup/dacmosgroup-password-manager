@@ -3216,6 +3216,11 @@ archivo era legítimo; lo que fallaba era la documentación.
 carpeta) y MSAL 3.30.0 (`web/libs/SHA256SUMS` + recompilación). La Extension (`src/`) no tiene ninguno.
 Capacitor (`native-bridge.js` y los plugins del APK) llega por npm con `package-lock.json`. Sin fuentes ni `.wasm`.
 
+**Regla de evidencia de CI (arquitecto, 2026-11-26).** Toda prueba de CI se registra como **run concreto**:
+ID o enlace y estado. Que no aparezcan fallos no prueba nada: una prueba que no corrió se ve igual que una que
+pasó. En SC-1 pasó de verdad: al subir dos ramas nuevas en un solo push, GitHub disparó el workflow solo en
+una, y `workflow_dispatch` no existe hasta que el workflow está en `main`.
+
 **Lo que deja ver (items propuestos, con gate):** SC-2, cargar MSAL solo al usar OneDrive y nunca en nativo
 (mínimo privilegio); SC-3, spike para salir de MSAL 3.x.
 

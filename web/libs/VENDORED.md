@@ -38,9 +38,11 @@ bash tools/vendor/msal/verify.sh
 `deploy-pwa.yml` corre `sha256sum -c --strict SHA256SUMS` en `web/libs/` antes de desplegar (sin `npm`).
 
 **Versiones de esbuild que generan el mismo archivo:** de 0.27.2 a 0.28.0 (probadas 0.27.2, 0.27.3, 0.27.4,
-0.27.5, 0.27.7 y 0.28.0). 0.27.0/0.27.1 y 0.28.1/0.28.2 dan otro archivo. Se fija **0.27.2**: es la única del
-rango fuera del advisory GHSA-g7r4-m6w7-qqqr (bajo; afecta al servidor de desarrollo de esbuild en Windows,
-que la receta no usa).
+0.27.5, 0.27.7 y 0.28.0). 0.27.0/0.27.1 y 0.28.1/0.28.2 dan otro archivo. Se fija **0.27.2** (aprobado por
+el arquitecto, 2026-11-26): de 0.27.3 a 0.28.0 tienen el advisory GHSA-g7r4-m6w7-qqqr (bajo: servidor de
+desarrollo de esbuild en Windows) y 0.27.2 da el mismo archivo con `npm audit` en 0. No se elige porque el
+advisory "no aplique": en una receta cuyo trabajo es dar confianza, un audit en 0 evita acostumbrarse a
+ignorar alertas, y la versión no cuesta nada porque el archivo es idéntico.
 
 ### Integridad de los paquetes (`dist.integrity` del registro = `package-lock.json`)
 
