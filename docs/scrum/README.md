@@ -113,6 +113,8 @@ proyecto en `.claude/CLAUDE.md`):
 - [ ] Docs pusheados y repo sincronizado en el Project DPM de Claude.ai (acción del PO — el arquitecto revisor lee el repo por GitHub; desde 2026-11-25 ya no se suben a mano)
 - [ ] Si el item toca UI/interacción: los criterios de aceptación cubren **desktop mouse + mobile touch Android** (+ Safari iOS si aplica) — regla de `protocolo-desarrollo.md`
 - [ ] **Si el item toca Android:** se da por terminado solo tras una prueba de humo en un **dispositivo físico**, con checklist registrado en el standup, en los **dos caminos de instalación** (limpia y actualización encima de la versión anterior), verificando en ambos algo que solo trae el build nuevo. Antes del build: `npx cap sync android` + hash de `engine.js` igual en `web/` y en los assets empaquetados (`documento-tecnico.md` §31, D1-14)
+- [ ] **Si el item publica en un canal** (Play, GitHub Releases u otro): se saca del dispositivo el APK que **entrega el canal** y se compara con el build propio (firma con `apksigner`, ausencia de código inyectado como `com.pairip`, tamaño del `classes.dex`). Lo que se verifica es lo que recibe el usuario, no lo que se subió (Retro del Sprint 3, `documento-tecnico.md` §32)
+- [ ] **Si el item toca la PWA servida** (service worker, `_headers`/CSP, archivos de `web/libs/`): se prueba en un **preview por rama** de Cloudflare Pages antes del merge (`workflow_dispatch` desde la rama, nunca desde `main`), incluida la **actualización** desde la versión en producción cuando cambia el SW (Retro del Sprint 3)
 
 ---
 
