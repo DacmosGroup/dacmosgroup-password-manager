@@ -1,3 +1,9 @@
+# JS de la PWA y de la Extension: siempre LF, también en un checkout de Windows con core.autocrlf=true.
+# Así engine.js tiene el mismo hash en el repo, en la PWA desplegada (CI en Linux) y dentro del APK,
+# que se compila en Windows y empaqueta la copia de trabajo (T-2, documento-tecnico §32).
+web/**/*.js text eol=lf
+src/**/*.js text eol=lf
+
 # Archivos vendorizados: bytes fijos (sin conversión CRLF) para que SHA256SUMS
-# verifique igual en el CI y en un checkout local de Windows (SW-1).
+# verifique igual en el CI y en un checkout local de Windows (SW-1). Va después: -text gana.
 web/libs/** -text
