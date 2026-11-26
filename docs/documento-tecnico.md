@@ -3174,12 +3174,8 @@ cambió ningún archivo en git; solo la copia de trabajo de Windows. Verificado 
 CR. Siguen con CRLF en la copia de trabajo los archivos no `.js` de `web/` (CSS, HTML, JSON, SVG,
 `_headers`, `_redirects`): fuera del alcance aprobado, pendiente en T-2.
 
-**Hallazgo al renormalizar (SC-1, propuesto):** `web/libs/msal-browser.esm.min.js` (entró en `bbddbdc`,
-2026-05-30) no se puede verificar contra nada publicado. `VENDORED.md` dice `npm pack @azure/msal-browser@3.30.0`
-→ `dist/msal-browser.esm.min.js`, pero ese archivo no existe en el paquete 3.30.0 (su integridad sí coincide
-con el registro); el contenido es un bundle de esbuild que tampoco coincide con los bundles ESM de jsDelivr
-ni de esm.sh. El hash documentado (`3fd8427c…`) es el de la copia con CRLF; el blob que se despliega es
-`827dca96…`. No hay indicios de código malicioso: lo que falla es la trazabilidad.
+**SC-1:** al renormalizar se abrió un item para re-vendorizar MSAL con procedencia verificable (gate abierto;
+el detalle se documenta aquí al cerrarlo).
 
 #### Lección: el pipeline viaja con la rama
 
