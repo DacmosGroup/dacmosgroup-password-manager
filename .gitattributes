@@ -1,9 +1,10 @@
-# JS de la PWA y de la Extension: siempre LF, también en un checkout de Windows con core.autocrlf=true.
-# Así engine.js tiene el mismo hash en el repo, en la PWA desplegada (CI en Linux) y dentro del APK,
-# que se compila en Windows y empaqueta la copia de trabajo (T-2, documento-tecnico §32).
-web/**/*.js text eol=lf
-src/**/*.js text eol=lf
+# PWA y Extension: archivos de texto siempre con LF, también en un checkout de Windows con core.autocrlf=true.
+# text=auto deja los binarios (PNG, ICO) sin tocar. Así el repo, la PWA desplegada (CI en Linux) y el APK
+# (se compila en Windows y empaqueta la copia de trabajo) tienen los mismos bytes (T-2, documento-tecnico §32).
+# android/ queda fuera a propósito.
+web/** text=auto eol=lf
+src/** text=auto eol=lf
 
-# Archivos vendorizados: bytes fijos (sin conversión CRLF) para que SHA256SUMS
-# verifique igual en el CI y en un checkout local de Windows (SW-1). Va después: -text gana.
+# Archivos vendorizados: bytes fijos (sin conversión) para que SHA256SUMS verifique igual en el CI y en un
+# checkout local de Windows (SW-1). Va al final: en .gitattributes gana la última regla que coincide.
 web/libs/** -text
