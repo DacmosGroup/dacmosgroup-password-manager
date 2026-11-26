@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Baseline 0.6.x · Última actualización 2026-11-19 (§31 — D-1 + EX-1, APK 0.6.1)**
+**Baseline 0.6.x · Última actualización 2026-11-25 (§32 — AAB-1 en Play + decisión de SW-1, Sprint 3)**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -42,6 +42,7 @@
 29. [Decisiones de Implementación — v0.6.0 Capacitor Android-first](#29-decisiones-de-implementación--v060-capacitor-android-first)
 30. [Decisiones de Implementación — H-5 (`_deviceId` en el vault, Sprint 2)](#30-decisiones-de-implementación--h-5-_deviceid-en-el-vault-sprint-2)
 31. [Decisiones de Implementación — D-1 + EX-1 (APK 0.6.1 fuera de Play Store, Sprint 2)](#31-decisiones-de-implementación--d-1--ex-1-apk-061-fuera-de-play-store-sprint-2)
+32. [Decisiones de Implementación — AAB-1 + SW-1 (Play internal track y Workbox propio, Sprint 3)](#32-decisiones-de-implementación--aab-1--sw-1-play-internal-track-y-workbox-propio-sprint-3)
 
 ---
 
@@ -1952,6 +1953,11 @@ const ENTORNO_DEV = ['localhost', '127.0.0.1', '[::1]']
 | R2 | Superficie de amenaza del SW | El bypass reduce caché, no añade capacidad → no ensancha la superficie en prod |
 | R3 | `offline.html` no funciona en localhost dev | Aceptable; offline es preocupación de prod. Documentado |
 
+> **Nota 2026-11-25 (Sprint 3):** el contrato de arriba **nunca llegó al código**. `git log -S ENTORNO_DEV`
+> solo lo encuentra en el commit de docs `412e1cf`; `web/service-worker.js` no tiene el bypass por hostname.
+> En desarrollo sigue valiendo la opción C (DevTools). Queda como item **SW-DEV** del backlog; no se
+> implementa dentro de SW-1 para no mezclar alcances (§32).
+
 ---
 
 ## 21. Auditoría Profunda — Hallazgos v0.4.1 / v0.4.2
@@ -2691,7 +2697,7 @@ prueba en un teléfono real (2026-11-17) y de su segunda ronda (2026-11-18).
 |---|---|---|---|
 | AAB v0.6.0 (jun-2026, pre-H-5) | 1 | `0.6.0` | Firmado, **nunca se sube** (no arranca: D1-9) |
 | APK D-1 (post-H-5 + EX-1) | 2 | `0.6.1` | Release `v0.6.1` |
-| AAB Play, rebuild post-H-5 | 3 | `0.6.1` | Pendiente de subir al internal track |
+| AAB Play, rebuild post-H-5 | 3 | `0.6.1` | ✅ Internal testing desde 2026-11-25 (AAB-1, §32) |
 
 El contador **no** es un mecanismo de continuidad entre canales: Play App Signing
 re-firma con la clave de Google y el APK directo firma con `dacmos-pm`, así que
@@ -2700,6 +2706,11 @@ desinstalar). Es un **registro de secuencia de builds**, no un contrato de
 compatibilidad. `versionName 0.6.1` identifica el build de cara a soporte; `0.6.0`
 queda reservado al snapshot pre-H-5 que nunca se distribuye. Formato de datos
 (H-5 sin bump de `BLOB_VERSION`, §30) e identidad de artefacto son capas distintas.
+
+> **Nota 2026-11-25 (AAB-1, §32):** el párrafo anterior ya **no describe la realidad**. Play App Signing
+> se configuró con `dacmos-pm` como clave de firma de la app (PEPK), así que Play y el APK de GitHub firman
+> con el mismo certificado: pasar de GitHub a Play es una **actualización** (probado en teléfono, §32 A-5).
+> El `versionCode` sí es ahora contrato entre canales: debe crecer de forma única en los dos.
 
 **PWA:** `web/manifest.json` pasa de 0.5.1 a **0.6.1** (aprobado 2026-11-18). El
 manifest lo comparten la PWA y la capa web del APK (el pie de Ajustes lee la
@@ -2714,6 +2725,9 @@ Capacitor no depende de Digital Asset Links para arrancar (el fallback a Custom
 Tabs es exclusivo de TWA). Se resuelve en el gate de F7-A (hueco #1): listar
 `dacmos-pm` y el fingerprint de Play App Signing, y retirar `dacmos-dpm` con una
 nota de auditoría.
+
+> **Nota 2026-11-25:** adelantado al Sprint 3 por decisión del PO (§32 A-6). Como la clave de firma
+> de Play **es** `dacmos-pm`, basta un único fingerprint (`B9:3E:FD:CB…`).
 
 ### D1-3 / D1-6 — Encaje de documentación y commits
 
@@ -2983,6 +2997,98 @@ incompatible con un producto cuyo argumento central es la confianza.
   desaparece, reabrir sin bucle ✅; PWA en incógnito tras el redeploy: el SW se sigue
   registrando ✅.
 - 0 dependencias nuevas; `engine.js` y `DpmKeyPlugin` sin cambios.
+
+---
+
+## 32. Decisiones de Implementación — AAB-1 + SW-1 (Play internal track y Workbox propio, Sprint 3)
+
+**Fecha:** 2026-11-25 · **Sprint:** 3 · Gate cerrado por el arquitecto revisor en el chat del Project DPM;
+opción de firma elegida por el PO.
+
+### AAB-1 — AAB vc 3 / 0.6.1 en el internal track de Play
+
+#### A-1 — Play App Signing con `dacmos-pm` como clave de firma de la app (opción B)
+
+| Opción | Estado | Razón |
+|---|---|---|
+| A — clave generada por Google; `dacmos-pm` solo como clave de subida | Descartada | Play y GitHub firmarían con certificados distintos: migrar de canal exigiría desinstalar y perder la bóveda local |
+| **B — `dacmos-pm` subida a Google como clave de firma (PEPK) + clave de subida nueva `dacmos-upload`** | ✅ Aprobada (PO) | Mismo certificado en los dos canales → actualización cruzada; la clave de subida se puede resetear si se pierde |
+
+- Coste aceptado: Google custodia una copia de `dacmos-pm`. Es la misma clave que firma el APK de GitHub,
+  así que la confianza en ese canal pasa a depender también de la custodia de Google.
+- La elección solo es reversible **antes** del primer release en pruebas abiertas o producción.
+- Al crear la app, la consola ya había generado una clave propia (install base 0 %, sin releases).
+  Se reemplazó con *Change key → Provide a copy of your app signing key* (PEPK con cifrado RSA-AES).
+- Huellas en Play (SHA-256): firma de la app `B9:3E:FD:CB:…:F0:1C:E3:FC` (`dacmos-pm`);
+  subida `7C:1C:DB:5A:…:8C:B7:AD:94` (`dacmos-upload`). Coinciden con los keystores locales.
+
+#### A-2 — Firma por artefacto con guard fail-closed en `build.gradle`
+
+Un solo build type no permite firmar distinto por tarea, así que la elección va por propiedad de Gradle:
+
+- AAB: `./gradlew bundleRelease -Pdpm.signing=upload` → firma con `dacmos-upload`.
+- APK: `./gradlew assembleRelease` (sin la propiedad) → firma con `dacmos-pm`.
+- El build **falla** en vez de caer a un valor por defecto: AAB de release sin la propiedad, propiedad
+  con valor distinto de `upload`, `assembleRelease` con la propiedad, o faltan las claves `UPLOAD_*`
+  en `local.properties`. La config `upload` solo se define al pedirla.
+- Probado en seco (`./gradlew -m`) en los 5 casos antes del build real. Commit `78ad1a9`.
+
+#### A-3 — Verificación del artefacto antes de subirlo
+
+`npx cap sync android` + hash de `engine.js` igual en `web/` y en los assets (D1-14);
+`keytool -printcert -jarfile app-release.aab` debe mostrar la huella de **subida**, nunca `B9:3E`.
+versionCode 3 / versionName 0.6.1 en el manifest fusionado. SHA-256 del AAB subido:
+`549458c6a30c1a71e16832b31caa7ad4721b8e3ea6dc884d96bcfdb9247dd4dd`.
+
+El único aviso de Play (falta el archivo de desofuscación) no aplica: `minifyEnabled false`.
+
+#### A-4 — Publicación
+
+Internal testing, 1 lista de testers (solo el PO). Nombre temporal "(unreviewed)" hasta completar la
+ficha. La primera publicación tardó en propagarse ("No se encontró el elemento" mientras tanto).
+
+> **Antes de producción:** las cuentas personales nuevas deben pasar por **pruebas cerradas con al
+> menos 12 testers durante 14 días seguidos** antes de poder solicitar producción. Es trabajo de PO,
+> no de dev; queda en el backlog (PS-2).
+
+#### A-5 — Verificación en dispositivo (DoD de Android)
+
+- **Actualización** sobre el APK vc 2 de GitHub, sin desinstalar: antes vc 2, instalador
+  `com.google.android.packageinstaller`; después vc 3, instalador `com.android.vending`, mismo
+  certificado `b93efdcb…e3fc` (`apksigner` sobre el `base.apk` extraído), `firstInstallTime` sin cambio,
+  la bóveda se desbloquea ✅. Play entrega *splits* (idioma, densidad) y añade su *Source Stamp*: esperado.
+- **Instalación limpia** desde Play en un segundo teléfono sin DPM previo: instala y arranca ✅.
+
+#### A-6 — `assetlinks.json`
+
+Se adelanta al Sprint 3 (antes en el gate de F7-A, D1-2): un único fingerprint, `B9:3E:FD:CB…`,
+y retirar el del keystore viejo con nota de auditoría. Pendiente de implementar.
+
+#### A-7 — Verificación de desarrolladores de Android (DV-1, backlog)
+
+Google exige registrar paquete y clave de firma para instalar apps fuera de Play en algunos países
+(Brasil, Indonesia, Singapur y Tailandia desde septiembre de 2026). Afecta al APK de GitHub. Va al
+backlog como **DV-1**, sin fecha.
+
+### SW-1 — Workbox servido desde el propio dominio (aprobado, pendiente de implementar)
+
+| Opción | Estado | Razón |
+|---|---|---|
+| **Vendorizar Workbox 7.0.0** con hashes verificados | ✅ Aprobada | Mismo comportamiento que hoy, sin CDN de terceros |
+| Service worker propio sin Workbox | Descartada | Reescribe precache, rutas y expiración: más superficie y más riesgo para el mismo resultado |
+| SRI en `importScripts` | No aplica | `importScripts` no admite integridad |
+
+Contrato:
+
+- Paquetes `workbox-sw`, `-core`, `-precaching`, `-routing`, `-strategies`, `-expiration` 7.0.0
+  obtenidos con `npm pack` y comparados con `dist.integrity` del registro. Solo los `.prod.js` + el
+  loader, sin `.map`, en `web/libs/workbox-v7.0.0/`, con `SHA256SUMS`.
+- `deploy-pwa.yml` corre `sha256sum -c` antes de desplegar: si un archivo cambia, no hay deploy.
+- `importScripts` local + `workbox.setConfig({ modulePathPrefix, debug: false })`.
+- `web/_headers`: quitar `https://storage.googleapis.com` de `script-src` y `worker-src`; actualizar los
+  comentarios. Verificar con `curl -I` en un deploy de preview.
+- DoD incluye una prueba negativa (hash alterado → el CI no despliega). Sin bump del manifest.
+- El bypass de desarrollo de §20 (`ENTORNO_DEV`) **no** entra en SW-1: es el item SW-DEV.
 
 ---
 

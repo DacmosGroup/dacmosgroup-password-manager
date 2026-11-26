@@ -18,8 +18,9 @@ DPM en el internal track de Play y la PWA sin dependencias externas en el servic
 
 | ID | Item | Talla | Estado |
 |---|---|---|---|
-| SW-1 | Servir Workbox desde el propio dominio en la PWA | S | ⬜ TODO — gate pedido (dependencia/CDN) |
-| AAB-1 | AAB vc 3 / 0.6.1 firmado desde `main` al internal track de Play | S–M | ⬜ TODO — gate pedido (distribución y firma) |
+| SW-1 | Servir Workbox desde el propio dominio en la PWA | S | ⬜ TODO — gate cerrado 2026-11-25 (§32) |
+| AAB-1 | AAB vc 3 / 0.6.1 firmado desde `main` al internal track de Play | S–M | ✅ DONE 2026-11-25 (§32) |
+| AAB-1b | `assetlinks.json` con un único fingerprint (`dacmos-pm`) | S | ⬜ TODO — adelantado por el PO (§32 A-6) |
 
 Reserva (solo si sobra capacidad): **H-9** — logging de eventos sync.
 
