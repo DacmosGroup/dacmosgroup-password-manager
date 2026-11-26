@@ -3166,6 +3166,21 @@ AAB-1b, reconfirmado el mismo día: `assetlinks.json` → `200` + `Content-Type:
 (en Pages una ruta inexistente también da `200`, con `text/html`: el `Content-Type` es lo que cuenta);
 `statements:list` → un statement, `co.dacmosgroup.dpm` con `B9:3E`.
 
+**Corrección (T-2, 2026-11-26, `958dbe1`):** `.gitattributes` con `web/**/*.js text eol=lf` y
+`src/**/*.js text eol=lf` (antes de `web/libs/** -text`, que conserva bytes fijos). Los blobs ya eran LF: no
+cambió ningún archivo en git; solo la copia de trabajo de Windows. Verificado tras `cap sync`: `engine.js`
+`a6eb1ac0…` en el blob, en la PWA de producción y en los assets del APK. **Los APK publicados hasta vc 4
+(GitHub vc 2, Play vc 3 y vc 4) llevan los `.js` con CRLF:** su hash se compara con el del repo quitando los
+CR. Siguen con CRLF en la copia de trabajo los archivos no `.js` de `web/` (CSS, HTML, JSON, SVG,
+`_headers`, `_redirects`): fuera del alcance aprobado, pendiente en T-2.
+
+**Hallazgo al renormalizar (SC-1, propuesto):** `web/libs/msal-browser.esm.min.js` (entró en `bbddbdc`,
+2026-05-30) no se puede verificar contra nada publicado. `VENDORED.md` dice `npm pack @azure/msal-browser@3.30.0`
+→ `dist/msal-browser.esm.min.js`, pero ese archivo no existe en el paquete 3.30.0 (su integridad sí coincide
+con el registro); el contenido es un bundle de esbuild que tampoco coincide con los bundles ESM de jsDelivr
+ni de esm.sh. El hash documentado (`3fd8427c…`) es el de la copia con CRLF; el blob que se despliega es
+`827dca96…`. No hay indicios de código malicioso: lo que falla es la trazabilidad.
+
 #### Lección: el pipeline viaja con la rama
 
 La configuración de CI se versiona con el código. Probar un commit viejo ejecuta **su** workflow viejo: la
