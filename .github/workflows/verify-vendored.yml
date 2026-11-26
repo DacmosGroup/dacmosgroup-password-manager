@@ -1,0 +1,51 @@
+# verify-vendored.yml — Recompila los archivos de terceros vendorizados y compara sus hashes (SC-1)
+#
+# web/libs/msal-browser.esm.min.js es un bundle generado con esbuild desde el paquete de npm.
+# Este job lo recompila con versiones fijadas (tools/vendor/msal/package-lock.json, con la
+# integridad del registro) y comprueba que sale byte a byte igual a web/libs/SHA256SUMS.
+#
+# No despliega nada y no usa secretos. Va separado de deploy-pwa.yml a propósito: el deploy solo
+# compara hashes y no instala paquetes, para no ampliar su cadena de suministro.
+
+name: Verificar vendorizados
+
+on:
+  push:
+    paths:
+      - 'web/libs/**'
+      - 'tools/vendor/**'
+      - '.github/workflows/verify-vendored.yml'
+  pull_request:
+    paths:
+      - 'web/libs/**'
+      - 'tools/vendor/**'
+      - '.github/workflows/verify-vendored.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  msal:
+    name: Recompilar MSAL y comparar
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v6
+
+      # Workbox y MSAL: los hashes del repo, igual que en el deploy
+      - name: Verificar SHA256SUMS
+        run: |
+          (cd web/libs/workbox-v7.0.0 && sha256sum -c --strict SHA256SUMS)
+          (cd web/libs && sha256sum -c --strict SHA256SUMS)
+
+      # Instala exactamente lo del lock. --ignore-scripts: ningún paquete ejecuta código al
+      # instalarse; esbuild toma su binario del paquete opcional de la plataforma.
+      - name: Instalar la receta (versiones fijadas)
+        run: |
+          node --version
+          npm ci --ignore-scripts --no-audit --no-fund --prefix tools/vendor/msal
+
+      - name: Recompilar y comparar
+        run: bash tools/vendor/msal/verify.sh

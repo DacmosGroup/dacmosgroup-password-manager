@@ -50,6 +50,14 @@ jobs:
         working-directory: web/libs/workbox-v7.0.0
         run: sha256sum -c --strict SHA256SUMS
 
+      # ── Paso 1c: Verificar MSAL vendorizado (SC-1, §32) ───────────────
+      # Solo compara hashes, sin npm: la recompilación desde el registro
+      # vive en verify-vendored.yml para no ampliar la cadena de suministro
+      # del deploy. Si el archivo cambia, el job falla y no hay deploy.
+      - name: Verificar hash de MSAL vendorizado
+        working-directory: web/libs
+        run: sha256sum -c --strict SHA256SUMS
+
       # ── Paso 2: Inyectar SW_DEPLOY_ID con el commit SHA ──────────────
       # Reemplaza el valor 'dev' de SW_DEPLOY_ID en service-worker.js con
       # los primeros 7 caracteres del commit SHA actual. Esto garantiza que
