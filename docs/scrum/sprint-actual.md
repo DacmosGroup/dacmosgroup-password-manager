@@ -35,6 +35,7 @@ canal y probar la PWA servida en un **preview por rama** antes del merge.
 ```
 2026-11-26 — Sprint 3 cerrado. Siguiente: Planning del Sprint 4 (PO). Bloqueos: ninguno.
 2026-11-26 — Mantenimiento entre sprints (arquitecto): T-2 ampliado a `text=auto eol=lf` para `web/**` y `src/**` (`dfeb909`; renormalize sin cambios, binarios intactos, 0 archivos con CRLF). SC-1: datos del gate reunidos y enviados al arquitecto (reproducción, carga, opciones del paquete, advisories, inventario de terceros); sin reemplazo hasta cerrar el gate. Siguiente: Planning del Sprint 4 (PO; el arquitecto propone SC-1 primero). Bloqueos: gate de SC-1.
+2026-11-26 — SC-1 ✅ (gate cerrado: opción B). Receta fijada en `tools/vendor/msal/` (msal-browser 3.30.0, msal-common 14.16.1, esbuild 0.27.2: mismo archivo que 0.28.0 y fuera de GHSA-g7r4-m6w7-qqqr; `npm audit` 0); `verify-vendored.yml` + `sha256sum -c` de `web/libs/SHA256SUMS` en el deploy. Local OK; CI ubuntu-latest `success` (5/5); negativa sin `--minify`: "Recompilar y comparar" `failure`, rama borrada. Nuevos SC-2 y SC-3 propuestos. Siguiente: merge a main (deploy sin cambios de runtime; OK del PO) y Planning del Sprint 4. Bloqueos: ninguno.
 ```
 
 ---

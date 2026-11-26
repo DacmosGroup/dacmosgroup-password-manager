@@ -6,56 +6,67 @@ dependencias en CDN externos para el flujo de autenticación OAuth.
 
 ---
 
-## msal-browser.esm.min.js
+## msal-browser.esm.min.js (SC-1, §32)
 
 | Campo | Valor |
 |-------|-------|
-| **Librería** | @azure/msal-browser |
-| **Versión** | 3.30.0 |
-| **Distribución** | ESM bundle minificado (`msal-browser.esm.min.js`) |
-| **Origen** | `npm pack @azure/msal-browser@3.30.0` → `dist/msal-browser.esm.min.js` |
-| **Fecha de descarga** | 2026-05-30 |
-| **SHA-256** | `3FD8427C48139A9F94AF90634EDC3C1C316F77B23A894CC5CCB366E4081FF20A` |
-| **Tamaño** | 319,117 bytes |
-| **Licencia** | MIT |
+| **Librería** | @azure/msal-browser (con @azure/msal-common empaquetado dentro) |
+| **Versión** | 3.30.0 (msal-common 14.16.1, fijada de forma exacta por msal-browser) |
+| **Distribución** | Bundle ESM autocontenido generado con esbuild desde `dist/index.mjs` del paquete (el paquete no trae un ESM de un solo archivo) |
+| **Generado** | 2026-05-30 (F4.3) · receta verificada y fijada el 2026-11-26 |
+| **SHA-256** | `827dca9694b5e713bbe10687952d6cacea8431ee73f66f5abe07c628d46f84c5` (en `SHA256SUMS`) |
+| **Tamaño** | 318,971 bytes |
+| **Licencia** | MIT (`LICENSE-msal-browser`, copiada del paquete) |
 | **Repositorio** | https://github.com/AzureAD/microsoft-authentication-library-for-js |
 
-### Por qué se vendorea
+### Receta (reproducible)
 
-La PWA no usa bundler (Vanilla JS sin build step). Importar MSAL.js desde CDN
-(`https://alcdn.msauth.net/...`) introduciría una dependencia en tiempo de ejecución
-que rompería el modo offline. El vendoreo permite:
+Dentro de `node_modules/@azure/msal-browser`:
 
-1. **Modo offline garantizado** — la librería vive junto a los assets precacheados por Workbox.
-2. **Versión fija y auditable** — el hash SHA-256 verifica que el archivo no ha sido alterado.
-3. **Sin solicitudes a dominios externos** — todo el código de auth corre desde `self`.
+```bash
+esbuild dist/index.mjs --bundle --format=esm --platform=browser --minify --outfile=msal-browser.esm.min.js
+```
+
+Versiones fijadas en `tools/vendor/msal/package.json` + `package-lock.json`. Para comprobarlo:
+
+```bash
+npm ci --ignore-scripts --prefix tools/vendor/msal
+bash tools/vendor/msal/verify.sh
+```
+
+`verify-vendored.yml` (CI) hace lo mismo en cada cambio de `web/libs/**` o `tools/vendor/**`, y
+`deploy-pwa.yml` corre `sha256sum -c --strict SHA256SUMS` en `web/libs/` antes de desplegar (sin `npm`).
+
+**Versiones de esbuild que generan el mismo archivo:** de 0.27.2 a 0.28.0 (probadas 0.27.2, 0.27.3, 0.27.4,
+0.27.5, 0.27.7 y 0.28.0). 0.27.0/0.27.1 y 0.28.1/0.28.2 dan otro archivo. Se fija **0.27.2** (aprobado por
+el arquitecto, 2026-11-26): de 0.27.3 a 0.28.0 tienen el advisory GHSA-g7r4-m6w7-qqqr (bajo: servidor de
+desarrollo de esbuild en Windows) y 0.27.2 da el mismo archivo con `npm audit` en 0. No se elige porque el
+advisory "no aplique": en una receta cuyo trabajo es dar confianza, un audit en 0 evita acostumbrarse a
+ignorar alertas, y la versión no cuesta nada porque el archivo es idéntico.
+
+### Integridad de los paquetes (`dist.integrity` del registro = `package-lock.json`)
+
+| Paquete | Integridad |
+|---|---|
+| `@azure/msal-browser@3.30.0` | `sha512-I0XlIGVdM4E9kYP5eTjgW8fgATdzwxJvQ6bm2PNiHaZhEuUz47NYw1xHthC9R+lXz4i9zbShS0VdLyxd7n0GGA==` |
+| `@azure/msal-common@14.16.1` | `sha512-nyxsA6NA4SVKh5YyRpbSXiMr7oQbwark7JU9LMeg6tJYTSPyAGkdx61wPT4gyxZfxlSxMMEyAsWaubBlNyIa1w==` |
+| `esbuild@0.27.2` y su binario por plataforma | en `tools/vendor/msal/package-lock.json` |
+
+### Corrección (2026-11-26)
+
+Hasta esta fecha este archivo decía que el origen era `npm pack` → `dist/msal-browser.esm.min.js` (ese
+archivo no existe en el paquete) y documentaba el SHA-256 `3FD8427C…`, que es el de una copia con CRLF de
+Windows, no el del blob que se despliega. El contenido nunca cambió: la receta de arriba, que estaba en el
+documento técnico (F4.3), lo reproduce byte a byte.
 
 ### Protocolo de actualización
 
-Cuando se actualice MSAL.js a una nueva versión:
-
-1. Ejecutar: `npm pack @azure/msal-browser@<nueva-versión>`
-2. Copiar `dist/msal-browser.esm.min.js` → `web/libs/msal-browser.esm.min.js`
-3. Calcular el hash: `Get-FileHash web/libs/msal-browser.esm.min.js -Algorithm SHA256`
-4. Actualizar los campos **Versión**, **Fecha de descarga**, **SHA-256** y **Tamaño** en este archivo
-5. Revisar el CHANGELOG de MSAL.js para breaking changes en la API de `PublicClientApplication`
-6. Probar el flujo OAuth completo (Google Drive + OneDrive) antes de hacer commit
-
-### Verificación del archivo actual
-
-Para verificar que el archivo en disco coincide con el hash documentado:
-
-```powershell
-# PowerShell
-(Get-FileHash "web\libs\msal-browser.esm.min.js" -Algorithm SHA256).Hash
-# Debe retornar: 3FD8427C48139A9F94AF90634EDC3C1C316F77B23A894CC5CCB366E4081FF20A
-```
-
-```bash
-# Bash / Linux
-sha256sum web/libs/msal-browser.esm.min.js
-# Debe retornar: 3fd8427c48139a9f94af90634edc3c1c316f77b23a894cc5ccb366e4081ff20a
-```
+1. Cambiar las versiones en `tools/vendor/msal/package.json` y regenerar el lock
+   (`npm install --package-lock-only --ignore-scripts`); `npm audit` sin advisories que apliquen.
+2. `npm ci --ignore-scripts` y la receta → nuevo `msal-browser.esm.min.js` en `web/libs/`.
+3. `sha256sum msal-browser.esm.min.js > SHA256SUMS` en `web/libs/`; actualizar esta sección y `versions.json`.
+4. `bash tools/vendor/msal/verify.sh` → OK.
+5. Probar el flujo OAuth completo (Google Drive + OneDrive) antes del commit, en un preview por rama.
 
 ---
 

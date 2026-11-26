@@ -4,6 +4,8 @@
 # android/ queda fuera a propósito.
 web/** text=auto eol=lf
 src/** text=auto eol=lf
+# Receta de los vendorizados (SC-1): verify.sh lo ejecuta bash, también en el CI.
+tools/** text=auto eol=lf
 
 # Archivos vendorizados: bytes fijos (sin conversión) para que SHA256SUMS verifique igual en el CI y en un
 # checkout local de Windows (SW-1). Va al final: en .gitattributes gana la última regla que coincide.

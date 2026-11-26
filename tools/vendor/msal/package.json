@@ -1,0 +1,11 @@
+{
+  "name": "dpm-vendor-msal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Receta reproducible de web/libs/msal-browser.esm.min.js (SC-1). Solo herramienta de verificación: no se carga en runtime ni en el deploy.",
+  "dependencies": {
+    "@azure/msal-browser": "3.30.0",
+    "@azure/msal-common": "14.16.1",
+    "esbuild": "0.27.2"
+  }
+}
