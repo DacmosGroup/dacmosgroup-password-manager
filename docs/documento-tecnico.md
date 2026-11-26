@@ -3174,8 +3174,50 @@ cambió ningún archivo en git; solo la copia de trabajo de Windows. Verificado 
 CR. Siguen con CRLF en la copia de trabajo los archivos no `.js` de `web/` (CSS, HTML, JSON, SVG,
 `_headers`, `_redirects`): fuera del alcance aprobado, pendiente en T-2.
 
-**SC-1:** al renormalizar se abrió un item para re-vendorizar MSAL con procedencia verificable (gate abierto;
-el detalle se documenta aquí al cerrarlo).
+### SC-1 — MSAL vendorizado con procedencia verificable (✅ 2026-11-26)
+
+**Qué estaba mal.** `web/libs/VENDORED.md` decía que `msal-browser.esm.min.js` (entró en `bbddbdc`, F4.3,
+2026-05-30) venía de `npm pack @azure/msal-browser@3.30.0` → `dist/msal-browser.esm.min.js`. Ese archivo no
+existe en el paquete, y el SHA-256 documentado (`3FD8427C…`) era el de una copia con CRLF de Windows, no el del
+blob que se despliega (`827dca96…`). El archivo corre en cada arranque, en el mismo origen que la bóveda
+(`app.js:14` → `auth/microsoft-auth.js:18`, `inicializarMsal()` en `app.js:54`; también `blank.html:26`), para
+todos los usuarios de la PWA y dentro del APK. Que un bundle minificado "no parezca malicioso" no prueba nada.
+
+**Cómo se resolvió.** La receta real estaba en este documento (F4.3, "bundle ESM local de MSAL"):
+`esbuild dist/index.mjs --bundle --format=esm --platform=browser --minify` dentro del paquete. Con
+`@azure/msal-browser@3.30.0` y `@azure/msal-common@14.16.1` del registro, **esbuild de 0.27.2 a 0.28.0 genera el
+archivo de producción byte a byte** (318.971 bytes, `827dca96…`); 0.27.0/0.27.1 y 0.28.1/0.28.2 dan otro. El
+archivo era legítimo; lo que fallaba era la documentación.
+
+| Decisión (gate, 2026-11-26) | Razón |
+|---|---|
+| **Opción B: fijar la receta y recompilar en el CI** | Con la reproducción, el archivo ya es verificable. La opción A (UMD `lib/msal-browser.min.js` del paquete, 307 KB) obligaba a tocar el código de auth y a cambiar de build: riesgo de regresión sin ganancia de procedencia |
+| esbuild **0.27.2** (no 0.28.0) | Mismo archivo; es la única versión del rango fuera de GHSA-g7r4-m6w7-qqqr (bajo: servidor de desarrollo en Windows, que la receta no usa). `npm audit` de la receta: 0 |
+| Versión de MSAL sin cambios (3.30.0) | `npm audit`: 0. Salir de la rama 3.x es un item aparte (SC-3) |
+| Recompilación fuera del deploy | `deploy-pwa.yml` solo hace `sha256sum -c --strict` de `web/libs/SHA256SUMS`, sin `npm`. La recompilación vive en `verify-vendored.yml` |
+
+**Cómo queda verificado.**
+
+- `tools/vendor/msal/`: `package.json` + `package-lock.json` con versiones exactas (integridad del registro),
+  `verify.sh` (recompila y compara con `web/libs/SHA256SUMS` y con el archivo del repo) y README.
+- `verify-vendored.yml`: en push o PR que toque `web/libs/**`, `tools/vendor/**` o el propio workflow, y con
+  `workflow_dispatch`. `npm ci --ignore-scripts` (esbuild funciona sin postinstall: toma el binario del paquete
+  opcional de la plataforma) y `verify.sh`. Sin secretos ni deploy.
+- `web/libs/SHA256SUMS` (MSAL, LF) y `LICENSE-msal-browser` (MIT). `VENDORED.md` corregido con la receta, las
+  versiones probadas y las integridades.
+
+| Prueba | Resultado |
+|---|---|
+| Local (Windows), `npm ci --ignore-scripts` + `verify.sh` | OK, `827dca96…` |
+| CI `ubuntu-latest` (`feature/sc-1`) | Los 5 pasos `success`: esbuild es determinista entre Windows y Linux |
+| Negativa en el CI (rama descartable, receta sin `--minify`) | "Recompilar y comparar" `failure`; los hashes del repo y la instalación, `success`. Rama borrada |
+
+**Inventario de terceros vendorizados** (alcance de SC-1): solo `web/libs/`: Workbox 7.0.0 (`SHA256SUMS` de su
+carpeta) y MSAL 3.30.0 (`web/libs/SHA256SUMS` + recompilación). La Extension (`src/`) no tiene ninguno.
+Capacitor (`native-bridge.js` y los plugins del APK) llega por npm con `package-lock.json`. Sin fuentes ni `.wasm`.
+
+**Lo que deja ver (items propuestos, con gate):** SC-2, cargar MSAL solo al usar OneDrive y nunca en nativo
+(mínimo privilegio); SC-3, spike para salir de MSAL 3.x.
 
 #### Lección: el pipeline viaja con la rama
 
