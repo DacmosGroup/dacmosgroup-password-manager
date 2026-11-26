@@ -40,6 +40,8 @@ Cambio de distribución que salió dentro de SW-1:
   - vc 4 en el A33 (vc 3 → vc 4 desde Play) y en el S25 (APK vc 2 de GitHub → vc 4 desde Play): instalador
     Play, `firstInstallTime` sin cambio, firma `B9:3E`, `com/pairip` = 0, `classes.dex` igual al del AAB
     propio, bóveda que se desbloquea, también en modo avión.
+  - Assets: los 62 archivos de `assets/public/` (incluido `engine.js`), los 3 assets nativos y los perfiles de
+    ART del APK de Play, idénticos a los del AAB propio (§32).
   - `base.apk` idéntico en los dos teléfonos.
 - Antes del build de vc 4: checkout limpio de `6465106`, `npx cap sync android`, hash de `engine.js` igual en
   `web/` y en los assets, `keytool -printcert` del AAB → clave de subida.
@@ -62,7 +64,8 @@ Nada comprometido quedó sin hacer. Siguen en el backlog:
 
 1. **Verificar lo que entrega el canal, no solo lo que subimos.** Play inyectaba código en vc 3 y la DoD de
    AAB-1 pasó sin notarlo, porque se verificó la firma pero no el contenido. Ahora la DoD (README) exige
-   sacar del dispositivo el APK que entrega el canal y compararlo con el build propio.
+   sacar del dispositivo el APK que entrega el canal y compararlo con el build propio: `classes.dex` **y** los
+   hashes de `assets/public/**`, donde vive el cifrado (corrección del arquitecto al cierre).
 2. **Toda prueba de la PWA servida, en un preview.** Con los previews por rama ya se puede probar un cambio
    de SW, cabeceras o CSP (incluida la actualización desde producción) antes del merge. Queda en la DoD (README).
 3. **Inventario de accesos de la máquina de desarrollo.** Un acceso de la máquina estaba desactualizado y

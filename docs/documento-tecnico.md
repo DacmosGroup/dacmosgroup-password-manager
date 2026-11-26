@@ -3146,6 +3146,33 @@ modo avión.
 
 Registro de developer verification: `B9:3E` registrada; claves ajenas retiradas o documentadas.
 
+#### Verificación del binario que entrega Play (vc 4, 2026-11-26)
+
+`base.apk` sacado de los dos teléfonos (A33 y S25, idéntico entre sí) frente al AAB propio de `6465106`:
+
+| Parte | Resultado |
+|---|---|
+| `classes.dex` | Idéntico (7.229.320 bytes); sin `com/pairip` |
+| `assets/public/**` (62 archivos, la capa web: cifrado, UI, sync) | **Los 62 hashes idénticos**, incluido `src/crypto/engine.js` |
+| `assets/capacitor.config.json`, `capacitor.plugins.json`, `native-bridge.js` | Idénticos |
+| `assets/dexopt/baseline.prof(m)` (solo en el APK) | Son los perfiles de ART del propio AAB (metadatos que Play coloca en el APK): mismos hashes |
+
+El `engine.js` empaquetado es el blob de git de `6465106` **con CRLF**: sin los retornos de carro, el hash
+coincide con el blob (`a6eb1ac0…`). Viene de compilar en Windows con `core.autocrlf=true` (`cap sync` copia
+la copia de trabajo). No cambia el comportamiento, pero un build del mismo commit en Linux daría otros hashes
+en los assets: dato para la build reproducible (T-2).
+
+AAB-1b, reconfirmado el mismo día: `assetlinks.json` → `200` + `Content-Type: application/json` + `nosniff`
+(en Pages una ruta inexistente también da `200`, con `text/html`: el `Content-Type` es lo que cuenta);
+`statements:list` → un statement, `co.dacmosgroup.dpm` con `B9:3E`.
+
+#### Lección: el pipeline viaja con la rama
+
+La configuración de CI se versiona con el código. Probar un commit viejo ejecuta **su** workflow viejo: la
+rama `preview-sw1` planteada sobre el `main` anterior habría desplegado a producción con `--branch=main`, y su
+paso de hashes habría fallado por no existir aún la carpeta vendorizada. Regla: **un cambio de workflow va
+en un commit aparte y antes de lo que depende de él** (aquí `b064a6a`, con SW-1 rebaseado encima).
+
 ---
 
 > **DacmosGroup.co** — Tecnología compleja, explicada de forma simple.
