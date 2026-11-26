@@ -4,6 +4,7 @@
 #   - Push a main que incluya cambios dentro de web/**
 # Disparo manual:
 #   - workflow_dispatch desde GitHub Actions → Run workflow
+#     (desde main = producción; desde otra rama = preview de Cloudflare Pages)
 #
 # Secretos requeridos (configurar en GitHub → Settings → Secrets → Actions):
 #   CLOUDFLARE_API_TOKEN  → Cloudflare Dashboard → My Profile → API Tokens
@@ -65,7 +66,14 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           # ID de la cuenta de Cloudflare
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Comando wrangler: despliega web/ al proyecto dacmos-pm-pwa en main
-          command: pages deploy web --project-name=dacmos-pm-pwa --branch=main
+          # Comando wrangler: despliega web/ al proyecto dacmos-pm-pwa con la rama
+          # que disparó el job. En main (push o dispatch) es el deploy de producción;
+          # un workflow_dispatch desde otra rama crea un preview en
+          # <rama-saneada>.dacmos-pm-pwa.pages.dev y nunca toca producción.
+          # Antes era --branch=main fijo: un dispatch desde cualquier rama
+          # publicaba en producción (gate SW-1, 2026-11-26).
+          # El origen del preview NO se registra en los OAuth de Google ni de
+          # Microsoft: el sync no funciona en previews, a propósito.
+          command: pages deploy web --project-name=dacmos-pm-pwa --branch=${{ github.ref_name }}
           # Token de GitHub para registrar el despliegue en la UI de GitHub
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
