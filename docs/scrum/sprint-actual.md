@@ -18,9 +18,10 @@ DPM en el internal track de Play y la PWA sin dependencias externas en el servic
 
 | ID | Item | Talla | Estado |
 |---|---|---|---|
-| SW-1 | Servir Workbox desde el propio dominio en la PWA | S | ⬜ TODO — gate cerrado 2026-11-25 (§32) |
+| SW-1 | Servir Workbox desde el propio dominio en la PWA | S | ✅ DONE 2026-11-26 (`600ed5b`, §32) |
 | AAB-1 | AAB vc 3 / 0.6.1 firmado desde `main` al internal track de Play | S–M | ✅ DONE 2026-11-25 (§32) |
 | AAB-1b | `assetlinks.json` con un único fingerprint (`dacmos-pm`) | S | ✅ DONE 2026-11-25 (`1e594c6`) |
+| AAB-2 | AAB vc 4 / 0.6.1 sin Automatic protection de Play (añadido 2026-11-26, P-100) | S | 🔄 commit `6465106` hecho; build a la espera de que el PO apague la protección |
 
 Reserva (solo si sobra capacidad): **H-9** — logging de eventos sync.
 
@@ -45,6 +46,7 @@ Además del DoD general (`README.md`), y por la Retro del Sprint 2:
 2026-11-25 — Hecho: AAB-1 docs (`db1c817`, §32). Arquitecto aprueba AAB-1b: solo `B9:3E` (sin subida, sin la clave generada por Google). `assetlinks.json` en `1e594c6`, deploy propio. Verificado en producción: curl -I 200 + application/json; API statements:list → un statement, `B9:3E`; pm get-app-links N/A (sin autoVerify). §32 revisada: no describe ubicación, respaldo ni contraseñas de los keystores. Primera mitad del Sprint Goal cumplida (DPM en internal track). Siguiente: SW-1 según §32. Bloqueos: ninguno. PO: confirmar DV-1 en Play Console esta semana.
 2026-11-25 — Cierre de sesión. README (fila Play Store) al día. SW-1 queda para la próxima sesión (decisión del PO). Estado: SW-1 ⬜ (contrato en §32, sin código); Goal a medias (Play ✅, SW sin CDN pendiente). Próxima sesión: SW-1 → deploy propio → si se cumple el Goal, Review + Retro del Sprint 3. Bloqueos: ninguno.
 2026-11-26 — SW-1 implementado (`7905e5f`): Workbox 7.0.0 en `web/libs/workbox-v7.0.0/` (npm pack, sha512 = dist.integrity, idéntico al CDN), SHA256SUMS + `sha256sum -c --strict` en deploy-pwa.yml antes del deploy en todas las ramas, CSP sin storage.googleapis.com. Pruebas locales con la CSP de producción (Chrome headless): SW activado, precache 16 entradas, página controlada, navegación offline OK; prueba negativa local (byte alterado → exit 1); clon nuevo en Windows (autocrlf=true) → `sha256sum -c` OK. Gate (arquitecto): aprobados `.gitattributes` (`web/libs/** -text`) y `LICENSE` MIT como añadidos; aprobado `--branch=${{ github.ref_name }}` en deploy-pwa.yml (`b064a6a`: antes un dispatch desde una rama publicaba en producción); prueba de actualización SW viejo → SW-1 en un preview (`preview-sw1`) y prueba negativa en el CI (`ci-negativa-sw1`) antes del merge. P-100: se apaga Automatic protection de Play a nivel de app; método de verificación confirmado (`com.pairip` presente en el base.apk de vc 3 servido por Play, ausente en los builds propios); vc 4 / 0.6.1 desde `main` **sin** SW-1, y luego merge de SW-1. Siguiente: pruebas en preview y CI; PO apaga la protección. Bloqueos: ninguno.
+2026-11-26 — Hecho: SW-1 ✅. Preview: prueba de actualización SW viejo → SW-1 en el alias `preview-sw1` OK (banner, activación tras el clic, cachés viejas borradas, offline, 0 peticiones a googleapis); prueba negativa en el CI (`ci-negativa-sw1`): paso de hashes `failure`, inyección y deploy `skipped`, sin alias; `feature/sw-1` → alias `feature-sw-1`; rama de producción de Pages = `main`. Commit `6465106` (versionCode 4, `main` sin SW-1; entre `78ad1a9` y `6465106` solo cambia `assetlinks.json`); merge de SW-1 (`600ed5b`) y deploy a producción verificado (curl -I 200 + application/javascript, CSP sin CDN, SW activo sin googleapis). Ramas descartables borradas. Git en esta máquina pasa a OAuth por el navegador (PAT revocado: no tenía permiso `workflow`). Siguiente: PO apaga Automatic protection → build de vc 4 desde `6465106` (checkout limpio) → internal testing → DoD de §32 → Review + Retro del Sprint 3. Bloqueos: protección (PO).
 ```
 
 ---

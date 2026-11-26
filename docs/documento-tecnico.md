@@ -1,6 +1,6 @@
 # 🔐 Documento Técnico — Dacmos Password Manager
 
-**Baseline 0.6.x · Última actualización 2026-11-25 (§32 — AAB-1 en Play + decisión de SW-1, Sprint 3)**
+**Baseline 0.6.x · Última actualización 2026-11-26 (§32 — SW-1 implementado, previews por rama, Automatic protection apagada y vc 4)**
 **DacmosGroup.co — Datos · Nube · Movilidad · Seguridad**
 
 > Este documento describe las decisiones de arquitectura, estándares de seguridad
@@ -3080,7 +3080,7 @@ Google exige registrar paquete y clave de firma para instalar apps fuera de Play
 (Brasil, Indonesia, Singapur y Tailandia desde septiembre de 2026). Afecta al APK de GitHub. Va al
 backlog como **DV-1**, sin fecha.
 
-### SW-1 — Workbox servido desde el propio dominio (aprobado, pendiente de implementar)
+### SW-1 — Workbox servido desde el propio dominio (✅ implementado 2026-11-26)
 
 | Opción | Estado | Razón |
 |---|---|---|
@@ -3099,6 +3099,52 @@ Contrato:
   comentarios. Verificar con `curl -I` en un deploy de preview.
 - DoD incluye una prueba negativa (hash alterado → el CI no despliega). Sin bump del manifest.
 - El bypass de desarrollo de §20 (`ENTORNO_DEV`) **no** entra en SW-1: es el item SW-DEV.
+
+#### Añadidos aprobados en el gate (2026-11-26)
+
+- **`.gitattributes`** con `web/libs/** -text`: con `core.autocrlf=true`, un checkout en Windows convertiría
+  los archivos a CRLF y `sha256sum -c` fallaría en local. Verificado con un clon nuevo en Windows.
+- **`LICENSE`** de Workbox (MIT) en `web/libs/workbox-v7.0.0/`: la licencia exige conservar el aviso. No es
+  código y no entra en `SHA256SUMS`.
+- **`deploy-pwa.yml` despliega con `--branch=${{ github.ref_name }}`** (antes `--branch=main` fijo). Desde
+  `main` sigue siendo producción; un `workflow_dispatch` desde otra rama crea un preview en
+  `<rama-saneada>.dacmos-pm-pwa.pages.dev` (`feature/sw-1` → `feature-sw-1`). Cierra un riesgo previo: un
+  dispatch desde cualquier rama publicaba en producción. Rama de producción del proyecto de Pages: `main`
+  (verificado). El origen de los previews **no** se registra en los OAuth de Google ni de Microsoft: el
+  sync no funciona en previews, a propósito.
+
+#### Verificación
+
+| Prueba | Resultado |
+|---|---|
+| Integridad de los paquetes | sha512 de cada `.tgz` = `dist.integrity` del registro; los 6 archivos idénticos byte a byte a los del CDN |
+| Local, con la CSP de producción (Chrome headless) | SW `activated`, 16 entradas precacheadas (incluida `offline.html`), página controlada, navegación offline |
+| Negativa local | Un byte alterado → `sha256sum -c` sale con 1 |
+| **Actualización en el preview** (SW viejo con Workbox del CDN → SW-1, mismo alias `preview-sw1`) | Banner de actualización; el SW nuevo queda en *waiting* hasta el clic; tras el clic, activo y controlando, sin *waiting*; cachés del deploy anterior borradas; navegación offline; 0 peticiones a `googleapis.com`; los 6 archivos de Workbox desde `/libs/workbox-v7.0.0/` |
+| **Negativa en el CI** (rama descartable con un byte alterado en `workbox-routing.prod.js`) | Paso "Verificar hashes" `failure`; "Inyectar SW_DEPLOY_ID" y "Deploy" `skipped`; el alias de esa rama no existe (404) |
+| Producción tras el merge (`600ed5b`) | `curl -I /libs/workbox-v7.0.0/workbox-sw.js` → `200` + `application/javascript` + `nosniff`; CSP `script-src 'self' https://accounts.google.com`, `worker-src 'self'`; SW activo con cachés `600ed5b`; sin peticiones a `googleapis.com` |
+
+Las ramas descartables (`preview-sw1`, `ci-negativa-sw1`) se borraron al terminar.
+
+### P-100 — Automatic protection de Play apagada · vc 4 / 0.6.1 (2026-11-26)
+
+Play Console tenía activa **Automatic protection** ("Installer check"). Play inyecta código propio en el AAB
+que firma (paquete `com.pairip`: arranque y comprobación de licencia). Verificado: el `base.apk` de vc 3
+servido por Play lo contiene; el AAB subido y el APK de GitHub, no.
+
+| Decisión | Razón |
+|---|---|
+| **Apagarla a nivel de app** (Protected with Play → Automatic protection settings), no por release | Puede exigir conexión tras un tiempo sin ella: un gestor local-first no puede negarse a abrir la bóveda sin red (disponibilidad). Es código de terceros ofuscado, imposible de revisar, dentro de un gestor zero-knowledge, y choca con "código abierto y verificable". Incluye telemetría hacia Google. No protege nada en una app gratuita y MIT. Un falso positivo cierra la app |
+| Recomendación de Google de no publicar versiones sin protección | No aplica: está pensada para apps de pago o con monetización |
+| **vc 4 / 0.6.1** sin la protección, compilado desde `main` **sin SW-1** (`6465106`) | El binario de las pruebas cerradas (PS-2) debe tener el mismo código que vc 2 y vc 3: una sola variable. Entre vc 3 (`78ad1a9`) y `6465106` solo cambió `web/.well-known/assetlinks.json`, que no corre en nativo |
+| PS-2 arranca con vc 4 | vc 3 ya salió de Play con la protección |
+
+DoD de vc 4: actualizar de vc 3 (Play) a vc 4 (Play) sin desinstalar, bóveda que se desbloquea y
+`versionCode=4`; `apksigner` sobre `base.apk` da `B9:3E`; `com.pairip` ausente; en el segundo teléfono,
+actualizar del APK vc 2 de GitHub a vc 4 de Play sin desinstalar, con la bóveda intacta; abrir la bóveda en
+modo avión.
+
+Registro de developer verification: `B9:3E` registrada; claves ajenas retiradas o documentadas.
 
 ---
 
