@@ -65,9 +65,9 @@ Nada comprometido quedó sin hacer. Siguen en el backlog:
    sacar del dispositivo el APK que entrega el canal y compararlo con el build propio.
 2. **Toda prueba de la PWA servida, en un preview.** Con los previews por rama ya se puede probar un cambio
    de SW, cabeceras o CSP (incluida la actualización desde producción) antes del merge. Queda en la DoD (README).
-3. **Inventario de accesos de la máquina de desarrollo.** El push falló porque git usaba un token personal
-   olvidado; se revocó y git pasó a OAuth por el navegador. El inventario vive **fuera del repo** (es
-   público) y se revisa en cada cierre de sprint.
+3. **Inventario de accesos de la máquina de desarrollo.** Un acceso de la máquina estaba desactualizado y
+   frenó el trabajo con el CI. Se corrigió y queda un inventario que vive **fuera del repo** (es público) y
+   se revisa en cada cierre de sprint.
 
 ---
 
