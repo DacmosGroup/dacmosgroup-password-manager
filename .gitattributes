@@ -1,0 +1,3 @@
+# Archivos vendorizados: bytes fijos (sin conversión CRLF) para que SHA256SUMS
+# verifique igual en el CI y en un checkout local de Windows (SW-1).
+web/libs/** -text

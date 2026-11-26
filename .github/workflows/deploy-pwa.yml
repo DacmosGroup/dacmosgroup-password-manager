@@ -4,6 +4,7 @@
 #   - Push a main que incluya cambios dentro de web/**
 # Disparo manual:
 #   - workflow_dispatch desde GitHub Actions → Run workflow
+#     (desde main = producción; desde otra rama = preview de Cloudflare Pages)
 #
 # Secretos requeridos (configurar en GitHub → Settings → Secrets → Actions):
 #   CLOUDFLARE_API_TOKEN  → Cloudflare Dashboard → My Profile → API Tokens
@@ -40,6 +41,15 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v6
 
+      # ── Paso 1b: Verificar Workbox vendorizado (SW-1, §32) ────────────
+      # El SW importa Workbox 7.0.0 desde web/libs/workbox-v7.0.0/.
+      # importScripts() no admite SRI, así que la integridad se comprueba
+      # aquí: si algún archivo no coincide con SHA256SUMS, el job falla y
+      # no hay deploy. --strict también falla ante líneas mal formadas.
+      - name: Verificar hashes de Workbox vendorizado
+        working-directory: web/libs/workbox-v7.0.0
+        run: sha256sum -c --strict SHA256SUMS
+
       # ── Paso 2: Inyectar SW_DEPLOY_ID con el commit SHA ──────────────
       # Reemplaza el valor 'dev' de SW_DEPLOY_ID en service-worker.js con
       # los primeros 7 caracteres del commit SHA actual. Esto garantiza que
@@ -65,7 +75,14 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           # ID de la cuenta de Cloudflare
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Comando wrangler: despliega web/ al proyecto dacmos-pm-pwa en main
-          command: pages deploy web --project-name=dacmos-pm-pwa --branch=main
+          # Comando wrangler: despliega web/ al proyecto dacmos-pm-pwa con la rama
+          # que disparó el job. En main (push o dispatch) es el deploy de producción;
+          # un workflow_dispatch desde otra rama crea un preview en
+          # <rama-saneada>.dacmos-pm-pwa.pages.dev y nunca toca producción.
+          # Antes era --branch=main fijo: un dispatch desde cualquier rama
+          # publicaba en producción (gate SW-1, 2026-11-26).
+          # El origen del preview NO se registra en los OAuth de Google ni de
+          # Microsoft: el sync no funciona en previews, a propósito.
+          command: pages deploy web --project-name=dacmos-pm-pwa --branch=${{ github.ref_name }}
           # Token de GitHub para registrar el despliegue en la UI de GitHub
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
