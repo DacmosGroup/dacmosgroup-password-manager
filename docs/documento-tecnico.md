@@ -2728,6 +2728,12 @@ nota de auditoría.
 
 > **Nota 2026-11-25:** adelantado al Sprint 3 por decisión del PO (§32 A-6). Como la clave de firma
 > de Play **es** `dacmos-pm`, basta un único fingerprint (`B9:3E:FD:CB…`).
+>
+> **Nota de auditoría 2026-11-25 (AAB-1b, `1e594c6`):** se retira `B0:A1:FC:98…DE:0D` (keystore viejo
+> `dacmos-dpm`, que nunca firmó nada distribuido). Queda solo `B9:3E:FD:CB…E3:FC` (`dacmos-pm`). **No** se
+> listan la clave de subida (`7C:1C…`), que nunca firma lo que se instala y listarla ampliaría quién puede
+> asociarse al dominio, ni la clave que Google generó al crear la app (`A4:1F…`), que nunca firmó nada.
+> La relación (`common.handle_all_urls`) no cambia; `common.get_login_creds` se decide en el gate de F7-A.
 
 ### D1-3 / D1-6 — Encaje de documentación y commits
 
@@ -3062,7 +3068,11 @@ ficha. La primera publicación tardó en propagarse ("No se encontró el element
 #### A-6 — `assetlinks.json`
 
 Se adelanta al Sprint 3 (antes en el gate de F7-A, D1-2): un único fingerprint, `B9:3E:FD:CB…`,
-y retirar el del keystore viejo con nota de auditoría. Pendiente de implementar.
+y retirar el del keystore viejo con nota de auditoría. ✅ **Hecho 2026-11-25** (`1e594c6`, deploy propio,
+separado del de SW-1). Verificado en producción: `curl -I` → `200` + `Content-Type: application/json`
+(no lo captura la regla catch-all de `_redirects`); la API `digitalassetlinks.googleapis.com/v1/statements:list`
+devuelve un único statement con `B9:3E`; `pm get-app-links`: **N/A**, el manifest no declara intent filters
+con `autoVerify`. Detalle de la retirada en §31 D1-2.
 
 #### A-7 — Verificación de desarrolladores de Android (DV-1, backlog)
 
