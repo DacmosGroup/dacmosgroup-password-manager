@@ -41,6 +41,15 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v6
 
+      # ── Paso 1b: Verificar Workbox vendorizado (SW-1, §32) ────────────
+      # El SW importa Workbox 7.0.0 desde web/libs/workbox-v7.0.0/.
+      # importScripts() no admite SRI, así que la integridad se comprueba
+      # aquí: si algún archivo no coincide con SHA256SUMS, el job falla y
+      # no hay deploy. --strict también falla ante líneas mal formadas.
+      - name: Verificar hashes de Workbox vendorizado
+        working-directory: web/libs/workbox-v7.0.0
+        run: sha256sum -c --strict SHA256SUMS
+
       # ── Paso 2: Inyectar SW_DEPLOY_ID con el commit SHA ──────────────
       # Reemplaza el valor 'dev' de SW_DEPLOY_ID en service-worker.js con
       # los primeros 7 caracteres del commit SHA actual. Esto garantiza que

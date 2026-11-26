@@ -6,17 +6,24 @@
  *  - Fallback offline: servir offline.html si la red falla y el
  *    recurso no está en caché
  *
- * Workbox se carga via CDN de Google Storage.
- * NOTA: importScripts() en Service Workers no soporta el atributo
- * integrity de Subresource Integrity (SRI) como lo hacen las etiquetas
- * <script> en HTML. La mitigación aplicada es:
- *  1. Fijar la URL a una versión exacta (7.0.0) — nunca un "latest"
- *  2. La directiva CSP worker-src 'self' https://storage.googleapis.com
- *     en _headers limita de dónde puede cargarse código en el SW
+ * Workbox 7.0.0 se sirve desde el propio dominio (SW-1, §32).
+ * importScripts() no admite Subresource Integrity (SRI), así que en vez
+ * de un CDN de terceros los archivos viven en web/libs/workbox-v7.0.0/:
+ *  1. Obtenidos con `npm pack` y verificados contra dist.integrity del
+ *     registro de npm (detalle en web/libs/VENDORED.md)
+ *  2. deploy-pwa.yml corre `sha256sum -c SHA256SUMS` antes de desplegar:
+ *     si un archivo cambia, no hay deploy
+ *  3. La CSP de _headers deja script-src y worker-src en 'self' (sin CDN)
  */
-importScripts(
-  'https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js'
-)
+importScripts('/libs/workbox-v7.0.0/workbox-sw.js')
+
+/* El loader carga cada módulo (core, precaching, ...) bajo demanda desde
+   modulePathPrefix. debug: false fuerza los .prod.js, los únicos
+   vendorizados: sin esto, en localhost pediría los .dev.js. */
+workbox.setConfig({
+  modulePathPrefix: '/libs/workbox-v7.0.0/',
+  debug: false,
+})
 
 /* ── Identificador de deploy ───────────────────────────────────────────
    En desarrollo local siempre es 'dev'.

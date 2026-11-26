@@ -7,9 +7,9 @@
 # (Google Identity Services + MSAL.js). Por ahora solo las URLs
 # estrictamente necesarias para el SW y Workbox están autorizadas.
 #
-# IMPORTANTE — worker-src incluye storage.googleapis.com porque el SW
-# carga Workbox via importScripts() desde ese CDN. Sin esta directiva,
-# el navegador bloquea el script y el SW no se registra.
+# IMPORTANTE — worker-src y script-src quedan en 'self' (sin CDN): desde SW-1
+# (§32) el SW carga Workbox 7.0.0 desde /libs/workbox-v7.0.0/, verificado con
+# SHA256SUMS en deploy-pwa.yml. No volver a añadir storage.googleapis.com.
 
 /.well-known/assetlinks.json
   Content-Type: application/json
@@ -18,7 +18,7 @@
   # ── Content Security Policy ─────────────────────────────────────────
   # Equivalente a la CSP de la Chrome Extension MV3: script-src 'self'
   # Sin eval(), sin scripts inline, sin recursos de terceros no declarados
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://storage.googleapis.com https://accounts.google.com; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://www.googleapis.com https://graph.microsoft.com https://accounts.google.com https://oauth2.googleapis.com https://login.microsoftonline.com; worker-src 'self' https://storage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://www.googleapis.com https://graph.microsoft.com https://accounts.google.com https://oauth2.googleapis.com https://login.microsoftonline.com; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
 
   # ── Prevención de clickjacking ───────────────────────────────────────
   # Refuerza frame-ancestors 'none' para navegadores que no leen CSP

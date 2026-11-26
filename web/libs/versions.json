@@ -1,3 +1,4 @@
 {
-  "msal-browser": "3.30.0"
+  "msal-browser": "3.30.0",
+  "workbox": "7.0.0"
 }
