@@ -3,7 +3,7 @@
 **Inicio:** 2026-11-25 · **Cierre:** 2026-11-26
 **Sprint Goal:** DPM en el internal track de Play y la PWA sin dependencias externas en el service worker.
 **Resultado del Goal:** ✅ cumplido
-**Standup log completo:** `docs/scrum/sprint-actual.md` en el commit anterior al cierre
+**Standup log completo:** `docs/scrum/sprint-actual.md` en `6265b6f` (último commit antes del cierre)
 
 ---
 
